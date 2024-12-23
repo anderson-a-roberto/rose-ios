@@ -1,4 +1,4 @@
-# Banco Rose
+# Banco 
 
 Um aplicativo bancário desenvolvido com React Native e Supabase, oferecendo funcionalidades de autenticação, KYC (Know Your Customer) e gerenciamento de conta.
 
