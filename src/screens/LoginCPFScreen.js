@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Linking } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
 import { createClient } from '@supabase/supabase-js';
 
@@ -10,6 +10,7 @@ const supabase = createClient(
 
 const LoginCPFScreen = ({ navigation }) => {
   const [cpf, setCpf] = useState('');
+  const [error, setError] = useState('');
 
   const formatCPF = (text) => {
     // Remove tudo que não é número
@@ -27,72 +28,47 @@ const LoginCPFScreen = ({ navigation }) => {
     setCpf(formattedCPF);
   };
 
-  const checkKYCStatus = async (documentNumber) => {
-    try {
-      const { data: kycData, error: kycError } = await supabase
-        .from('kyc_proposals')
-        .select('*')
-        .eq('document_number', documentNumber)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (kycError) {
-        if (kycError.code === 'PGRST116') {
-          // Nenhuma proposta encontrada
-          return null;
-        }
-        throw kycError;
-      }
-
-      return kycData;
-    } catch (error) {
-      console.error('Erro ao verificar status KYC:', error);
-      throw error;
-    }
-  };
-
   const handleContinue = async () => {
-    // Remove formatação do CPF
-    const cleanCPF = cpf.replace(/\D/g, '');
-    console.log('CPF enviado:', cleanCPF);
-    
     try {
-      // Verifica se o usuário existe
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id')
+      setError('');
+      const cleanCPF = cpf.replace(/\D/g, '');
+      
+      // Consulta a tabela kyc_proposals_v2
+      const { data: kycData, error: kycError } = await supabase
+        .from('kyc_proposals_v2')
+        .select('*')
         .eq('document_number', cleanCPF)
         .maybeSingle();
 
-      console.log('Data retornado:', data);
-      console.log('Erro:', error);
+      if (kycError) {
+        console.error('Erro ao consultar kyc_proposals_v2:', kycError);
+        setError('Erro ao verificar documento. Tente novamente.');
+        return;
+      }
 
-      if (error) throw error;
+      // Se não encontrar registro
+      if (!kycData) {
+        navigation.navigate('Step1');
+        return;
+      }
 
-      if (data) {
-        console.log('Usuário encontrado, verificando status KYC');
-        
-        // Verificar status do KYC
-        const kycData = await checkKYCStatus(cleanCPF);
-        
-        if (kycData && kycData.status === 'PENDING' && kycData.kyc_url) {
-          console.log('KYC pendente, indo para tela de KYC');
-          navigation.navigate('KYC', { 
-            kycUrl: kycData.kyc_url,
-            documentNumber: cleanCPF 
-          });
-        } else {
-          console.log('Indo para LoginPassword');
-          navigation.navigate('LoginPassword', { cpf: cleanCPF });
-        }
+      // Verifica os status e redireciona
+      if (kycData.onboarding_create_status === 'CONFIRMED') {
+        navigation.navigate('LoginPassword', { cpf: cleanCPF });
+      } else if (kycData.documentscopy_status === 'PENDING' && kycData.url_documentscopy) {
+        await Linking.openURL(kycData.url_documentscopy);
+      } else if (kycData.documentscopy_status === 'PROCESSING') {
+        navigation.navigate('ThankYou');
+      } else if (kycData.onboarding_create_status === 'REPROVED') {
+        navigation.navigate('ThankYou');
       } else {
-        console.log('Usuário não encontrado, indo para Step1');
+        // Se nenhuma condição for atendida
         navigation.navigate('Step1');
       }
+
     } catch (error) {
-      console.error('Erro ao verificar CPF:', error.message);
-      // Aqui você pode adicionar um feedback visual para o usuário
+      console.error('Erro ao verificar CPF:', error);
+      setError('Erro ao verificar documento. Tente novamente.');
     }
   };
 
@@ -113,6 +89,8 @@ const LoginCPFScreen = ({ navigation }) => {
           maxLength={14}
           theme={{ colors: { primary: '#FF1493' } }}
         />
+
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <Button
           mode="contained"
@@ -161,6 +139,11 @@ const styles = StyleSheet.create({
   buttonLabel: {
     fontSize: 16,
     color: '#fff',
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginBottom: 16,
   },
 });
 

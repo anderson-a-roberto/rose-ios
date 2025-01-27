@@ -22,12 +22,14 @@
     "react-native": "0.76.5",
     "react-native-gesture-handler": "^2.21.2",
     "react-native-get-random-values": "^1.11.0",
+    "react-native-mask-input": "^1.2.3",
     "react-native-paper": "^5.12.5",
     "react-native-safe-area-context": "^5.0.0",
     "react-native-screens": "^4.3.0",
     "react-native-web": "^0.19.13",
     "react-native-webview": "^13.12.5",
-    "uuid": "^11.0.3"
+    "uuid": "^11.0.3",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

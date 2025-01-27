@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Linking } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  'https://abkhgnefvzlqqamfpyvd.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFia2hnbmVmdnpscXFhbWZweXZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM4ODU1MjgsImV4cCI6MjA0OTQ2MTUyOH0.K-xv30H1ULn7CSsi7yPbnofQR6PsfxXdH7W-WQAtZYc'
-);
+import { supabase } from '../config/supabase';
 
 const LoginPasswordScreen = ({ route, navigation }) => {
   const [password, setPassword] = useState('');
@@ -14,10 +9,28 @@ const LoginPasswordScreen = ({ route, navigation }) => {
   const [error, setError] = useState('');
   const { cpf } = route.params;
 
+  const getUserEmail = async (documentNumber) => {
+    try {
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('document_number', documentNumber)
+        .single();
+
+      if (profileError) throw profileError;
+      if (!profileData?.email) throw new Error('Email não encontrado');
+
+      return profileData.email;
+    } catch (error) {
+      console.error('Erro ao buscar email:', error);
+      throw error;
+    }
+  };
+
   const checkKYCStatus = async (documentNumber) => {
     try {
       const { data: kycData, error: kycError } = await supabase
-        .from('kyc_proposals')
+        .from('kyc_proposals_v2')
         .select('*')
         .eq('document_number', documentNumber)
         .order('created_at', { ascending: false })
@@ -43,54 +56,47 @@ const LoginPasswordScreen = ({ route, navigation }) => {
     try {
       setError('');
 
-      // Fazer login com CPF (email temporário) e senha
+      // Busca o email real do usuário
+      const email = await getUserEmail(cpf);
+
+      // Faz login com o email real e senha
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: `${cpf}@temp.com`,
+        email: email,
         password: password,
       });
 
       if (authError) throw authError;
 
+      // Verifica se a sessão está ativa
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!session) throw new Error('Sessão não estabelecida após login');
+
       // Verificar status do KYC usando o CPF
       const kycData = await checkKYCStatus(cpf);
 
       if (!kycData) {
-        // Sem proposta KYC - usuário acabou de se cadastrar
-        navigation.navigate('ThankYou');
+        await Linking.openURL('/error');
         return;
       }
 
-      switch (kycData.status) {
-        case 'PENDING':
-          // Redirecionar para KYCScreen com a URL e documentNumber
-          if (kycData.kyc_url) {
-            navigation.navigate('KYC', { 
-              kycUrl: kycData.kyc_url,
-              documentNumber: cpf 
-            });
-          } else {
-            navigation.navigate('ThankYou');
-          }
-          break;
-
-        case 'APPROVED':
-          // Redirecionar para o Dashboard quando aprovado
-          navigation.navigate('Dashboard');
-          break;
-
-        case 'REJECTED':
-          navigation.navigate('ThankYou');
-          break;
-
-        default:
-          navigation.navigate('ThankYou');
+      if (kycData.onboarding_create_status === 'CONFIRMED') {
+        navigation.navigate('Dashboard2');
+      } else {
+        await Linking.openURL('/error');
       }
 
     } catch (error) {
       console.error('Erro ao fazer login:', error);
-      setError(error.message === 'Invalid login credentials'
-        ? 'Senha incorreta'
-        : 'Erro ao fazer login. Tente novamente.');
+      if (error.message === 'Email não encontrado') {
+        setError('Usuário não encontrado');
+      } else if (error.message === 'Invalid login credentials') {
+        setError('Senha incorreta');
+      } else if (error.message === 'Sessão não estabelecida após login') {
+        setError('Sessão não estabelecida após login');
+      } else {
+        setError('Erro ao fazer login. Tente novamente.');
+      }
     }
   };
 
