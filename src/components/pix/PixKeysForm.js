@@ -209,12 +209,20 @@ const PixKeysForm = () => {
       setLoading(true);
       setError(null);
 
+      // Usar o número da conta que vem na estrutura correta
+      const accountNumber = selectedKeyToDelete.account?.account;
+      
+      if (!accountNumber) {
+        throw new Error('Número da conta não encontrado');
+      }
+
       const { error: deleteError } = await supabase.functions.invoke(
         'delete-pix-key',
         {
           body: {
             key: selectedKeyToDelete.key,
-            type: selectedKeyToDelete.keyType
+            type: selectedKeyToDelete.keyType,
+            account: accountNumber
           }
         }
       );

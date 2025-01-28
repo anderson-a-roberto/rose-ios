@@ -8,6 +8,13 @@ import PaymentForm from '../components/payment/PaymentForm';
 import TransferForm from '../components/transfer/TransferForm';
 import PixOptionsForm from '../components/pix/PixOptionsForm';
 import PixKeysForm from '../components/pix/PixKeysForm';
+import PixTransferForm from '../components/pix/transfer/PixTransferForm';
+import PixReceiveForm from '../components/pix/receive/PixReceiveForm';
+import ChargesOptionsForm from '../components/charges/ChargesOptionsForm';
+import CreateChargeForm from '../components/charges/CreateChargeForm';
+import ManageChargesForm from '../components/charges/ManageChargesForm';
+import useDashboard from '../hooks/useDashboard';
+import ProfileSettingsForm from '../components/profile/ProfileSettingsForm';
 
 const ActionButton = ({ icon, label, onPress }) => (
   <TouchableOpacity style={styles.actionButton} onPress={onPress}>
@@ -28,7 +35,8 @@ const TransactionItem = ({ date, description, value, isPositive }) => (
   </View>
 );
 
-const Dashboard2Screen = () => {
+export default function Dashboard2Screen() {
+  const { userAccount, userTaxId } = useDashboard();
   const [balance, setBalance] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -38,6 +46,13 @@ const Dashboard2Screen = () => {
   const [showTransfer, setShowTransfer] = useState(false);
   const [showPix, setShowPix] = useState(false);
   const [showPixKeys, setShowPixKeys] = useState(false);
+  const [showPixTransfer, setShowPixTransfer] = useState(false);
+  const [showPixReceive, setShowPixReceive] = useState(false);
+  const [showCharges, setShowCharges] = useState(false);
+  const [showCreateCharge, setShowCreateCharge] = useState(false);
+  const [showManageCharges, setShowManageCharges] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [userName, setUserName] = useState('Usuário');
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -150,11 +165,50 @@ const Dashboard2Screen = () => {
   };
 
   const showSection = (section) => {
-    setShowStatement(section === 'statement');
-    setShowPayment(section === 'payment');
-    setShowTransfer(section === 'transfer');
-    setShowPix(section === 'pix');
+    setShowStatement(false);
+    setShowPayment(false);
+    setShowTransfer(false);
+    setShowPix(false);
     setShowPixKeys(false);
+    setShowPixTransfer(false);
+    setShowPixReceive(false);
+    setShowCharges(false);
+    setShowCreateCharge(false);
+    setShowManageCharges(false);
+    setShowSettings(false);
+
+    switch (section) {
+      case 'statement':
+        setShowStatement(true);
+        break;
+      case 'payment':
+        setShowPayment(true);
+        break;
+      case 'transfer':
+        setShowTransfer(true);
+        break;
+      case 'pix':
+        setShowPix(true);
+        break;
+      case 'pixKeys':
+        setShowPixKeys(true);
+        break;
+      case 'pixTransfer':
+        setShowPixTransfer(true);
+        break;
+      case 'pixReceive':
+        setShowPixReceive(true);
+        break;
+      case 'charges':
+        setShowCharges(true);
+        break;
+      case 'createCharge':
+        setShowCreateCharge(true);
+        break;
+      case 'manageCharges':
+        setShowManageCharges(true);
+        break;
+    }
   };
 
   const fetchBalance = async () => {
@@ -209,109 +263,159 @@ const Dashboard2Screen = () => {
     }
   };
 
+  const loadUserName = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.full_name) {
+        setUserName(profile.full_name);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar nome do usuário:', error);
+    }
+  };
+
   useEffect(() => {
     fetchBalance();
+    loadUserName();
   }, []);
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.userInfo}>
-          <MaterialCommunityIcons name="account-circle" size={24} color="#FFF" />
-          <View style={styles.greeting}>
-            <Text style={styles.greetingText}>Boa tarde</Text>
-            <Text style={styles.userName}>Usuário</Text>
+    <View style={styles.container}>
+      <ScrollView style={styles.scrollView}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.userInfo}>
+            <TouchableOpacity onPress={() => showSection(null)}>
+              <MaterialCommunityIcons name="account-circle" size={24} color="#FFF" />
+            </TouchableOpacity>
+            <View style={styles.greeting}>
+              <Text style={styles.greetingText}>Boa tarde</Text>
+              <Text style={styles.userName}>{userName}</Text>
+            </View>
           </View>
+          <TouchableOpacity onPress={() => setShowSettings(true)}>
+            <MaterialCommunityIcons name="menu" size={24} color="#FFF" />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity>
-          <MaterialCommunityIcons name="menu" size={24} color="#FFF" />
-        </TouchableOpacity>
-      </View>
 
-      {/* Balance Card */}
-      <View style={styles.balanceCard}>
-        <Text style={styles.balanceLabel}>Saldo disponível</Text>
-        {loading ? (
-          <ActivityIndicator size="small" color="#FFF" />
-        ) : error ? (
-          <Text style={styles.errorText}>{error}</Text>
-        ) : (
-          <Text style={styles.balanceValue}>
-            R$ {formatCurrency(balance || 0)}
-          </Text>
-        )}
-      </View>
-
-      {/* Action Buttons Grid */}
-      <View style={styles.actionGrid}>
-        <View style={styles.actionRow}>
-          <ActionButton 
-            icon="cash-fast" 
-            label="PIX" 
-            onPress={() => showSection('pix')}
-          />
-          <ActionButton 
-            icon="barcode" 
-            label="Pagar conta" 
-            onPress={() => showSection('payment')}
-          />
-        </View>
-        <View style={styles.actionRow}>
-          <ActionButton 
-            icon="text-box-outline" 
-            label="Extrato" 
-            onPress={() => showSection('statement')}
-          />
-          <ActionButton 
-            icon="bank-transfer" 
-            label="Transferir"
-            onPress={() => showSection('transfer')}
-          />
-        </View>
-        <View style={styles.actionRow}>
-          <ActionButton icon="cash-multiple" label="Cobranças" />
-        </View>
-      </View>
-
-      {/* Content Section */}
-      <View style={[styles.transactionsContainer, (showStatement || showPayment || showTransfer || showPix || showPixKeys) && styles.contentContainer]}>
-        {showPayment ? (
-          <PaymentForm onSubmit={handlePaymentSubmit} />
-        ) : showStatement ? (
-          <StatementForm onSubmit={handleStatementSubmit} />
-        ) : showTransfer ? (
-          <TransferForm onSubmit={handleTransferSubmit} />
-        ) : showPixKeys ? (
-          <PixKeysForm />
-        ) : showPix ? (
-          <PixOptionsForm
-            onTransfer={handlePixTransfer}
-            onReceive={handlePixReceive}
-            onManageKeys={handlePixKeys}
-          />
+        {showSettings ? (
+          <ProfileSettingsForm onBack={() => setShowSettings(false)} />
         ) : (
           <>
-            <Text style={styles.transactionsTitle}>Últimas transações</Text>
-            {loading ? (
-              <ActivityIndicator size="small" color="#FF1493" />
-            ) : error ? (
-              <Text style={styles.errorText}>{error}</Text>
-            ) : (
-              transactions.map((transaction) => (
-                <TransactionItem
-                  key={transaction.id}
-                  date={new Date(transaction.createDate).toLocaleString('pt-BR')}
-                  description={transaction.description}
-                  value={formatCurrency(transaction.amount)}
-                  isPositive={transaction.balanceType === 'CREDIT'}
+            {/* Balance Card */}
+            <View style={styles.balanceCard}>
+              <Text style={styles.balanceLabel}>Saldo disponível</Text>
+              {loading ? (
+                <ActivityIndicator size="small" color="#FFF" />
+              ) : error ? (
+                <Text style={styles.errorText}>{error}</Text>
+              ) : (
+                <Text style={styles.balanceValue}>
+                  R$ {formatCurrency(balance || 0)}
+                </Text>
+              )}
+            </View>
+
+            {/* Action Buttons Grid */}
+            <View style={styles.actionGrid}>
+              <View style={styles.actionRow}>
+                <ActionButton 
+                  icon="cash-fast" 
+                  label="PIX" 
+                  onPress={() => showSection('pix')}
                 />
-              ))
-            )}
+                <ActionButton 
+                  icon="barcode" 
+                  label="Pagar conta" 
+                  onPress={() => showSection('payment')}
+                />
+              </View>
+              <View style={styles.actionRow}>
+                <ActionButton 
+                  icon="text-box-outline" 
+                  label="Extrato" 
+                  onPress={() => showSection('statement')}
+                />
+                <ActionButton 
+                  icon="bank-transfer" 
+                  label="Transferir"
+                  onPress={() => showSection('transfer')}
+                />
+              </View>
+              <View style={styles.actionRow}>
+                <ActionButton 
+                  icon="cash-multiple" 
+                  label="Cobranças"
+                  onPress={() => showSection('charges')}
+                />
+              </View>
+            </View>
+
+            {/* Content Section */}
+            <View style={[styles.transactionsContainer, (showStatement || showPayment || showTransfer || showPix || showPixKeys || showPixTransfer || showPixReceive || showCharges || showCreateCharge || showManageCharges) && styles.contentContainer]}>
+              {showPayment ? (
+                <PaymentForm onBack={() => showSection(null)} onSubmit={handlePaymentSubmit} />
+              ) : showStatement ? (
+                <StatementForm onBack={() => showSection(null)} onSubmit={handleStatementSubmit} />
+              ) : showTransfer ? (
+                <TransferForm onBack={() => showSection(null)} onSubmit={handleTransferSubmit} />
+              ) : showPixKeys ? (
+                <PixKeysForm onBack={() => showSection('pix')} />
+              ) : showPixTransfer ? (
+                <PixTransferForm 
+                  onBack={() => showSection('pix')} 
+                  userAccount={userAccount}
+                  userTaxId={userTaxId}
+                />
+              ) : showPixReceive ? (
+                <PixReceiveForm onBack={() => showSection('pix')} />
+              ) : showCharges ? (
+                <ChargesOptionsForm 
+                  onBack={() => showSection(null)}
+                  onCreate={() => showSection('createCharge')}
+                  onManage={() => showSection('manageCharges')}
+                />
+              ) : showCreateCharge ? (
+                <CreateChargeForm onBack={() => showSection('charges')} />
+              ) : showManageCharges ? (
+                <ManageChargesForm onBack={() => showSection('charges')} />
+              ) : showPix ? (
+                <PixOptionsForm
+                  onTransfer={() => showSection('pixTransfer')}
+                  onReceive={() => showSection('pixReceive')}
+                  onKeys={() => showSection('pixKeys')}
+                />
+              ) : (
+                <>
+                  <Text style={styles.transactionsTitle}>Últimas transações</Text>
+                  {loading ? (
+                    <ActivityIndicator size="small" color="#FF1493" />
+                  ) : error ? (
+                    <Text style={styles.errorText}>{error}</Text>
+                  ) : (
+                    transactions.map((transaction) => (
+                      <TransactionItem
+                        key={transaction.id}
+                        date={new Date(transaction.createDate).toLocaleString('pt-BR')}
+                        description={transaction.description}
+                        value={formatCurrency(transaction.amount)}
+                        isPositive={transaction.balanceType === 'CREDIT'}
+                      />
+                    ))
+                  )}
+                </>
+              )}
+            </View>
           </>
         )}
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -319,6 +423,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FF1493',
+  },
+  scrollView: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
@@ -430,5 +537,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-
-export default Dashboard2Screen;
