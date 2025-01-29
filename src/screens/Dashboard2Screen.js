@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, FlatList, Dimensions } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { supabase } from '../config/supabase';
@@ -18,26 +18,57 @@ import ProfileSettingsForm from '../components/profile/ProfileSettingsForm';
 
 const ActionButton = ({ icon, label, onPress }) => (
   <TouchableOpacity style={styles.actionButton} onPress={onPress}>
-    <MaterialCommunityIcons name={icon} size={24} color="#FF1493" />
     <Text style={styles.actionButtonText}>{label}</Text>
+    <View style={styles.actionButtonIconContainer}>
+      <MaterialCommunityIcons 
+        name={icon} 
+        size={24} 
+        color="#FFFFFF" 
+      />
+    </View>
   </TouchableOpacity>
 );
 
-const TransactionItem = ({ date, description, value, isPositive }) => (
+const formatValue = (value, type) => {
+  const formattedValue = new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(value);
+
+  return type === 'CREDIT' ? `${formattedValue}` : `${formattedValue}`;
+};
+
+const formatDate = (dateString) => {
+  return new Date(dateString).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+};
+
+const TransactionItem = ({ date, description, value, isPositive, movementType }) => (
   <View style={styles.transactionItem}>
-    <View style={styles.transactionLeft}>
-      <Text style={styles.transactionDate}>{date}</Text>
-      <Text style={styles.transactionDescription}>{description}</Text>
-    </View>
-    <Text style={[styles.transactionValue, { color: isPositive ? '#4CAF50' : '#F44336' }]}>
-      {isPositive ? '+' : '-'}R$ {value}
+    <Text style={[styles.transactionType, { color: isPositive ? '#4CAF50' : '#F44336' }]}>
+      {isPositive ? '+' : '-'}
     </Text>
+    
+    <View style={styles.transactionContent}>
+      <Text style={styles.transactionTitle}>{description}</Text>
+      <Text style={styles.transactionSubtitle}>
+        {formatValue(value, isPositive ? 'CREDIT' : 'DEBIT')} | Usuário
+      </Text>
+      <Text style={styles.transactionDate}>{formatDate(date)}</Text>
+    </View>
   </View>
 );
 
-export default function Dashboard2Screen() {
+export default function Dashboard2Screen({ navigation }) {
   const { userAccount, userTaxId } = useDashboard();
   const [balance, setBalance] = useState(null);
+  const [showBalance, setShowBalance] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [transactions, setTransactions] = useState([]);
@@ -53,6 +84,14 @@ export default function Dashboard2Screen() {
   const [showManageCharges, setShowManageCharges] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [userName, setUserName] = useState('Usuário');
+
+  const menuItems = [
+    { id: 'pix', icon: 'bank-transfer', label: 'Pix', onPress: () => showSection('pix') },
+    { id: 'transfer', icon: 'transfer', label: 'Minhas Transferências', onPress: () => showSection('transfer') },
+    { id: 'payment', icon: 'barcode', label: 'Pagar Conta', onPress: () => navigation.navigate('PayBill', { balance }) },
+    { id: 'statement', icon: 'text-box-outline', label: 'Extrato', onPress: () => navigation.navigate('Statement', { balance }) },
+    { id: 'charges', icon: 'cash-multiple', label: 'Cobranças', onPress: () => showSection('charges') },
+  ];
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -76,6 +115,7 @@ export default function Dashboard2Screen() {
       if (statementError) throw statementError;
       
       if (statementData.status === 'SUCCESS' && statementData.body?.movements) {
+        console.log('Primeira transação:', statementData.body.movements[0]);
         setTransactions(statementData.body.movements);
       } else {
         throw new Error('Erro ao obter extrato');
@@ -287,134 +327,133 @@ export default function Dashboard2Screen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.userInfo}>
-            <TouchableOpacity onPress={() => showSection(null)}>
-              <MaterialCommunityIcons name="account-circle" size={24} color="#FFF" />
-            </TouchableOpacity>
-            <View style={styles.greeting}>
-              <Text style={styles.greetingText}>Boa tarde</Text>
-              <Text style={styles.userName}>{userName}</Text>
-            </View>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.userInfo}>
+          <View style={styles.avatarContainer}>
+            <MaterialCommunityIcons name="account-circle" size={40} color="#FFFFFF" />
           </View>
-          <TouchableOpacity onPress={() => setShowSettings(true)}>
-            <MaterialCommunityIcons name="menu" size={24} color="#FFF" />
+          <View style={styles.userDetails}>
+            <Text style={styles.userName}>OLÁ, {userName.toUpperCase()}</Text>
+            <Text style={styles.accountInfo}>Agência: {userAccount?.substring(0, 4) || '----'} | Conta: {userAccount?.substring(4) || '----'}</Text>
+          </View>
+        </View>
+        <View style={styles.logo}>
+          <Text style={styles.logoText}>nk</Text>
+        </View>
+      </View>
+
+      {/* Frame do Saldo */}
+      <View style={styles.balanceFrame}>
+        <View style={styles.balanceContainer}>
+          <Text style={styles.balanceLabel}>SALDO DISPONÍVEL</Text>
+          <View style={styles.balanceRow}>
+            <View style={styles.balanceValueContainer}>
+              {showBalance ? (
+                <Text style={styles.balanceValue}>
+                  {balance ? formatValue(balance) : 'R$ 0,00'}
+                </Text>
+              ) : (
+                <View style={styles.hiddenBalanceContainer}>
+                  {[...Array(5)].map((_, index) => (
+                    <View key={index} style={styles.hiddenBalanceDot} />
+                  ))}
+                </View>
+              )}
+            </View>
+            <TouchableOpacity onPress={() => setShowBalance(!showBalance)}>
+              <MaterialCommunityIcons 
+                name={showBalance ? "eye" : "eye-off"} 
+                size={20} 
+                color="white" 
+              />
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity style={styles.addBalanceButton}>
+            <Text style={styles.addBalanceText}>+ ADICIONAR SALDO</Text>
           </TouchableOpacity>
         </View>
+      </View>
 
-        {showSettings ? (
-          <ProfileSettingsForm onBack={() => setShowSettings(false)} />
+      {/* Actions Section */}
+      <View style={styles.actionsContainer}>
+        <FlatList
+          data={menuItems}
+          renderItem={({ item }) => (
+            <ActionButton
+              icon={item.icon}
+              label={item.label}
+              onPress={item.onPress}
+            />
+          )}
+          keyExtractor={item => item.id}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          snapToInterval={116} // 111 (width) + 5 (gap)
+          decelerationRate="fast"
+          contentContainerStyle={styles.actionsList}
+        />
+      </View>
+
+      {/* Transactions Section */}
+      <View style={styles.transactionsContainer}>
+        <Text style={styles.transactionsTitle}>Últimas Transações</Text>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#682145" />
+          </View>
         ) : (
-          <>
-            {/* Balance Card */}
-            <View style={styles.balanceCard}>
-              <Text style={styles.balanceLabel}>Saldo disponível</Text>
-              {loading ? (
-                <ActivityIndicator size="small" color="#FFF" />
-              ) : error ? (
-                <Text style={styles.errorText}>{error}</Text>
-              ) : (
-                <Text style={styles.balanceValue}>
-                  R$ {formatCurrency(balance || 0)}
-                </Text>
-              )}
-            </View>
-
-            {/* Action Buttons Grid */}
-            <View style={styles.actionGrid}>
-              <View style={styles.actionRow}>
-                <ActionButton 
-                  icon="cash-fast" 
-                  label="PIX" 
-                  onPress={() => showSection('pix')}
-                />
-                <ActionButton 
-                  icon="barcode" 
-                  label="Pagar conta" 
-                  onPress={() => showSection('payment')}
-                />
-              </View>
-              <View style={styles.actionRow}>
-                <ActionButton 
-                  icon="text-box-outline" 
-                  label="Extrato" 
-                  onPress={() => showSection('statement')}
-                />
-                <ActionButton 
-                  icon="bank-transfer" 
-                  label="Transferir"
-                  onPress={() => showSection('transfer')}
-                />
-              </View>
-              <View style={styles.actionRow}>
-                <ActionButton 
-                  icon="cash-multiple" 
-                  label="Cobranças"
-                  onPress={() => showSection('charges')}
-                />
-              </View>
-            </View>
-
-            {/* Content Section */}
-            <View style={[styles.transactionsContainer, (showStatement || showPayment || showTransfer || showPix || showPixKeys || showPixTransfer || showPixReceive || showCharges || showCreateCharge || showManageCharges) && styles.contentContainer]}>
-              {showPayment ? (
-                <PaymentForm onBack={() => showSection(null)} onSubmit={handlePaymentSubmit} />
-              ) : showStatement ? (
-                <StatementForm onBack={() => showSection(null)} onSubmit={handleStatementSubmit} />
-              ) : showTransfer ? (
-                <TransferForm onBack={() => showSection(null)} onSubmit={handleTransferSubmit} />
-              ) : showPixKeys ? (
-                <PixKeysForm onBack={() => showSection('pix')} />
-              ) : showPixTransfer ? (
-                <PixTransferForm 
-                  onBack={() => showSection('pix')} 
-                  userAccount={userAccount}
-                  userTaxId={userTaxId}
-                />
-              ) : showPixReceive ? (
-                <PixReceiveForm onBack={() => showSection('pix')} />
-              ) : showCharges ? (
-                <ChargesOptionsForm 
-                  onBack={() => showSection(null)}
-                  onCreate={() => showSection('createCharge')}
-                  onManage={() => showSection('manageCharges')}
-                />
-              ) : showCreateCharge ? (
-                <CreateChargeForm onBack={() => showSection('charges')} />
-              ) : showManageCharges ? (
-                <ManageChargesForm onBack={() => showSection('charges')} />
-              ) : showPix ? (
-                <PixOptionsForm
-                  onTransfer={() => showSection('pixTransfer')}
-                  onReceive={() => showSection('pixReceive')}
-                  onKeys={() => showSection('pixKeys')}
-                />
-              ) : (
-                <>
-                  <Text style={styles.transactionsTitle}>Últimas transações</Text>
-                  {loading ? (
-                    <ActivityIndicator size="small" color="#FF1493" />
-                  ) : error ? (
-                    <Text style={styles.errorText}>{error}</Text>
-                  ) : (
-                    transactions.map((transaction) => (
-                      <TransactionItem
-                        key={transaction.id}
-                        date={new Date(transaction.createDate).toLocaleString('pt-BR')}
-                        description={transaction.description}
-                        value={formatCurrency(transaction.amount)}
-                        isPositive={transaction.balanceType === 'CREDIT'}
-                      />
-                    ))
-                  )}
-                </>
-              )}
-            </View>
-          </>
+          <ScrollView>
+            {transactions.map((transaction, index) => (
+              <TransactionItem
+                key={index}
+                date={transaction.createDate}
+                description={transaction.description}
+                value={transaction.amount}
+                isPositive={transaction.movementType.includes('CREDIT') || transaction.movementType.includes('IN')}
+                movementType={transaction.movementType}
+              />
+            ))}
+          </ScrollView>
         )}
-      </ScrollView>
+      </View>
+
+      {/* Forms */}
+      {showPayment ? (
+        <PaymentForm onBack={() => showSection(null)} onSubmit={handlePaymentSubmit} />
+      ) : showStatement ? (
+        <StatementForm onBack={() => showSection(null)} onSubmit={handleStatementSubmit} />
+      ) : showTransfer ? (
+        <TransferForm onBack={() => showSection(null)} onSubmit={handleTransferSubmit} />
+      ) : showPixKeys ? (
+        <PixKeysForm onBack={() => showSection('pix')} />
+      ) : showPixTransfer ? (
+        <PixTransferForm 
+          onBack={() => showSection('pix')} 
+          userAccount={userAccount}
+          userTaxId={userTaxId}
+        />
+      ) : showPixReceive ? (
+        <PixReceiveForm onBack={() => showSection('pix')} />
+      ) : showCharges ? (
+        <ChargesOptionsForm 
+          onBack={() => showSection(null)}
+          onCreate={() => showSection('createCharge')}
+          onManage={() => showSection('manageCharges')}
+        />
+      ) : showCreateCharge ? (
+        <CreateChargeForm onBack={() => showSection('charges')} />
+      ) : showManageCharges ? (
+        <ManageChargesForm onBack={() => showSection('charges')} />
+      ) : showPix ? (
+        <PixOptionsForm
+          onTransfer={() => showSection('pixTransfer')}
+          onReceive={() => showSection('pixReceive')}
+          onKeys={() => showSection('pixKeys')}
+        />
+      ) : (
+        <></>
+      )}
     </View>
   );
 };
@@ -422,118 +461,195 @@ export default function Dashboard2Screen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FF1493',
-  },
-  scrollView: {
-    flex: 1,
+    backgroundColor: '#682145',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    paddingTop: 40,
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
   },
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  greeting: {
-    marginLeft: 10,
+  avatarContainer: {
+    marginRight: 12,
   },
-  greetingText: {
-    color: '#FFF',
-    opacity: 0.8,
+  userDetails: {
+    justifyContent: 'center',
   },
   userName: {
-    color: '#FFF',
+    color: '#FFFFFF',
+    fontSize: 16,
     fontWeight: 'bold',
   },
-  balanceCard: {
-    margin: 20,
-    padding: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 10,
+  accountInfo: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    opacity: 0.7,
+  },
+  logo: {
+    backgroundColor: '#FFFFFF',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoText: {
+    color: '#682145',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  balanceFrame: {
+    width: 343,
+    height: 130,
+    alignSelf: 'center',
+  },
+  balanceContainer: {
+    flex: 1,
+    paddingTop: 16,
+    paddingBottom: 16,
   },
   balanceLabel: {
-    color: '#FFF',
+    color: '#FFFFFF',
+    fontSize: 14,
     opacity: 0.8,
+    marginLeft: 16,
+  },
+  balanceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingRight: 16,
+    marginTop: 4,
+    height: 48,
+  },
+  balanceValueContainer: {
+    width: 190,
+    height: 48,
+    marginLeft: 16,
+    justifyContent: 'center',
   },
   balanceValue: {
-    color: '#FFF',
-    fontSize: 24,
+    color: '#FFFFFF',
+    fontSize: 32,
     fontWeight: 'bold',
-    marginTop: 5,
   },
-  actionGrid: {
-    backgroundColor: '#FFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-  },
-  actionRow: {
+  hiddenBalanceContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20,
+    alignItems: 'center',
+    gap: 8,
+    height: 48,
+    justifyContent: 'flex-start',
+  },
+  hiddenBalanceDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'white',
+  },
+  addBalanceButton: {
+    width: 144,
+    height: 36,
+    marginLeft: 16,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addBalanceText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  actionsContainer: {
+    height: 130,
+    marginBottom: 30,
+  },
+  actionsList: {
+    paddingHorizontal: 20,
+    gap: 5,
   },
   actionButton: {
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    padding: 15,
-    borderRadius: 10,
-    width: '40%',
+    backgroundColor: 'rgba(104, 33, 69, 0.3)',
+    borderRadius: 12,
+    padding: 16,
+    width: 111,
+    height: 130,
+    position: 'relative',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
   },
   actionButtonText: {
-    marginTop: 5,
-    color: '#333',
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  actionButtonIconContainer: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
   },
   transactionsContainer: {
-    backgroundColor: '#FFF',
-    padding: 20,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     flex: 1,
-  },
-  contentContainer: {
-    paddingHorizontal: 0,
-    paddingTop: 0,
+    padding: 20,
   },
   transactionsTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#333',
+    fontWeight: '600',
+    marginBottom: 16,
+    color: '#333333',
   },
   transactionItem: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
+    alignItems: 'flex-start',
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: '#F5F5F5',
+    height: 84,
   },
-  transactionLeft: {
+  transactionType: {
+    width: 24,
+    height: 24,
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginRight: 16,
+  },
+  transactionContent: {
     flex: 1,
   },
+  transactionTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000000',
+    marginBottom: 4,
+  },
+  transactionSubtitle: {
+    fontSize: 14,
+    color: '#666666',
+    marginBottom: 4,
+  },
   transactionDate: {
-    color: '#666',
     fontSize: 12,
+    color: '#999999',
   },
-  transactionDescription: {
-    color: '#333',
-    marginTop: 2,
-  },
-  transactionValue: {
-    fontWeight: 'bold',
-  },
-  errorText: {
-    color: '#F44336',
-    textAlign: 'center',
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
   },
 });

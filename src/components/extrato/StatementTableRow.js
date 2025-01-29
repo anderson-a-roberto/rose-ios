@@ -9,7 +9,8 @@ const StatementTableRow = ({ transaction, onPress }) => {
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      second: '2-digit'
     });
   };
 
@@ -19,70 +20,66 @@ const StatementTableRow = ({ transaction, onPress }) => {
       currency: 'BRL'
     }).format(value);
 
-    return type === 'CREDIT' ? `+${formattedValue}` : `-${formattedValue}`;
+    return type === 'CREDIT' ? `${formattedValue}` : `${formattedValue}`;
   };
 
-  const getTransactionType = (movementType) => {
-    const types = {
-      'TEFTRANSFERIN': 'TEF Recebida',
-      'TEDTRANSFEROUT': 'TED Enviada',
-      'ENTRYCREDIT': 'Crédito',
-      'ENTRYDEBIT': 'Débito',
-      'PIXCREDIT': 'PIX Recebido',
-      'PIXDEBIT': 'PIX Enviado'
-    };
-    return types[movementType] || movementType;
-  };
+  const isPositive = transaction.balanceType === 'CREDIT' || transaction.movementType.includes('IN');
 
   return (
     <TouchableOpacity onPress={() => onPress(transaction)}>
-      <View style={styles.row}>
-        <Text style={[styles.cell, styles.dateCell]}>
-          {formatDate(transaction.createDate)}
+      <View style={styles.transactionItem}>
+        <Text style={[styles.transactionType, { color: isPositive ? '#4CAF50' : '#F44336' }]}>
+          {isPositive ? '+' : '-'}
         </Text>
-        <Text style={[styles.cell, styles.descriptionCell]}>
-          {transaction.description || '-'}
-        </Text>
-        <Text style={[styles.cell, styles.typeCell]}>
-          {getTransactionType(transaction.movementType)}
-        </Text>
-        <Text style={[
-          styles.cell,
-          styles.valueCell,
-          { color: transaction.balanceType === 'CREDIT' ? '#4CAF50' : '#F44336' }
-        ]}>
-          {formatValue(transaction.amount, transaction.balanceType)}
-        </Text>
+        
+        <View style={styles.transactionContent}>
+          <Text style={styles.transactionTitle}>{transaction.description || '-'}</Text>
+          <Text style={styles.transactionSubtitle}>
+            {formatValue(transaction.amount, transaction.balanceType)} | Usuário
+          </Text>
+          <Text style={styles.transactionDate}>{formatDate(transaction.createDate)}</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
-  row: {
+  transactionItem: {
     flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    alignItems: 'flex-start',
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#F5F5F5',
+    height: 84,
     backgroundColor: '#fff',
+    paddingHorizontal: 16,
   },
-  cell: {
-    fontSize: 14,
+  transactionType: {
+    width: 24,
+    height: 24,
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginRight: 16,
   },
-  dateCell: {
-    flex: 2,
+  transactionContent: {
+    flex: 1,
   },
-  descriptionCell: {
-    flex: 3,
-  },
-  typeCell: {
-    flex: 2,
-  },
-  valueCell: {
-    flex: 2,
-    textAlign: 'right',
+  transactionTitle: {
+    fontSize: 16,
     fontWeight: '500',
+    color: '#000000',
+    marginBottom: 4,
+  },
+  transactionSubtitle: {
+    fontSize: 14,
+    color: '#666666',
+    marginBottom: 4,
+  },
+  transactionDate: {
+    fontSize: 12,
+    color: '#999999',
   },
 });
 

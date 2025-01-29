@@ -11,6 +11,15 @@ import ThankYouScreen from '../screens/ThankYouScreen';
 import KYCScreen from '../screens/KYCScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import Dashboard2Screen from '../screens/Dashboard2Screen';
+import StatementScreen from '../screens/StatementScreen';
+import PayBillScreen from '../screens/PayBillScreen';
+import PayBillConfirmScreen from '../screens/PayBillConfirmScreen';
+import PayBillLoadingScreen from '../screens/PayBillLoadingScreen';
+import PayBillSuccessScreen from '../screens/PayBillSuccessScreen';
+import PayBillReceiptScreen from '../screens/PayBillReceiptScreen';
+import WelcomeScreen from '../screens/WelcomeScreen';
+import LoginScreen from '../screens/LoginScreen';
+import PasswordScreen from '../screens/PasswordScreen';
 
 const Stack = createStackNavigator();
 
@@ -27,6 +36,15 @@ const linking = {
       KYC: 'kyc',
       Dashboard: 'dashboard',
       Dashboard2: 'dashboard2',
+      Statement: 'statement',
+      PayBill: 'pay-bill',
+      PayBillConfirm: 'pay-bill-confirm',
+      PayBillLoading: 'pay-bill-loading',
+      PayBillSuccess: 'pay-bill-success',
+      PayBillReceipt: 'pay-bill-receipt',
+      Welcome: 'welcome',
+      Login: 'login',
+      Password: 'password',
     },
   },
 };
@@ -50,6 +68,15 @@ const AppNavigator = () => {
         <Stack.Screen name="KYC" component={KYCScreen} />
         <Stack.Screen name="Dashboard" component={DashboardScreen} />
         <Stack.Screen name="Dashboard2" component={Dashboard2Screen} />
+        <Stack.Screen name="Statement" component={StatementScreen} />
+        <Stack.Screen name="PayBill" component={PayBillScreen} />
+        <Stack.Screen name="PayBillConfirm" component={PayBillConfirmScreen} />
+        <Stack.Screen name="PayBillLoading" component={PayBillLoadingScreen} />
+        <Stack.Screen name="PayBillSuccess" component={PayBillSuccessScreen} />
+        <Stack.Screen name="PayBillReceipt" component={PayBillReceiptScreen} />
+        <Stack.Screen name="Welcome" component={WelcomeScreen} />
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Password" component={PasswordScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Text, Button } from 'react-native-paper';
-import { TextInput } from 'react-native-paper';
+import { Text, Button, TextInput } from 'react-native-paper';
 import StatementTable from './StatementTable';
 
 const StatementForm = ({ onSubmit }) => {
@@ -12,17 +11,13 @@ const StatementForm = ({ onSubmit }) => {
   const [transactions, setTransactions] = useState([]);
 
   const formatDate = (text) => {
-    // Remove tudo que não for número
     const numbers = text.replace(/\D/g, '');
-
-    // Aplica a máscara DD/MM/AAAA
     let formatted = numbers;
     if (numbers.length > 2) formatted = numbers.replace(/^(\d{2})/, '$1/');
     if (numbers.length > 4) formatted = numbers.replace(/^(\d{2})(\d{2})/, '$1/$2/');
     if (numbers.length > 4) {
       formatted = numbers.replace(/^(\d{2})(\d{2})(\d{0,4}).*/, '$1/$2/$3');
     }
-
     return formatted;
   };
 
@@ -72,93 +67,113 @@ const StatementForm = ({ onSubmit }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Consultar Extrato</Text>
+    <View style={styles.mainContainer}>
+      <View style={styles.formContainer}>
+        <View style={styles.formRow}>
+          <View style={styles.dateField}>
+            <Text style={styles.label}>Data Inicial</Text>
+            <TextInput
+              style={styles.input}
+              mode="outlined"
+              placeholder="DD/MM/AAAA"
+              value={startDate}
+              onChangeText={(text) => setStartDate(formatDate(text))}
+              keyboardType="numeric"
+              maxLength={10}
+              outlineColor="#e92176"
+              activeOutlineColor="#e92176"
+              textColor="white"
+              theme={{
+                colors: {
+                  background: '#682145',
+                  placeholder: '#e92176',
+                  text: 'white'
+                }
+              }}
+            />
+          </View>
 
-      <View style={styles.formRow}>
-        <View style={styles.dateField}>
-          <Text style={styles.label}>Data Inicial</Text>
-          <TextInput
-            style={styles.input}
-            mode="outlined"
-            placeholder="DD/MM/AAAA"
-            value={startDate}
-            onChangeText={(text) => setStartDate(formatDate(text))}
-            keyboardType="numeric"
-            maxLength={10}
-            outlineColor="#FF1493"
-            activeOutlineColor="#FF1493"
-          />
+          <View style={styles.dateField}>
+            <Text style={styles.label}>Data Final</Text>
+            <TextInput
+              style={styles.input}
+              mode="outlined"
+              placeholder="DD/MM/AAAA"
+              value={endDate}
+              onChangeText={(text) => setEndDate(formatDate(text))}
+              keyboardType="numeric"
+              maxLength={10}
+              outlineColor="#e92176"
+              activeOutlineColor="#e92176"
+              textColor="white"
+              theme={{
+                colors: {
+                  background: '#682145',
+                  placeholder: '#e92176',
+                  text: 'white'
+                }
+              }}
+            />
+          </View>
         </View>
 
-        <View style={styles.dateField}>
-          <Text style={styles.label}>Data Final</Text>
-          <TextInput
-            style={styles.input}
-            mode="outlined"
-            placeholder="DD/MM/AAAA"
-            value={endDate}
-            onChangeText={(text) => setEndDate(formatDate(text))}
-            keyboardType="numeric"
-            maxLength={10}
-            outlineColor="#FF1493"
-            activeOutlineColor="#FF1493"
-          />
-        </View>
+        <Button
+          mode="contained"
+          onPress={handleSubmit}
+          style={styles.button}
+          buttonColor="#e92176"
+          textColor="white"
+          loading={loading}
+        >
+          Consultar Extrato
+        </Button>
       </View>
 
-      <Button
-        mode="contained"
-        onPress={handleSubmit}
-        style={styles.button}
-        buttonColor="#FF1493"
-      >
-        Consultar Extrato
-      </Button>
-
-      <StatementTable
-        transactions={transactions}
-        loading={loading}
-        error={error}
-      />
+      <View style={styles.contentContainer}>
+        <StatementTable
+          transactions={transactions}
+          loading={loading}
+          error={error}
+        />
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  mainContainer: {
     flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    margin: 16,
-    padding: 16,
+    backgroundColor: '#682145',
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#333',
+  formContainer: {
+    padding: 20,
   },
   formRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
+    gap: 16,
+    marginBottom: 20,
   },
   dateField: {
     flex: 1,
-    marginHorizontal: 8,
   },
   label: {
-    fontSize: 16,
-    color: '#666',
+    color: 'white',
     marginBottom: 8,
+    fontSize: 16,
   },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: '#682145',
   },
   button: {
-    marginVertical: 16,
-    paddingVertical: 8,
+    borderRadius: 25,
+    height: 50,
+    justifyContent: 'center',
+  },
+  contentContainer: {
+    flex: 1,
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
 });
 

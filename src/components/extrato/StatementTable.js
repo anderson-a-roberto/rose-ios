@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, ActivityIndicator } from 'react-native-paper';
-import StatementTableHeader from './StatementTableHeader';
 import StatementTableRow from './StatementTableRow';
 import ReceiptModal from './receipts/ReceiptModal';
 
@@ -17,7 +16,7 @@ const StatementTable = ({ transactions, loading, error }) => {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#FF1493" />
+        <ActivityIndicator size="large" color="#682145" />
       </View>
     );
   }
@@ -40,7 +39,6 @@ const StatementTable = ({ transactions, loading, error }) => {
 
   return (
     <View style={styles.container}>
-      <StatementTableHeader />
       <ScrollView style={styles.scrollView}>
         {transactions.map((transaction, index) => (
           <StatementTableRow
@@ -63,18 +61,21 @@ const StatementTable = ({ transactions, loading, error }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    marginTop: 16,
-    borderRadius: 8,
-    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   scrollView: {
-    maxHeight: 400,
+    flex: 1,
   },
   centerContainer: {
-    padding: 20,
-    alignItems: 'center',
+    flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
   },
   errorText: {
     color: '#F44336',
