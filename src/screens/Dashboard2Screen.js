@@ -86,11 +86,11 @@ export default function Dashboard2Screen({ navigation }) {
   const [userName, setUserName] = useState('Usuário');
 
   const menuItems = [
-    { id: 'pix', icon: 'bank-transfer', label: 'Pix', onPress: () => showSection('pix') },
-    { id: 'transfer', icon: 'transfer', label: 'Minhas Transferências', onPress: () => showSection('transfer') },
+    { id: 'pix', icon: 'bank-transfer', label: 'Pix', onPress: () => navigation.navigate('HomePix', { balance }) },
+    { id: 'transfer', icon: 'transfer', label: 'Transferir', onPress: () => navigation.navigate('TransferAmount', { balance }) },
     { id: 'payment', icon: 'barcode', label: 'Pagar Conta', onPress: () => navigation.navigate('PayBill', { balance }) },
     { id: 'statement', icon: 'text-box-outline', label: 'Extrato', onPress: () => navigation.navigate('Statement', { balance }) },
-    { id: 'charges', icon: 'cash-multiple', label: 'Cobranças', onPress: () => showSection('charges') },
+    { id: 'charges', icon: 'cash-multiple', label: 'Cobranças', onPress: () => navigation.navigate('Charges') },
   ];
 
   const formatCurrency = (value) => {
