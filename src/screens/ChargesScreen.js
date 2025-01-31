@@ -14,7 +14,7 @@ const ChargesScreen = ({ navigation }) => {
   
   const [showPDF, setShowPDF] = useState(false);
   const [pdfUrl, setPdfUrl] = useState('');
-  const [loadingPDF, setLoadingPDF] = useState(false);
+  const [loadingChargeId, setLoadingChargeId] = useState(null);
   const [currentTransactionId, setCurrentTransactionId] = useState(null);
 
   const handleNextPage = () => {
@@ -29,13 +29,13 @@ const ChargesScreen = ({ navigation }) => {
     }
   };
 
-  const handleViewPDF = async (transactionId) => {
+  const handleViewPDF = async (charge) => {
     try {
-      setLoadingPDF(true);
-      setCurrentTransactionId(transactionId);
+      setLoadingChargeId(charge.id);
+      setCurrentTransactionId(charge.transaction_id);
       
       const { data, error } = await supabase.functions.invoke('get-charge-pdf', {
-        body: { transaction_id: transactionId }
+        body: { transaction_id: charge.transaction_id }
       });
 
       if (error) throw error;
@@ -46,7 +46,7 @@ const ChargesScreen = ({ navigation }) => {
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
     } finally {
-      setLoadingPDF(false);
+      setLoadingChargeId(null);
     }
   };
 
@@ -76,9 +76,14 @@ const ChargesScreen = ({ navigation }) => {
       </View>
       <TouchableOpacity
         style={styles.viewButton}
-        onPress={() => handleViewPDF(charge.transaction_id)}
+        onPress={() => handleViewPDF(charge)}
+        disabled={loadingChargeId === charge.id}
       >
-        <MaterialCommunityIcons name="file-document-outline" size={24} color="#000" />
+        {loadingChargeId === charge.id ? (
+          <ActivityIndicator size={24} color="#000" />
+        ) : (
+          <MaterialCommunityIcons name="file-document-outline" size={24} color="#000" />
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -89,7 +94,7 @@ const ChargesScreen = ({ navigation }) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation.navigate('Dashboard2')}
         >
           <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
         </TouchableOpacity>
@@ -98,7 +103,7 @@ const ChargesScreen = ({ navigation }) => {
       {/* New Charge Button */}
       <Button
         mode="contained"
-        onPress={() => navigation.navigate('CreateCharge')}
+        onPress={() => navigation.navigate('CreateChargePersonalData')}
         style={styles.newChargeButton}
         labelStyle={styles.newChargeButtonLabel}
       >

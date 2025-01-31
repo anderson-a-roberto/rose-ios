@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { Text, TextInput } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
@@ -37,24 +37,34 @@ export default function LoginScreen() {
         .maybeSingle();
 
       if (kycError) {
-        console.error('Erro ao validar documento:', kycError);
-        setError('Erro ao validar documento. Tente novamente.');
+        console.error('Erro ao consultar kyc_proposals_v2:', kycError);
+        setError('Erro ao verificar documento. Tente novamente.');
         return;
       }
 
+      // Se não encontrar registro, vai para cadastro
       if (!kycData) {
-        setError('CPF não encontrado');
+        navigation.navigate('AccountType');
         return;
       }
 
+      // Verifica os status e redireciona
       if (kycData.onboarding_create_status === 'CONFIRMED') {
-        navigation.navigate('Password', { document: numbers });
+        navigation.navigate('LoginPassword', { cpf: numbers });
+      } else if (kycData.documentscopy_status === 'PENDING' && kycData.url_documentscopy) {
+        await Linking.openURL(kycData.url_documentscopy);
+      } else if (kycData.documentscopy_status === 'PROCESSING') {
+        navigation.navigate('OnboardingSuccess');
+      } else if (kycData.onboarding_create_status === 'REPROVED') {
+        navigation.navigate('OnboardingSuccess');
       } else {
-        setError('CPF não autorizado');
+        // Se nenhuma condição for atendida, vai para cadastro
+        navigation.navigate('AccountType');
       }
+
     } catch (error) {
       console.error('Erro ao validar documento:', error);
-      setError('Erro ao validar documento');
+      setError('Erro ao verificar documento. Tente novamente.');
     } finally {
       setLoading(false);
     }

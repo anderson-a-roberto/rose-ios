@@ -25,7 +25,7 @@ export default function WelcomeScreen() {
 
         <TouchableOpacity
           style={styles.createAccountButton}
-          onPress={() => {}}
+          onPress={() => navigation.navigate('AccountType')}
         >
           <Text style={styles.createAccountButtonText}>ABRIR CONTA</Text>
         </TouchableOpacity>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Linking } from 'react-native';
-import { TextInput, Button, Text } from 'react-native-paper';
+import { View, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import { Text, TextInput } from 'react-native-paper';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { supabase } from '../config/supabase';
 
 const LoginPasswordScreen = ({ route, navigation }) => {
@@ -102,37 +103,60 @@ const LoginPasswordScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Login</Text>
-        <Text style={styles.subtitle}>Digite sua senha para continuar</Text>
-        
-        <TextInput
-          label="Senha"
-          value={password}
-          onChangeText={setPassword}
-          mode="outlined"
-          style={styles.input}
-          placeholder="Sua senha"
-          secureTextEntry={!showPassword}
-          right={
-            <TextInput.Icon
-              icon={showPassword ? "eye-off" : "eye"}
-              onPress={() => setShowPassword(!showPassword)}
-            />
-          }
-          theme={{ colors: { primary: '#FF1493' } }}
-        />
-
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-        <Button
-          mode="contained"
-          onPress={handleLogin}
-          style={styles.button}
-          labelStyle={styles.buttonLabel}
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
         >
-          Entrar
-        </Button>
+          <MaterialCommunityIcons name="arrow-left" size={24} color="#1D1D1D" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Senha</Text>
+      </View>
+
+      {/* Content */}
+      <View style={styles.content}>
+        <Text style={styles.subtitle}>Agora insira sua senha</Text>
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            label="Senha"
+            value={password}
+            onChangeText={setPassword}
+            style={styles.input}
+            secureTextEntry={!showPassword}
+            mode="outlined"
+            outlineColor="#E5E5E5"
+            activeOutlineColor="#682145"
+            right={
+              <TextInput.Icon
+                icon={showPassword ? "eye-off" : "eye"}
+                onPress={() => setShowPassword(!showPassword)}
+                color="#666666"
+              />
+            }
+            error={!!error}
+          />
+          {error && <Text style={styles.errorText}>{error}</Text>}
+
+          <TouchableOpacity onPress={() => {}} style={styles.forgotPasswordContainer}>
+            <Text style={styles.forgotPassword}>Esqueceu a senha? <Text style={styles.clickHere}>Clique aqui</Text></Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Footer */}
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={[
+            styles.continueButton,
+            (!password) && styles.continueButtonDisabled
+          ]}
+          onPress={handleLogin}
+          disabled={!password}
+        >
+          <Text style={styles.continueButtonText}>CONTINUAR</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -141,42 +165,73 @@ const LoginPasswordScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#FFFFFF',
+  },
+  backButton: {
+    marginRight: 16,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '500',
+    color: '#1D1D1D',
   },
   content: {
     flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 8,
+    padding: 16,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
+    color: '#666666',
+    marginBottom: 24,
+  },
+  inputContainer: {
     marginBottom: 24,
   },
   input: {
-    marginBottom: 16,
-    backgroundColor: '#fff',
-  },
-  button: {
-    marginTop: 8,
-    paddingVertical: 8,
-    backgroundColor: '#FF1493',
-  },
-  buttonLabel: {
-    fontSize: 16,
-    color: '#fff',
+    backgroundColor: '#FFFFFF',
+    height: 56,
   },
   errorText: {
-    color: 'red',
-    textAlign: 'center',
-    marginBottom: 16,
+    color: '#FF0000',
+    fontSize: 14,
+    marginTop: 8,
+  },
+  forgotPasswordContainer: {
+    marginTop: 16,
+  },
+  forgotPassword: {
+    color: '#666666',
+    fontSize: 14,
+  },
+  clickHere: {
+    textDecorationLine: 'underline',
+  },
+  footer: {
+    padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5E5',
+  },
+  continueButton: {
+    backgroundColor: '#682145',
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  continueButtonDisabled: {
+    backgroundColor: '#CCCCCC',
+  },
+  continueButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
 
