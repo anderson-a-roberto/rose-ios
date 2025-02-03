@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
 import { Text, Button, Portal, Modal, RadioButton } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { supabase } from '../config/supabase';
@@ -127,7 +127,7 @@ const RegisterPixKeyScreen = ({ navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -193,7 +193,7 @@ const RegisterPixKeyScreen = ({ navigation }) => {
       </View>
 
       <SuccessModal />
-    </View>
+    </SafeAreaView>
   );
 };
 

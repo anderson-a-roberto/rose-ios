@@ -13,7 +13,13 @@ export default function LoginScreen() {
 
   const formatDocument = (text) => {
     const numbers = text.replace(/\D/g, '');
-    return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    if (numbers.length <= 11) {
+      // CPF: 000.000.000-00
+      return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    } else {
+      // CNPJ: 00.000.000/0000-00
+      return numbers.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    }
   };
 
   const handleDocumentChange = (text) => {
@@ -50,7 +56,7 @@ export default function LoginScreen() {
 
       // Verifica os status e redireciona
       if (kycData.onboarding_create_status === 'CONFIRMED') {
-        navigation.navigate('LoginPassword', { cpf: numbers });
+        navigation.navigate('LoginPassword', { documentNumber: numbers });
       } else if (kycData.documentscopy_status === 'PENDING' && kycData.url_documentscopy) {
         await Linking.openURL(kycData.url_documentscopy);
       } else if (kycData.documentscopy_status === 'PROCESSING') {
@@ -94,7 +100,7 @@ export default function LoginScreen() {
             onChangeText={handleDocumentChange}
             style={styles.input}
             keyboardType="numeric"
-            maxLength={14}
+            maxLength={18}
             autoFocus
             error={!!error}
             disabled={loading}

@@ -4,6 +4,7 @@ import { Text, Button, Menu, Snackbar } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { supabase } from '../config/supabase';
 import DeletePixKeyDialog from '../components/pix/DeletePixKeyDialog';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const KEY_TYPES = {
   EVP: "Chave Aleatória",
@@ -195,7 +196,7 @@ const PixKeysScreen = ({ navigation, route }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -286,7 +287,7 @@ const PixKeysScreen = ({ navigation, route }) => {
       >
         {snackbarMessage}
       </Snackbar>
-    </View>
+    </SafeAreaView>
   );
 };
 

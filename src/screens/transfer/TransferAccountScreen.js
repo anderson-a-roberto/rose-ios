@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, TextInput, Button } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../config/supabase';
 
 const TransferAccountScreen = ({ navigation, route }) => {
@@ -100,7 +101,7 @@ const TransferAccountScreen = ({ navigation, route }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -143,7 +144,7 @@ const TransferAccountScreen = ({ navigation, route }) => {
           CONTINUAR
         </Button>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 

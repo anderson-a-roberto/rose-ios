@@ -3,6 +3,7 @@ import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Text } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const ReceiptField = ({ label, value, copyable }) => (
   <View style={styles.fieldContainer}>
@@ -40,7 +41,7 @@ export default function PayBillReceiptScreen({ route }) {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <View>
@@ -85,7 +86,7 @@ export default function PayBillReceiptScreen({ route }) {
           <Text style={styles.authButtonText}>Autenticação</Text>
         </TouchableOpacity>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

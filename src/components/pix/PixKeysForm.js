@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Select } from 'react-native';
 import { Text, Button, TextInput, Snackbar } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { supabase } from '../../config/supabase';
@@ -283,16 +283,16 @@ const PixKeysForm = () => {
       <View style={styles.formGroup}>
         <Text style={styles.label}>Tipo de Chave</Text>
         <View style={styles.selectContainer}>
-          <select
+          <Select
             style={styles.select}
             value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
+            onValueChange={(e) => setSelectedType(e)}
           >
-            <option value="" disabled>Selecione o tipo de chave</option>
+            <Select.Item label="Selecione o tipo de chave" value="" disabled />
             {Object.entries(KEY_TYPES).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
+              <Select.Item key={value} label={label} value={value} />
             ))}
-          </select>
+          </Select>
         </View>
       </View>
 
@@ -421,8 +421,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 48,
     paddingHorizontal: 12,
-    border: 'none',
-    outline: 'none',
+    borderWidth: 0,
     fontSize: 16,
     color: '#333',
   },

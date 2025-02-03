@@ -5,6 +5,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import useCharges from '../hooks/useCharges';
 import ChargePDFDialog from '../components/charges/ChargePDFDialog';
 import { supabase } from '../config/supabase';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const ChargesScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -89,7 +90,7 @@ const ChargesScreen = ({ navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -170,7 +171,7 @@ const ChargesScreen = ({ navigation }) => {
         pdfUrl={pdfUrl}
         onDismiss={handleClosePDF}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

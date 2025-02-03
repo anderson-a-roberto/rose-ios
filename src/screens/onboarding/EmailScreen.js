@@ -46,12 +46,13 @@ const EmailScreen = ({ navigation }) => {
 
       // 1. Criar conta no Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formatCPF(onboardingData.personalData.documentNumber) + '@temp.com',
+        email: email.toLowerCase().trim(),
         password: onboardingData.securityData.password,
         options: {
           data: {
             cpf: formatCPF(onboardingData.personalData.documentNumber),
-            full_name: onboardingData.personalData.fullName
+            full_name: onboardingData.personalData.fullName,
+            account_type: 'PF'
           }
         }
       });

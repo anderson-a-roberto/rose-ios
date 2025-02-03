@@ -4,6 +4,7 @@ import { Text, TextInput, Button } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useCharge } from '../../contexts/ChargeContext';
 import MaskInput from 'react-native-mask-input';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const CreateChargeAddressScreen = ({ navigation }) => {
   const { chargeData, updateChargeData } = useCharge();
@@ -56,7 +57,7 @@ const CreateChargeAddressScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -182,7 +183,7 @@ const CreateChargeAddressScreen = ({ navigation }) => {
       >
         PRÓXIMO
       </Button>
-    </View>
+    </SafeAreaView>
   );
 };
 

@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function PayBillSuccessScreen({ route }) {
   const navigation = useNavigation();
@@ -18,14 +19,14 @@ export default function PayBillSuccessScreen({ route }) {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.iconContainer}>
           <MaterialCommunityIcons name="check" size={40} color="#9ACD32" />
         </View>
         <Text style={styles.text}>Pronto,{'\n'}validação concluída!</Text>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

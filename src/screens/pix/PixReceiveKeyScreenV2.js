@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Text, Button, Portal, Modal, RadioButton, ActivityIndicator } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../config/supabase';
 
 const KEY_TYPES = {
@@ -96,7 +97,7 @@ const PixReceiveKeyScreenV2 = ({ navigation, route }) => {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -152,7 +153,7 @@ const PixReceiveKeyScreenV2 = ({ navigation, route }) => {
           CONTINUAR
         </Button>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 

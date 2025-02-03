@@ -3,6 +3,7 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, Button, TextInput } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useCharge } from '../../contexts/ChargeContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const formatCurrency = (value) => {
   if (!value) return '0,00';
@@ -43,7 +44,7 @@ const CreateChargeAmountScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -87,7 +88,7 @@ const CreateChargeAmountScreen = ({ navigation }) => {
       >
         PRÓXIMO
       </Button>
-    </View>
+    </SafeAreaView>
   );
 };
 

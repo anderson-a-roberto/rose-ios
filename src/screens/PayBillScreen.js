@@ -4,6 +4,7 @@ import { Text, TextInput } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../config/supabase';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function PayBillScreen({ route }) {
   const navigation = useNavigation();
@@ -56,7 +57,7 @@ export default function PayBillScreen({ route }) {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -104,7 +105,7 @@ export default function PayBillScreen({ route }) {
           )}
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

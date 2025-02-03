@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, Share } from 'react-native';
 import { Text, Button } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 const formatCurrency = (value) => {
@@ -33,7 +34,7 @@ const TransferReceiptScreen = ({ navigation, route }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -81,7 +82,7 @@ const TransferReceiptScreen = ({ navigation, route }) => {
           <Text style={styles.shareButtonLabel}>Compartilhar comprovante</Text>
         </Button>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 

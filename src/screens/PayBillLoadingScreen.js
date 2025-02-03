@@ -1,17 +1,18 @@
 import React from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Text } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function PayBillLoadingScreen() {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.iconContainer}>
           <ActivityIndicator size="large" color="#FFFFFF" />
         </View>
         <Text style={styles.text}>Aguarde,{'\n'}estamos validando...</Text>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

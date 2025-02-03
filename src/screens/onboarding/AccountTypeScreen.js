@@ -1,9 +1,22 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Text, Button } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { useOnboarding } from '../../contexts/OnboardingContext';
 
 const AccountTypeScreen = ({ navigation }) => {
+  const { updateOnboardingData } = useOnboarding();
+
+  const handleTypeSelection = (type) => {
+    updateOnboardingData({ accountType: type });
+    
+    if (type === 'PF') {
+      navigation.navigate('OnboardingPersonalData');
+    } else {
+      navigation.navigate('CompanyData');
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -16,42 +29,34 @@ const AccountTypeScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.title}>Abrir Conta</Text>
-      <Text style={styles.subtitle}>Qual o tipo de conta que você quer abrir?</Text>
+      <Text style={styles.title}>Tipo de Conta</Text>
+      <Text style={styles.subtitle}>
+        Selecione o tipo de conta que você deseja abrir
+      </Text>
 
       <View style={styles.optionsContainer}>
-        {/* Pessoa Jurídica - Desabilitado */}
-        <TouchableOpacity style={[styles.option, styles.optionDisabled]}>
-          <View style={styles.optionContent}>
-            <MaterialCommunityIcons name="bank" size={32} color="#999" />
-            <Text style={[styles.optionText, styles.optionTextDisabled]}>
-              Pessoa{'\n'}Jurídica
-            </Text>
-          </View>
+        <TouchableOpacity
+          style={styles.option}
+          onPress={() => handleTypeSelection('PF')}
+        >
+          <MaterialCommunityIcons name="account" size={32} color="#000" />
+          <Text style={styles.optionTitle}>Pessoa Física</Text>
+          <Text style={styles.optionDescription}>
+            Conta para uso pessoal
+          </Text>
         </TouchableOpacity>
 
-        {/* Pessoa Física */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.option}
-          onPress={() => navigation.navigate('OnboardingPersonalData')}
+          onPress={() => handleTypeSelection('PJ')}
         >
-          <View style={styles.optionContent}>
-            <MaterialCommunityIcons name="account" size={32} color="#000" />
-            <Text style={styles.optionText}>
-              Pessoa{'\n'}Física
-            </Text>
-          </View>
+          <MaterialCommunityIcons name="domain" size={32} color="#000" />
+          <Text style={styles.optionTitle}>Pessoa Jurídica</Text>
+          <Text style={styles.optionDescription}>
+            Conta para sua empresa
+          </Text>
         </TouchableOpacity>
       </View>
-
-      <Button
-        mode="contained"
-        onPress={() => navigation.navigate('OnboardingPersonalData')}
-        style={styles.continueButton}
-        labelStyle={styles.continueButtonLabel}
-      >
-        CONTINUAR
-      </Button>
     </View>
   );
 };
@@ -86,45 +91,24 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   optionsContainer: {
-    flexDirection: 'row',
     paddingHorizontal: 24,
-    gap: 16,
   },
   option: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#000',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    padding: 24,
+    marginBottom: 16,
   },
-  optionDisabled: {
-    borderColor: '#999',
-    backgroundColor: '#f5f5f5',
-  },
-  optionContent: {
-    alignItems: 'center',
-    gap: 16,
-  },
-  optionText: {
-    fontSize: 16,
-    textAlign: 'center',
+  optionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 16,
+    marginBottom: 8,
     color: '#000',
   },
-  optionTextDisabled: {
-    color: '#999',
-  },
-  continueButton: {
-    backgroundColor: '#000',
-    marginHorizontal: 24,
-    marginTop: 'auto',
-    marginBottom: 24,
-    borderRadius: 25,
-  },
-  continueButtonLabel: {
-    fontSize: 16,
-    color: '#FFF',
-    fontWeight: 'bold',
+  optionDescription: {
+    fontSize: 14,
+    color: '#666',
   },
 });
 

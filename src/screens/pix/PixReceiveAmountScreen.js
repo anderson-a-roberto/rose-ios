@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, Button, TextInput } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const formatCurrency = (value) => {
   if (!value) return '0,00';
@@ -32,7 +33,7 @@ const PixReceiveAmountScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -78,7 +79,7 @@ const PixReceiveAmountScreen = ({ navigation }) => {
           CONTINUAR
         </Button>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 

@@ -20,7 +20,13 @@ const PasswordScreen = ({ navigation }) => {
         password: formData.password
       }
     });
-    navigation.navigate('OnboardingPhone');
+    // Se for PJ (tem dados da empresa), vai para CompanyContact
+    // Se for PF, segue o fluxo normal
+    if (onboardingData.companyData) {
+      navigation.navigate('CompanyContact');
+    } else {
+      navigation.navigate('OnboardingPhone');
+    }
   };
 
   return (

@@ -10,8 +10,8 @@ export default function WelcomeScreen() {
     <View style={styles.container}>
       {/* Logo */}
       <View style={styles.logoContainer}>
-        <Text style={styles.logoText}>bank</Text>
-        <Text style={styles.logoTextClock}>o'clock</Text>
+        <Text style={styles.logoText}>Banco</Text>
+        <Text style={styles.logoTextClock}>Rose</Text>
       </View>
 
       {/* Buttons */}
@@ -61,14 +61,14 @@ const styles = StyleSheet.create({
     marginBottom: 48,
   },
   enterButton: {
-    backgroundColor: '#CCFF00',
+    backgroundColor: '#e92176',
     height: 56,
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
   },
   enterButtonText: {
-    color: '#1D1D1D',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '500',
   },

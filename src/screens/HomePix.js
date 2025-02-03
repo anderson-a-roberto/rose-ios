@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Text } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 const MenuItem = ({ icon, title, description, onPress }) => (
@@ -46,7 +47,7 @@ const HomePix = ({ route, navigation }) => {
   ];
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Card do Topo */}
       <View style={styles.topCard}>
         {/* Header */}
@@ -98,7 +99,7 @@ const HomePix = ({ route, navigation }) => {
           ))}
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

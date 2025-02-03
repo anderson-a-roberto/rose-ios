@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, Button, TextInput } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 const formatCurrency = (value) => {
@@ -38,7 +39,7 @@ const PixTransferAmountScreen = ({ navigation, route }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -85,7 +86,7 @@ const PixTransferAmountScreen = ({ navigation, route }) => {
           CONTINUAR
         </Button>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 

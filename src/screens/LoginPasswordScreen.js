@@ -8,20 +8,26 @@ const LoginPasswordScreen = ({ route, navigation }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const { cpf } = route.params;
+  const { documentNumber } = route.params;
 
   const getUserEmail = async (documentNumber) => {
     try {
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('email')
-        .eq('document_number', documentNumber)
+        .select('email, business_email, document_type')
+        .eq('document_number', documentNumber.replace(/\D/g, ''))
         .single();
 
       if (profileError) throw profileError;
-      if (!profileData?.email) throw new Error('Email não encontrado');
+      
+      // Se for PJ usa business_email, se for PF usa email
+      const userEmail = profileData.document_type === 'CNPJ' 
+        ? profileData.business_email 
+        : profileData.email;
+        
+      if (!userEmail) throw new Error('Email não encontrado');
 
-      return profileData.email;
+      return userEmail;
     } catch (error) {
       console.error('Erro ao buscar email:', error);
       throw error;
@@ -58,7 +64,7 @@ const LoginPasswordScreen = ({ route, navigation }) => {
       setError('');
 
       // Busca o email real do usuário
-      const email = await getUserEmail(cpf);
+      const email = await getUserEmail(documentNumber);
 
       // Faz login com o email real e senha
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -73,8 +79,8 @@ const LoginPasswordScreen = ({ route, navigation }) => {
       if (sessionError) throw sessionError;
       if (!session) throw new Error('Sessão não estabelecida após login');
 
-      // Verificar status do KYC usando o CPF
-      const kycData = await checkKYCStatus(cpf);
+      // Verificar status do KYC usando o documento
+      const kycData = await checkKYCStatus(documentNumber);
 
       if (!kycData) {
         await Linking.openURL('/error');
@@ -94,7 +100,7 @@ const LoginPasswordScreen = ({ route, navigation }) => {
       } else if (error.message === 'Invalid login credentials') {
         setError('Senha incorreta');
       } else if (error.message === 'Sessão não estabelecida após login') {
-        setError('Sessão não estabelecida após login');
+        setError('Erro ao estabelecer sessão');
       } else {
         setError('Erro ao fazer login. Tente novamente.');
       }
@@ -109,55 +115,46 @@ const LoginPasswordScreen = ({ route, navigation }) => {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#1D1D1D" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Senha</Text>
-      </View>
-
-      {/* Content */}
-      <View style={styles.content}>
-        <Text style={styles.subtitle}>Agora insira sua senha</Text>
-
-        <View style={styles.inputContainer}>
-          <TextInput
-            label="Senha"
-            value={password}
-            onChangeText={setPassword}
-            style={styles.input}
-            secureTextEntry={!showPassword}
-            mode="outlined"
-            outlineColor="#E5E5E5"
-            activeOutlineColor="#682145"
-            right={
-              <TextInput.Icon
-                icon={showPassword ? "eye-off" : "eye"}
-                onPress={() => setShowPassword(!showPassword)}
-                color="#666666"
-              />
-            }
-            error={!!error}
-          />
-          {error && <Text style={styles.errorText}>{error}</Text>}
-
-          <TouchableOpacity onPress={() => {}} style={styles.forgotPasswordContainer}>
-            <Text style={styles.forgotPassword}>Esqueceu a senha? <Text style={styles.clickHere}>Clique aqui</Text></Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Footer */}
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[
-            styles.continueButton,
-            (!password) && styles.continueButtonDisabled
-          ]}
-          onPress={handleLogin}
-          disabled={!password}
-        >
-          <Text style={styles.continueButtonText}>CONTINUAR</Text>
+          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
         </TouchableOpacity>
       </View>
+
+      <Text style={styles.title}>Senha</Text>
+      <Text style={styles.subtitle}>Agora insira sua senha</Text>
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          label="Senha"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!showPassword}
+          mode="outlined"
+          style={styles.input}
+          error={!!error}
+          right={
+            <TextInput.Icon
+              icon={showPassword ? 'eye-off' : 'eye'}
+              onPress={() => setShowPassword(!showPassword)}
+            />
+          }
+        />
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+        <TouchableOpacity onPress={() => {}}>
+          <Text style={styles.forgotPassword}>Esqueceu a senha? Clique aqui!</Text>
+        </TouchableOpacity>
+      </View>
+
+      <TouchableOpacity
+        style={[
+          styles.continueButton,
+          !password && styles.continueButtonDisabled
+        ]}
+        onPress={handleLogin}
+        disabled={!password}
+      >
+        <Text style={styles.continueButtonText}>CONTINUAR</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -170,56 +167,50 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 16,
   },
   backButton: {
-    marginRight: 16,
+    padding: 8,
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '500',
-    color: '#1D1D1D',
-  },
-  content: {
-    flex: 1,
-    padding: 16,
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginHorizontal: 24,
+    marginTop: 24,
+    color: '#000',
   },
   subtitle: {
     fontSize: 16,
-    color: '#666666',
-    marginBottom: 24,
+    marginHorizontal: 24,
+    marginTop: 8,
+    marginBottom: 32,
+    color: '#666',
   },
   inputContainer: {
-    marginBottom: 24,
+    paddingHorizontal: 24,
   },
   input: {
-    backgroundColor: '#FFFFFF',
-    height: 56,
+    marginBottom: 16,
+    backgroundColor: '#fff',
   },
   errorText: {
-    color: '#FF0000',
-    fontSize: 14,
-    marginTop: 8,
-  },
-  forgotPasswordContainer: {
-    marginTop: 16,
+    color: '#B00020',
+    fontSize: 12,
+    marginTop: -8,
+    marginBottom: 16,
   },
   forgotPassword: {
-    color: '#666666',
-    fontSize: 14,
-  },
-  clickHere: {
+    color: '#666',
     textDecorationLine: 'underline',
-  },
-  footer: {
-    padding: 16,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E5E5E5',
+    marginTop: 8,
   },
   continueButton: {
-    backgroundColor: '#682145',
+    backgroundColor: '#000',
+    marginHorizontal: 24,
+    marginTop: 'auto',
+    marginBottom: 24,
     height: 56,
     borderRadius: 28,
     justifyContent: 'center',
@@ -229,9 +220,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#CCCCCC',
   },
   continueButtonText: {
-    color: '#FFFFFF',
+    color: '#FFF',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: 'bold',
   },
 });
 

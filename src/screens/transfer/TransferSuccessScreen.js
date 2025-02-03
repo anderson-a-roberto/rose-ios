@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 const TransferSuccessScreen = ({ navigation, route }) => {
@@ -16,7 +17,7 @@ const TransferSuccessScreen = ({ navigation, route }) => {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.iconContainer}>
           <MaterialCommunityIcons
@@ -30,7 +31,7 @@ const TransferSuccessScreen = ({ navigation, route }) => {
           validação concluída!
         </Text>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
