@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Text, Button, TextInput } from 'react-native-paper';
+import { View, StyleSheet, TouchableOpacity, StatusBar, ScrollView } from 'react-native';
+import { Text, Button, TextInput, Divider } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../config/supabase';
 
 const formatCurrency = (value) => {
@@ -90,177 +91,215 @@ const PixTransferConfirmScreen = ({ navigation, route }) => {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Transferir</Text>
-        <View style={{ width: 24 }} />
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.backText}>‹</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Confirmar</Text>
+            <Text style={styles.subtitle}>Confira os dados da transferência</Text>
+          </View>
+        </View>
+
+        {/* Content */}
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Amount */}
+          <View style={styles.amountContainer}>
+            <Text style={styles.amountLabel}>Valor da transferência</Text>
+            <Text style={styles.amountValue}>{formatCurrency(amount)}</Text>
+          </View>
+
+          <Divider style={styles.divider} />
+
+          {/* Beneficiary Info */}
+          <View style={styles.infoSection}>
+            <Text style={styles.sectionTitle}>Para</Text>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Nome</Text>
+              <Text style={styles.infoValue}>{dictData.name}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>CPF/CNPJ</Text>
+              <Text style={styles.infoValue}>{dictData.documentnumber}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Instituição</Text>
+              <Text style={styles.infoValue}>{dictData.participant}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Chave PIX</Text>
+              <Text style={styles.infoValue}>{pixKey}</Text>
+            </View>
+          </View>
+
+          <Divider style={styles.divider} />
+
+          {/* Description */}
+          <View style={styles.descriptionContainer}>
+            <TextInput
+              mode="outlined"
+              label="Descrição (opcional)"
+              value={description}
+              onChangeText={setDescription}
+              style={styles.input}
+              maxLength={140}
+              multiline
+              numberOfLines={3}
+              outlineColor="#E0E0E0"
+              activeOutlineColor="#E91E63"
+            />
+          </View>
+
+          {error && <Text style={styles.errorText}>{error}</Text>}
+        </ScrollView>
+
+        {/* Transfer Button */}
+        <View style={styles.buttonContainer}>
+          <Button
+            mode="contained"
+            onPress={handleTransfer}
+            style={styles.button}
+            contentStyle={styles.buttonContent}
+            labelStyle={styles.buttonLabel}
+            loading={loading}
+            disabled={loading}
+          >
+            TRANSFERIR
+          </Button>
+        </View>
       </View>
-
-      <Text style={styles.subtitle}>
-        Confirme todos os dados antes de realizar a transferência
-      </Text>
-
-      {/* Transfer Details */}
-      <View style={styles.detailsContainer}>
-        <View style={styles.detailItem}>
-          <Text style={styles.detailLabel}>Valor</Text>
-          <Text style={styles.detailValue}>{formatCurrency(amount)}</Text>
-        </View>
-
-        <View style={styles.detailItem}>
-          <Text style={styles.detailLabel}>Nome</Text>
-          <Text style={styles.detailValue}>{dictData.name}</Text>
-        </View>
-
-        <View style={styles.detailItem}>
-          <Text style={styles.detailLabel}>CPF/CNPJ</Text>
-          <Text style={styles.detailValue}>
-            {dictData.documentnumber.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '***.$2.$3-**')}
-          </Text>
-        </View>
-
-        <View style={styles.detailItem}>
-          <Text style={styles.detailLabel}>Instituição Financeira</Text>
-          <Text style={styles.detailValue}>{dictData.participant}</Text>
-        </View>
-
-        <View style={styles.detailItem}>
-          <Text style={styles.detailLabel}>Data</Text>
-          <Text style={styles.detailValue}>
-            {new Date().toLocaleDateString('pt-BR')}
-          </Text>
-        </View>
-
-        <View style={styles.descriptionContainer}>
-          <Text style={styles.detailLabel}>Descrição</Text>
-          <TextInput
-            mode="outlined"
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Opcional"
-            style={styles.descriptionInput}
-            maxLength={140}
-          />
-        </View>
-      </View>
-
-      {error && <Text style={styles.errorText}>{error}</Text>}
-
-      {/* Footer Buttons */}
-      <View style={styles.footer}>
-        <Button
-          mode="contained"
-          onPress={handleTransfer}
-          style={styles.continueButton}
-          labelStyle={styles.continueButtonLabel}
-          loading={loading}
-          disabled={loading}
-        >
-          CONTINUAR
-        </Button>
-
-        <Button
-          mode="outlined"
-          onPress={() => navigation.goBack()}
-          style={styles.cancelButton}
-          labelStyle={styles.cancelButtonLabel}
-          disabled={loading}
-        >
-          CANCELAR TRANSFERÊNCIA
-        </Button>
-      </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFF'
+  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF'
   },
   header: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 16,
+    marginBottom: 20,
+    paddingTop: 12,
   },
   backButton: {
     padding: 8,
+    marginLeft: -8,
+  },
+  backText: {
+    color: '#E91E63',
+    fontSize: 32,
+    fontWeight: '300',
+  },
+  headerContent: {
+    paddingHorizontal: 4,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#000',
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#000',
-    paddingHorizontal: 16,
+    color: '#666',
+    opacity: 0.8,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+  amountContainer: {
     marginBottom: 24,
   },
-  detailsContainer: {
-    paddingHorizontal: 16,
-  },
-  detailItem: {
-    marginBottom: 16,
-  },
-  detailLabel: {
+  amountLabel: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 4,
-  },
-  detailValue: {
-    fontSize: 16,
-    color: '#000',
-    fontWeight: '500',
-  },
-  descriptionContainer: {
-    marginTop: 8,
-  },
-  descriptionInput: {
-    backgroundColor: '#fff',
-  },
-  errorText: {
-    color: '#B00020',
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 16,
-    paddingHorizontal: 16,
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 16,
-    paddingBottom: 32,
-    backgroundColor: '#fff',
-  },
-  continueButton: {
-    backgroundColor: '#1B1B1B',
-    borderRadius: 25,
     marginBottom: 8,
   },
-  continueButtonLabel: {
-    fontSize: 16,
-    color: '#fff',
+  amountValue: {
+    fontSize: 32,
+    color: '#000',
+    fontWeight: 'bold',
   },
-  cancelButton: {
-    borderColor: '#1B1B1B',
-    borderRadius: 25,
+  divider: {
+    backgroundColor: '#E0E0E0',
+    height: 1,
+    marginVertical: 24,
   },
-  cancelButtonLabel: {
+  infoSection: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    color: '#000',
+    fontWeight: '500',
+    marginBottom: 16,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  infoValue: {
+    fontSize: 14,
+    color: '#000',
+    fontWeight: '500',
+    textAlign: 'right',
+    flex: 1,
+    marginLeft: 16,
+  },
+  descriptionContainer: {
+    marginBottom: 24,
+  },
+  input: {
+    backgroundColor: '#FFF',
+  },
+  errorText: {
+    color: '#E91E63',
+    fontSize: 14,
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  buttonContainer: {
+    padding: 20,
+    paddingBottom: 32,
+  },
+  button: {
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
+  },
+  buttonContent: {
+    height: 56,
+  },
+  buttonLabel: {
     fontSize: 16,
-    color: '#1B1B1B',
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+    color: '#FFF',
   },
 });
 

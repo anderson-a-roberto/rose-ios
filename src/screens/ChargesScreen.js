@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { Text, Button, TextInput, ActivityIndicator, IconButton } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
+import { Text, Button, TextInput, ActivityIndicator } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import useCharges from '../hooks/useCharges';
 import ChargePDFDialog from '../components/charges/ChargePDFDialog';
@@ -81,24 +81,32 @@ const ChargesScreen = ({ navigation }) => {
         disabled={loadingChargeId === charge.id}
       >
         {loadingChargeId === charge.id ? (
-          <ActivityIndicator size={24} color="#000" />
+          <ActivityIndicator size={24} color="#E91E63" />
         ) : (
-          <MaterialCommunityIcons name="file-document-outline" size={24} color="#000" />
+          <MaterialCommunityIcons name="file-document-outline" size={24} color="#E91E63" />
         )}
       </TouchableOpacity>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
+      
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.navigate('Dashboard2')}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
-        </TouchableOpacity>
+        <View style={styles.headerTop}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.navigate('Dashboard2')}
+          >
+            <Text style={styles.backText}>‹</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Cobranças</Text>
+          <Text style={styles.subtitle}>Gerencie suas cobranças</Text>
+        </View>
       </View>
 
       {/* New Charge Button */}
@@ -106,12 +114,11 @@ const ChargesScreen = ({ navigation }) => {
         mode="contained"
         onPress={() => navigation.navigate('CreateChargePersonalData')}
         style={styles.newChargeButton}
-        labelStyle={styles.newChargeButtonLabel}
+        contentStyle={styles.buttonContent}
+        labelStyle={styles.buttonLabel}
       >
         GERAR NOVA COBRANÇA
       </Button>
-
-      <Text style={styles.title}>Cobranças</Text>
 
       {/* Search Input */}
       <TextInput
@@ -120,124 +127,102 @@ const ChargesScreen = ({ navigation }) => {
         value={searchQuery}
         onChangeText={setSearchQuery}
         style={styles.searchInput}
-        outlineColor="#E0E0E0"
-        activeOutlineColor="#000"
+        outlineStyle={styles.inputOutline}
       />
 
       {/* Charges List */}
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#000" />
-        </View>
-      ) : error ? (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Erro ao carregar cobranças</Text>
-          <Button onPress={refetch}>Tentar novamente</Button>
-        </View>
-      ) : (
-        <>
-          <ScrollView style={styles.chargesList}>
-            {charges.map(renderChargeItem)}
-          </ScrollView>
-
-          {/* Pagination */}
-          {pageCount > 1 && (
-            <View style={styles.pagination}>
-              <IconButton
-                icon="chevron-left"
-                size={24}
-                onPress={handlePrevPage}
-                disabled={currentPage === 1}
-                iconColor={currentPage === 1 ? '#999' : '#000'}
-              />
-              <Text style={styles.pageInfo}>
-                Página {currentPage} de {pageCount}
-              </Text>
-              <IconButton
-                icon="chevron-right"
-                size={24}
-                onPress={handleNextPage}
-                disabled={currentPage === pageCount}
-                iconColor={currentPage === pageCount ? '#999' : '#000'}
-              />
-            </View>
-          )}
-        </>
-      )}
+      <ScrollView style={styles.chargesList}>
+        {charges?.map(renderChargeItem)}
+      </ScrollView>
 
       {/* PDF Dialog */}
       <ChargePDFDialog
         visible={showPDF}
-        pdfUrl={pdfUrl}
         onDismiss={handleClosePDF}
+        pdfUrl={pdfUrl}
+        transactionId={currentTransactionId}
       />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
   },
   header: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    marginBottom: 20,
+    paddingTop: 12,
   },
   backButton: {
     padding: 8,
+    marginLeft: -8,
+  },
+  backText: {
+    color: '#E91E63',
+    fontSize: 32,
+    fontWeight: '300',
+  },
+  headerContent: {
+    paddingHorizontal: 4,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    opacity: 0.8,
   },
   newChargeButton: {
-    backgroundColor: '#000',
-    marginHorizontal: 24,
-    marginTop: 16,
-    borderRadius: 25,
+    backgroundColor: '#E91E63',
+    marginHorizontal: 20,
+    marginBottom: 16,
+    borderRadius: 8,
   },
-  newChargeButtonLabel: {
-    color: '#FFF',
+  buttonContent: {
+    height: 56,
+  },
+  buttonLabel: {
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginHorizontal: 24,
-    marginTop: 24,
-    marginBottom: 16,
-    color: '#000',
+    letterSpacing: 0.5,
+    color: '#FFF',
   },
   searchInput: {
-    marginHorizontal: 24,
+    marginHorizontal: 20,
     marginBottom: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    color: 'red',
-    marginBottom: 16,
+  inputOutline: {
+    borderRadius: 8,
+    borderColor: '#E0E0E0',
   },
   chargesList: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
   },
   chargeItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    backgroundColor: '#FFF',
+    padding: 16,
+    marginBottom: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   chargeInfo: {
     flex: 1,
@@ -256,21 +241,11 @@ const styles = StyleSheet.create({
   chargeValue: {
     fontSize: 14,
     color: '#000',
+    fontWeight: '500',
   },
   viewButton: {
     padding: 8,
-  },
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-  },
-  pageInfo: {
-    marginHorizontal: 16,
-    color: '#000',
+    marginLeft: 16,
   },
 });
 

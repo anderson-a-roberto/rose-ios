@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
 import { Text, TextInput, Button } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useCharge } from '../../contexts/ChargeContext';
 import MaskInput from 'react-native-mask-input';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -35,123 +34,178 @@ const CreateChargePersonalDataScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
+      
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
-        </TouchableOpacity>
+        <View style={styles.headerTop}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backText}>‹</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Dados Pessoais</Text>
+          <Text style={styles.subtitle}>
+            Insira os dados pessoais do contato para gerar a cobrança
+          </Text>
+        </View>
       </View>
 
-      <Text style={styles.title}>Dados Pessoais</Text>
-      <Text style={styles.subtitle}>Insira os dados pessoais do contato</Text>
-
-      {/* Form */}
-      <View style={styles.form}>
-        <TextInput
-          label="CPF/CNPJ"
-          value={chargeData.cpfCnpj}
-          onChangeText={(text) => updateChargeData({ cpfCnpj: text })}
-          style={styles.input}
-          mode="outlined"
-          error={!!errors.cpfCnpj}
-          outlineColor="#E0E0E0"
-          activeOutlineColor="#000"
-          render={props => (
-            <MaskInput
-              {...props}
-              mask={[/\d/, /\d/, /\d/, '.', /\d/, /\d/, /\d/, '.', /\d/, /\d/, /\d/, '-', /\d/, /\d/]}
-            />
+      {/* Content */}
+      <ScrollView 
+        style={styles.content}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        <View style={styles.form}>
+          <Text style={styles.label}>CPF/CNPJ</Text>
+          <TextInput
+            value={chargeData.cpfCnpj}
+            onChangeText={(text) => updateChargeData({ cpfCnpj: text })}
+            style={[styles.input, chargeData.cpfCnpj && styles.filledInput]}
+            error={!!errors.cpfCnpj}
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            textColor={chargeData.cpfCnpj ? '#000' : '#999'}
+            theme={{ fonts: { regular: { fontWeight: chargeData.cpfCnpj ? '600' : '400' } } }}
+            render={props => (
+              <MaskInput
+                {...props}
+                mask={[/\d/, /\d/, /\d/, '.', /\d/, /\d/, /\d/, '.', /\d/, /\d/, /\d/, '-', /\d/, /\d/]}
+              />
+            )}
+          />
+          {errors.cpfCnpj && (
+            <Text style={styles.errorText}>{errors.cpfCnpj}</Text>
           )}
-        />
-        {errors.cpfCnpj && (
-          <Text style={styles.errorText}>{errors.cpfCnpj}</Text>
-        )}
 
-        <TextInput
-          label="Nome"
-          value={chargeData.nome}
-          onChangeText={(text) => updateChargeData({ nome: text })}
-          style={styles.input}
-          mode="outlined"
-          error={!!errors.nome}
-          outlineColor="#E0E0E0"
-          activeOutlineColor="#000"
-        />
-        {errors.nome && (
-          <Text style={styles.errorText}>{errors.nome}</Text>
-        )}
-      </View>
+          <Text style={styles.label}>Nome</Text>
+          <TextInput
+            value={chargeData.nome}
+            onChangeText={(text) => updateChargeData({ nome: text })}
+            style={[styles.input, chargeData.nome && styles.filledInput]}
+            error={!!errors.nome}
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            textColor={chargeData.nome ? '#000' : '#999'}
+            theme={{ fonts: { regular: { fontWeight: chargeData.nome ? '600' : '400' } } }}
+          />
+          {errors.nome && (
+            <Text style={styles.errorText}>{errors.nome}</Text>
+          )}
+        </View>
+      </ScrollView>
 
       {/* Next Button */}
-      <Button
-        mode="contained"
-        onPress={handleNext}
-        style={styles.nextButton}
-        labelStyle={styles.nextButtonLabel}
-      >
-        PRÓXIMO
-      </Button>
+      <View style={styles.buttonContainer}>
+        <Button
+          mode="contained"
+          onPress={handleNext}
+          style={styles.button}
+          contentStyle={styles.buttonContent}
+          labelStyle={styles.buttonLabel}
+          disabled={!chargeData.cpfCnpj || !chargeData.nome}
+        >
+          PRÓXIMO
+        </Button>
+      </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
   },
   header: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    marginBottom: 20,
+    paddingTop: 12,
   },
   backButton: {
     padding: 8,
+    marginLeft: -8,
   },
-  title: {
-    fontSize: 24,
+  backText: {
+    color: '#E91E63',
+    fontSize: 32,
+    fontWeight: '300',
+  },
+  headerContent: {
+    paddingHorizontal: 4,
+  },
+  headerTitle: {
+    fontSize: 28,
     fontWeight: 'bold',
-    marginHorizontal: 24,
-    marginTop: 24,
     color: '#000',
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    marginHorizontal: 24,
-    marginTop: 8,
-    marginBottom: 32,
-    color: '#000',
+    color: '#666',
+    opacity: 0.8,
+  },
+  content: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   form: {
     paddingHorizontal: 24,
+    paddingTop: 24,
+  },
+  label: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+    marginLeft: 4,
   },
   input: {
-    marginBottom: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#F5F5F5',
+    height: 56,
+    borderRadius: 8,
+    marginBottom: 24,
+    fontSize: 16,
+  },
+  filledInput: {
+    backgroundColor: '#F5F5F5',
   },
   errorText: {
     color: '#B00020',
     fontSize: 12,
-    marginTop: -12,
-    marginBottom: 16,
-    marginLeft: 8,
-  },
-  nextButton: {
-    backgroundColor: '#000',
-    marginHorizontal: 24,
-    marginTop: 'auto',
+    marginTop: -20,
     marginBottom: 24,
-    borderRadius: 25,
+    marginLeft: 4,
   },
-  nextButtonLabel: {
+  buttonContainer: {
+    padding: 20,
+    paddingBottom: 32,
+  },
+  button: {
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
+  },
+  buttonContent: {
+    height: 56,
+  },
+  buttonLabel: {
     fontSize: 16,
-    color: '#FFF',
     fontWeight: 'bold',
+    letterSpacing: 0.5,
+    color: '#FFF',
   },
 });
 

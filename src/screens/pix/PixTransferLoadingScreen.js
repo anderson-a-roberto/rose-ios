@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Text } from 'react-native-paper';
+import { View, StyleSheet, StatusBar } from 'react-native';
+import { Text, ActivityIndicator } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 const PixTransferLoadingScreen = ({ navigation, route }) => {
@@ -16,48 +17,72 @@ const PixTransferLoadingScreen = ({ navigation, route }) => {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.iconContainer}>
-          <MaterialCommunityIcons
-            name="progress-clock"
-            size={40}
-            color="#fff"
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar backgroundColor="#682145" barStyle="light-content" />
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <View style={styles.iconContainer}>
+            <MaterialCommunityIcons
+              name="clock-outline"
+              size={40}
+              color="#FFF"
+            />
+          </View>
+          <Text style={styles.title}>Processando...</Text>
+          <Text style={styles.subtitle}>
+            Estamos processando sua transferência
+          </Text>
+          <ActivityIndicator 
+            size="large" 
+            color="#FFF" 
+            style={styles.loader}
           />
         </View>
-        <Text style={styles.text}>
-          Aguarde,{'\n'}
-          estamos validando...
-        </Text>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#682145'
+  },
   container: {
     flex: 1,
-    backgroundColor: '#4D4D4D',
+    backgroundColor: '#682145',
     justifyContent: 'center',
     alignItems: 'center',
   },
   content: {
     alignItems: 'center',
+    paddingHorizontal: 32,
   },
   iconContainer: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
   },
-  text: {
+  title: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 24,
+    fontWeight: 'bold',
     textAlign: 'center',
-    lineHeight: 24,
+    marginBottom: 8,
+  },
+  subtitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    textAlign: 'center',
+    opacity: 0.8,
+    marginBottom: 32,
+  },
+  loader: {
+    marginTop: 16,
   },
 });
 

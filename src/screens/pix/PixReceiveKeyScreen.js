@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
 import { Text, Button, ActivityIndicator } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { supabase } from '../../config/supabase';
 
@@ -20,7 +21,7 @@ const PixKeyItem = ({ keyId, type, value, selected, onSelect }) => {
     >
       <View style={[styles.keyContent, selected && styles.keyContentSelected]}>
         <View style={styles.keyIconContainer}>
-          <MaterialCommunityIcons name="key-variant" size={24} color="#682145" />
+          <MaterialCommunityIcons name="key-variant" size={24} color="#E91E63" />
         </View>
         <View style={styles.keyInfo}>
           <Text style={styles.keyType}>{KEY_TYPES[type] || type}</Text>
@@ -28,7 +29,7 @@ const PixKeyItem = ({ keyId, type, value, selected, onSelect }) => {
         </View>
         {selected && (
           <View style={styles.checkContainer}>
-            <MaterialCommunityIcons name="check-circle" size={24} color="#4CAF50" />
+            <MaterialCommunityIcons name="check-circle" size={24} color="#E91E63" />
           </View>
         )}
       </View>
@@ -85,7 +86,6 @@ const PixReceiveKeyScreen = ({ navigation, route }) => {
       if (keysError) throw keysError;
 
       const pixKeys = keysData.body?.listKeys || [];
-      console.log('PIX Keys:', pixKeys); // Para debug
       setKeys(pixKeys);
     } catch (err) {
       console.error('Erro ao buscar chaves:', err);
@@ -100,133 +100,160 @@ const PixReceiveKeyScreen = ({ navigation, route }) => {
   };
 
   const handleContinue = () => {
-    if (!selectedKey) return;
-    navigation.navigate('PixReceiveConfirm', { 
-      amount,
-      selectedKey
-    });
+    if (selectedKey) {
+      navigation.navigate('PixReceiveConfirm', { amount, selectedKey });
+    }
   };
 
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#682145" />
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>{error}</Text>
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#E91E63" />
+          <Text style={styles.loadingText}>Carregando suas chaves PIX...</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
+      
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
+          <Text style={styles.backButtonText}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Chaves</Text>
-        <View style={{ width: 24 }} />
       </View>
 
-      <Text style={styles.subtitle}>Selecione uma chave</Text>
+      <View style={styles.content}>
+        <Text style={styles.title}>Chave PIX</Text>
+        <Text style={styles.subtitle}>Selecione uma chave para receber</Text>
 
-      <ScrollView style={styles.keysList}>
-        {keys.map((key) => (
-          <PixKeyItem
-            key={key.id || `${key.type}-${key.value}`}
-            keyId={key.id}
-            type={key.type}
-            value={key.value}
-            selected={selectedKey?.id === key.id}
-            onSelect={handleKeySelect}
-          />
-        ))}
-      </ScrollView>
+        {error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+            <Button
+              mode="contained"
+              onPress={fetchKeys}
+              style={styles.retryButton}
+              contentStyle={styles.buttonContent}
+              labelStyle={styles.buttonLabel}
+            >
+              TENTAR NOVAMENTE
+            </Button>
+          </View>
+        ) : (
+          <ScrollView style={styles.keysList} showsVerticalScrollIndicator={false}>
+            {keys.map((key) => (
+              <PixKeyItem
+                key={key.id}
+                keyId={key.id}
+                type={key.type}
+                value={key.value}
+                selected={selectedKey?.id === key.id}
+                onSelect={handleKeySelect}
+              />
+            ))}
+          </ScrollView>
+        )}
+      </View>
 
+      {/* Continue Button */}
       <View style={styles.footer}>
         <Button
           mode="contained"
           onPress={handleContinue}
           style={styles.continueButton}
-          labelStyle={styles.continueButtonLabel}
+          contentStyle={styles.buttonContent}
+          labelStyle={styles.buttonLabel}
           disabled={!selectedKey}
         >
           CONTINUAR
         </Button>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
   },
-  centerContainer: {
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
+    padding: 24,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 16,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 24,
   },
   backButton: {
     padding: 8,
+    marginLeft: -8,
   },
-  headerTitle: {
-    fontSize: 20,
+  backButtonText: {
+    color: '#E91E63',
+    fontSize: 32,
+    fontWeight: '300',
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+  title: {
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#000',
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#000',
-    paddingHorizontal: 16,
-    marginBottom: 24,
+    color: '#666',
+    marginBottom: 32,
   },
   keysList: {
     flex: 1,
-    paddingHorizontal: 16,
   },
   keyItem: {
-    marginBottom: 8,
-    borderRadius: 12,
-    overflow: 'hidden',
+    marginBottom: 12,
   },
   keyContent: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     backgroundColor: '#F5F5F5',
+    borderRadius: 12,
   },
   keyContentSelected: {
-    backgroundColor: '#E8F5E9',
-    borderWidth: 1,
-    borderColor: '#4CAF50',
+    backgroundColor: '#FCE4EC',
   },
   keyIconContainer: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 16,
   },
   keyInfo: {
     flex: 1,
@@ -244,23 +271,37 @@ const styles = StyleSheet.create({
   checkContainer: {
     marginLeft: 12,
   },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
   errorText: {
-    color: '#B00020',
+    fontSize: 16,
+    color: '#666',
     textAlign: 'center',
-    marginHorizontal: 16,
+    marginBottom: 24,
+  },
+  retryButton: {
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
   },
   footer: {
-    padding: 16,
+    padding: 24,
     paddingBottom: 32,
-    backgroundColor: '#fff',
   },
   continueButton: {
-    backgroundColor: '#1B1B1B',
-    borderRadius: 25,
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
   },
-  continueButtonLabel: {
+  buttonContent: {
+    height: 56,
+  },
+  buttonLabel: {
     fontSize: 16,
-    color: '#fff',
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
 });
 

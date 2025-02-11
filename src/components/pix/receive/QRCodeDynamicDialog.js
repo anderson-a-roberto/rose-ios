@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Portal, Dialog, Button, Text, Snackbar } from 'react-native-paper';
-import { WebView } from 'react-native-webview';
+import QRCodeImage from './QRCodeCanvas';
 
 const QRCodeDynamicDialog = ({ visible, onDismiss, qrData }) => {
   const [snackbarVisible, setSnackbarVisible] = useState(false);
@@ -25,28 +25,6 @@ const QRCodeDynamicDialog = ({ visible, onDismiss, qrData }) => {
   const emvqrcps = qrData?.body?.body?.dynamicBRCodeData?.emvqrcps;
   const dueDate = qrData?.body?.body?.calendar?.dueDate;
 
-  const qrCodeHtml = `
-    <html>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
-      </head>
-      <body style="display: flex; justify-content: center; align-items: center; margin: 0;">
-        <div id="qrcode"></div>
-        <script type="text/javascript">
-          new QRCode(document.getElementById("qrcode"), {
-            text: "${emvqrcps || ''}",
-            width: 256,
-            height: 256,
-            colorDark : "#000000",
-            colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.H
-          });
-        </script>
-      </body>
-    </html>
-  `;
-
   return (
     <Portal>
       <Dialog visible={visible} onDismiss={onDismiss} style={styles.dialog}>
@@ -55,19 +33,10 @@ const QRCodeDynamicDialog = ({ visible, onDismiss, qrData }) => {
         <Dialog.Content style={styles.content}>
           <View style={styles.qrContainer}>
             {emvqrcps && (
-              Platform.OS === 'web' ? (
-                <div 
-                  dangerouslySetInnerHTML={{ 
-                    __html: qrCodeHtml 
-                  }} 
-                  style={{ width: 256, height: 256 }}
-                />
-              ) : (
-                <WebView
-                  source={{ html: qrCodeHtml }}
-                  style={{ width: 256, height: 256 }}
-                />
-              )
+              <QRCodeImage
+                value={emvqrcps}
+                size={256}
+              />
             )}
           </View>
 
@@ -134,7 +103,7 @@ const styles = StyleSheet.create({
   expirationText: {
     fontSize: 12,
     color: '#666',
-    },
+  },
 });
 
 export default QRCodeDynamicDialog;

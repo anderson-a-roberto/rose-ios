@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
 import { Text, Button, TextInput } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useCharge } from '../../contexts/ChargeContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -44,124 +43,156 @@ const CreateChargeAmountScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
+      
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
-        </TouchableOpacity>
+        <View style={styles.headerTop}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backText}>‹</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Valor da Cobrança</Text>
+          <Text style={styles.subtitle}>Qual valor deseja cobrar?</Text>
+        </View>
       </View>
 
-      <Text style={styles.title}>Valor da Cobrança</Text>
-      <Text style={styles.subtitle}>Qual valor deseja cobrar?</Text>
+      {/* Content */}
+      <View style={styles.content}>
+        {/* Amount Input */}
+        <View style={styles.amountContainer}>
+          <Text style={styles.currencySymbol}>R$</Text>
+          <TextInput
+            mode="flat"
+            value={amount}
+            onChangeText={handleAmountChange}
+            keyboardType="numeric"
+            style={styles.amountInput}
+            contentStyle={styles.amountInputContent}
+            placeholder="0,00"
+            placeholderTextColor="#666"
+            autoFocus={true}
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+          />
+        </View>
 
-      {/* Amount Input */}
-      <View style={styles.amountContainer}>
-        <Text style={styles.currencySymbol}>R$</Text>
-        <TextInput
-          mode="flat"
-          value={amount}
-          onChangeText={handleAmountChange}
-          keyboardType="numeric"
-          style={styles.amountInput}
-          placeholder="0,00"
-          placeholderTextColor="#666"
-          autoFocus={true}
-        />
+        {/* Taxa Info */}
+        <Text style={styles.taxInfo}>
+          A taxa do boleto é de <Text style={styles.taxValue}>R$ {TAXA_BOLETO.toFixed(2).replace('.', ',')}</Text>
+        </Text>
       </View>
-
-      {/* Taxa Info */}
-      <Text style={styles.taxInfo}>
-        A taxa do boleto é de <Text style={styles.taxValue}>R$ {TAXA_BOLETO.toFixed(2).replace('.', ',')}</Text>
-      </Text>
 
       {/* Next Button */}
-      <Button
-        mode="contained"
-        onPress={handleNext}
-        style={styles.nextButton}
-        labelStyle={styles.nextButtonLabel}
-        disabled={!amount || amount === '0,00'}
-      >
-        PRÓXIMO
-      </Button>
+      <View style={styles.buttonContainer}>
+        <Button
+          mode="contained"
+          onPress={handleNext}
+          style={styles.button}
+          contentStyle={styles.buttonContent}
+          labelStyle={styles.buttonLabel}
+          disabled={!amount || amount === '0,00'}
+        >
+          PRÓXIMO
+        </Button>
+      </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
   },
   header: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    marginBottom: 20,
+    paddingTop: 12,
   },
   backButton: {
     padding: 8,
+    marginLeft: -8,
   },
-  title: {
-    fontSize: 24,
+  backText: {
+    color: '#E91E63',
+    fontSize: 32,
+    fontWeight: '300',
+  },
+  headerContent: {
+    paddingHorizontal: 4,
+  },
+  headerTitle: {
+    fontSize: 28,
     fontWeight: 'bold',
-    marginHorizontal: 24,
-    marginTop: 24,
     color: '#000',
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    marginHorizontal: 24,
-    marginTop: 8,
-    marginBottom: 32,
-    color: '#000',
+    color: '#666',
+    opacity: 0.8,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
   },
   amountContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 32,
-    paddingHorizontal: 24,
+    marginTop: 32,
+    marginBottom: 24,
   },
   currencySymbol: {
     fontSize: 32,
-    fontWeight: 'bold',
     color: '#000',
     marginRight: 8,
   },
   amountInput: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    backgroundColor: 'transparent',
     flex: 1,
-    textAlign: 'left',
-    color: '#000',
-    height: 80,
+    backgroundColor: 'transparent',
+    fontSize: 32,
+  },
+  amountInputContent: {
+    paddingHorizontal: 0,
+    height: 56,
   },
   taxInfo: {
     fontSize: 14,
     color: '#666',
-    marginHorizontal: 24,
-    marginTop: 16,
+    textAlign: 'center',
   },
   taxValue: {
-    color: '#FF0000',
+    color: '#000',
+    fontWeight: '500',
   },
-  nextButton: {
-    backgroundColor: '#000',
-    marginHorizontal: 24,
-    marginTop: 'auto',
-    marginBottom: 24,
-    borderRadius: 25,
+  buttonContainer: {
+    padding: 20,
+    paddingBottom: 32,
   },
-  nextButtonLabel: {
+  button: {
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
+  },
+  buttonContent: {
+    height: 56,
+  },
+  buttonLabel: {
     fontSize: 16,
-    color: '#FFF',
     fontWeight: 'bold',
+    letterSpacing: 0.5,
+    color: '#FFF',
   },
 });
 

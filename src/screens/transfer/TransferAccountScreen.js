@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Text, TextInput, Button } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { View, StyleSheet, TouchableOpacity, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
+import { Text, TextInput, Button, ActivityIndicator } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../config/supabase';
 
@@ -100,110 +99,175 @@ const TransferAccountScreen = ({ navigation, route }) => {
     }
   };
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#E91E63" />
+          <Text style={styles.loadingText}>Processando transferência...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Transferir</Text>
-        <View style={{ width: 24 }} />
-      </View>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.backText}>‹</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Conta de destino</Text>
+            <Text style={styles.subtitle}>Digite o número da conta</Text>
+          </View>
+        </View>
 
-      <Text style={styles.subtitle}>Para quem você quer transferir?</Text>
+        <View style={styles.content}>
+          {/* Account Input */}
+          <View style={styles.inputContainer}>
+            <TextInput
+              mode="flat"
+              value={destinationAccount}
+              onChangeText={handleAccountChange}
+              keyboardType="numeric"
+              style={styles.input}
+              placeholder="Digite o número da conta"
+              placeholderTextColor="#666"
+              autoFocus={true}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              selectionColor="#E91E63"
+              error={!!error}
+            />
+          </View>
 
-      {/* Account Input */}
-      <View style={styles.inputContainer}>
-        <TextInput
-          mode="outlined"
-          label="Número da Conta"
-          value={destinationAccount}
-          onChangeText={handleAccountChange}
-          keyboardType="numeric"
-          error={!!error}
-          style={styles.input}
-          autoFocus
-        />
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      </View>
+          {error ? (
+            <Text style={styles.errorText}>{error}</Text>
+          ) : null}
+        </View>
 
-      {/* Continue Button */}
-      <View style={styles.footer}>
-        <Button
-          mode="contained"
-          onPress={handleSubmit}
-          style={styles.continueButton}
-          labelStyle={styles.continueButtonLabel}
-          loading={loading}
-          disabled={loading || !destinationAccount}
-        >
-          CONTINUAR
-        </Button>
-      </View>
+        {/* Continue Button */}
+        <View style={styles.buttonContainer}>
+          <Button
+            mode="contained"
+            onPress={handleSubmit}
+            style={styles.button}
+            contentStyle={styles.buttonContent}
+            labelStyle={styles.buttonLabel}
+            disabled={!destinationAccount || loading}
+          >
+            CONTINUAR
+          </Button>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFF'
+  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF'
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    padding: 24,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
   },
   header: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    marginBottom: 20,
+    paddingTop: 12,
   },
   backButton: {
     padding: 8,
+    marginLeft: -8,
+  },
+  backText: {
+    color: '#E91E63',
+    fontSize: 32,
+    fontWeight: '300',
+  },
+  headerContent: {
+    paddingHorizontal: 4,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '500',
+    fontSize: 28,
+    fontWeight: 'bold',
     color: '#000',
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: 32,
-    marginBottom: 32,
-    color: '#000',
+    fontSize: 16,
+    color: '#666',
+    opacity: 0.8,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
   },
   inputContainer: {
-    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    marginBottom: 8,
   },
   input: {
-    backgroundColor: '#fff',
-    color: '#000',
+    backgroundColor: 'transparent',
+    fontSize: 20,
+    paddingHorizontal: 0,
+    height: 56,
   },
   errorText: {
     color: '#B00020',
-    fontSize: 12,
-    marginTop: 4,
-    marginLeft: 8,
+    fontSize: 14,
+    marginTop: 8,
   },
-  footer: {
-    padding: 16,
-    marginTop: 'auto',
+  buttonContainer: {
+    padding: 20,
+    paddingBottom: 32,
   },
-  continueButton: {
-    backgroundColor: '#000',
-    height: 48,
-    borderRadius: 25,
+  button: {
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
   },
-  continueButtonLabel: {
+  buttonContent: {
+    height: 56,
+  },
+  buttonLabel: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    letterSpacing: 0.5,
+    color: '#FFF',
   },
 });
 

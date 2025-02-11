@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Share } from 'react-native';
-import { Text, Button } from 'react-native-paper';
+import { View, StyleSheet, TouchableOpacity, Share, StatusBar, ScrollView } from 'react-native';
+import { Text, Button, Divider } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 const formatCurrency = (value) => {
@@ -38,169 +39,231 @@ const PixTransferReceiptScreen = ({ navigation, route }) => {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={() => navigation.navigate('HomePix', { 
-            balance: transferData.debitParty.balance || 0 
-          })}
-        >
-          <MaterialCommunityIcons name="close" size={24} color="#000" />
-        </TouchableOpacity>
-      </View>
-
-      <Text style={styles.title}>Meu Comprovante</Text>
-
-      {/* Receipt Content */}
-      <View style={styles.content}>
-        <Text style={styles.transactionType}>Transferência Pix Realizada</Text>
-        <Text style={styles.amount}>{formatCurrency(transferData.amount)}</Text>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>ID/Transação</Text>
-          <View style={styles.infoValueContainer}>
-            <Text style={styles.infoValue}>{transferData.endToEndId}</Text>
-            <TouchableOpacity>
-              <MaterialCommunityIcons name="content-copy" size={20} color="#682145" />
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => navigation.navigate('HomePix', { 
+                balance: transferData.debitParty.balance || 0 
+              })}
+            >
+              <Text style={styles.closeText}>‹</Text>
             </TouchableOpacity>
           </View>
-        </View>
-
-        {transferData.description && (
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Descrição</Text>
-            <Text style={styles.infoValue}>{transferData.description}</Text>
-          </View>
-        )}
-
-        {/* Origin Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Origem</Text>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Nome</Text>
-            <Text style={styles.infoValue}>{transferData.debitParty.name}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>CPF/CNPJ</Text>
-            <Text style={styles.infoValue}>{transferData.debitParty.taxId}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Instituição Financeira</Text>
-            <Text style={styles.infoValue}>{transferData.debitParty.bank}</Text>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Comprovante</Text>
+            <Text style={styles.subtitle}>Transferência realizada com sucesso</Text>
           </View>
         </View>
 
-        {/* Destination Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Destino</Text>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Nome</Text>
-            <Text style={styles.infoValue}>{transferData.beneficiary.name}</Text>
+        {/* Receipt Content */}
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.amountContainer}>
+            <Text style={styles.amountValue}>{formatCurrency(transferData.amount)}</Text>
+            <Text style={styles.amountLabel}>Transferência PIX</Text>
           </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>CPF/CNPJ</Text>
-            <Text style={styles.infoValue}>{transferData.beneficiary.taxId}</Text>
+
+          <Divider style={styles.divider} />
+
+          <View style={styles.infoSection}>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>ID/Transação</Text>
+              <View style={styles.infoValueContainer}>
+                <Text style={styles.infoValue}>{transferData.endToEndId}</Text>
+                <TouchableOpacity style={styles.copyButton}>
+                  <MaterialCommunityIcons name="content-copy" size={20} color="#E91E63" />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {transferData.description && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Descrição</Text>
+                <Text style={styles.infoValue}>{transferData.description}</Text>
+              </View>
+            )}
           </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Instituição Financeira</Text>
-            <Text style={styles.infoValue}>{transferData.beneficiary.bank}</Text>
+
+          <Divider style={styles.divider} />
+
+          {/* Origin Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Origem</Text>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Nome</Text>
+              <Text style={styles.infoValue}>{transferData.debitParty.name}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>CPF/CNPJ</Text>
+              <Text style={styles.infoValue}>{transferData.debitParty.taxId}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Instituição</Text>
+              <Text style={styles.infoValue}>{transferData.debitParty.bank}</Text>
+            </View>
           </View>
+
+          <Divider style={styles.divider} />
+
+          {/* Destination Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Destino</Text>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Nome</Text>
+              <Text style={styles.infoValue}>{transferData.beneficiary.name}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>CPF/CNPJ</Text>
+              <Text style={styles.infoValue}>{transferData.beneficiary.taxId}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Instituição</Text>
+              <Text style={styles.infoValue}>{transferData.beneficiary.bank}</Text>
+            </View>
+          </View>
+        </ScrollView>
+
+        {/* Share Button */}
+        <View style={styles.buttonContainer}>
+          <Button
+            mode="contained"
+            onPress={handleShare}
+            style={styles.button}
+            contentStyle={styles.buttonContent}
+            labelStyle={styles.buttonLabel}
+            icon="share-variant"
+          >
+            COMPARTILHAR COMPROVANTE
+          </Button>
         </View>
       </View>
-
-      {/* Share Button */}
-      <View style={styles.footer}>
-        <Button
-          mode="contained"
-          onPress={handleShare}
-          style={styles.shareButton}
-          labelStyle={styles.shareButtonLabel}
-        >
-          COMPARTILHAR
-        </Button>
-      </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFF'
+  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF'
   },
   header: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+  },
+  headerTop: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 16,
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingTop: 12,
   },
   closeButton: {
     padding: 8,
+    marginLeft: -8,
   },
-  title: {
-    fontSize: 20,
+  closeText: {
+    color: '#E91E63',
+    fontSize: 32,
+    fontWeight: '300',
+  },
+  headerContent: {
+    paddingHorizontal: 4,
+  },
+  headerTitle: {
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#000',
-    paddingHorizontal: 16,
-    marginBottom: 16,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  transactionType: {
-    fontSize: 16,
     color: '#000',
     marginBottom: 8,
   },
-  amount: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#000',
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    opacity: 0.8,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+  amountContainer: {
+    alignItems: 'center',
     marginBottom: 24,
+  },
+  amountValue: {
+    fontSize: 32,
+    color: '#000',
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  amountLabel: {
+    fontSize: 16,
+    color: '#666',
+  },
+  divider: {
+    backgroundColor: '#E0E0E0',
+    height: 1,
+    marginVertical: 24,
+  },
+  infoSection: {
+    marginBottom: 24,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    color: '#000',
+    fontWeight: '500',
+    marginBottom: 16,
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   infoLabel: {
     fontSize: 14,
     color: '#666',
   },
+  infoValue: {
+    fontSize: 14,
+    color: '#000',
+    fontWeight: '500',
+    textAlign: 'right',
+    flex: 1,
+    marginLeft: 16,
+  },
   infoValueContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  infoValue: {
-    fontSize: 14,
-    color: '#000',
-    marginRight: 8,
+  copyButton: {
+    marginLeft: 8,
+    padding: 4,
   },
-  section: {
-    marginTop: 24,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 16,
-  },
-  footer: {
-    padding: 16,
+  buttonContainer: {
+    padding: 20,
     paddingBottom: 32,
   },
-  shareButton: {
-    backgroundColor: '#1B1B1B',
-    borderRadius: 25,
+  button: {
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
   },
-  shareButtonLabel: {
+  buttonContent: {
+    height: 56,
+  },
+  buttonLabel: {
     fontSize: 16,
-    color: '#fff',
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+    color: '#FFF',
   },
 });
 

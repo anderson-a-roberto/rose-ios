@@ -30,15 +30,15 @@ const CreateChargeSuccessScreen = ({ navigation }) => {
           <View style={styles.iconContainer}>
             <MaterialCommunityIcons
               name="check-circle"
-              size={48}
-              color="#4CAF50"
+              size={64}
+              color="#E91E63"
             />
           </View>
 
           {/* Success Message */}
           <Text style={styles.title}>Boleto gerado com sucesso!</Text>
           <Text style={styles.subtitle}>
-            Visualize seu boleto ou clique em novo boleto para gerar um novo.
+            Deseja visualizar suas cobranças ou gerar um novo boleto?
           </Text>
 
           {/* Action Buttons */}
@@ -46,18 +46,20 @@ const CreateChargeSuccessScreen = ({ navigation }) => {
             <Button
               mode="outlined"
               onPress={handleNewCharge}
-              style={styles.noButton}
-              labelStyle={styles.noButtonLabel}
+              style={styles.newButton}
+              contentStyle={styles.buttonContent}
+              labelStyle={styles.newButtonLabel}
             >
-              NÃO
+              NOVO BOLETO
             </Button>
             <Button
               mode="contained"
               onPress={handleViewCharges}
-              style={styles.yesButton}
-              labelStyle={styles.yesButtonLabel}
+              style={styles.viewButton}
+              contentStyle={styles.buttonContent}
+              labelStyle={styles.viewButtonLabel}
             >
-              SIM
+              VER COBRANÇAS
             </Button>
           </View>
         </View>
@@ -77,46 +79,50 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconContainer: {
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
     marginBottom: 24,
   },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    width: '100%',
-    gap: 16,
-  },
-  noButton: {
-    flex: 1,
-    borderColor: '#000',
-    borderRadius: 25,
-  },
-  noButtonLabel: {
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
     color: '#000',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 32,
+    paddingHorizontal: 16,
+    opacity: 0.8,
+  },
+  buttonContainer: {
+    flexDirection: 'column',
+    width: '100%',
+    gap: 12,
+  },
+  buttonContent: {
+    height: 56,
+  },
+  newButton: {
+    borderColor: '#E91E63',
+    borderRadius: 8,
+  },
+  newButtonLabel: {
+    color: '#E91E63',
     fontSize: 16,
     fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
-  yesButton: {
-    flex: 1,
-    backgroundColor: '#000',
-    borderRadius: 25,
+  viewButton: {
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
   },
-  yesButtonLabel: {
+  viewButtonLabel: {
     color: '#FFF',
     fontSize: 16,
     fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
 });
 

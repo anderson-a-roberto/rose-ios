@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Text, TextInput, Button } from 'react-native-paper';
+import { View, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
+import { Text, TextInput, Button, List } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../config/supabase';
@@ -82,166 +82,178 @@ const PixTransferKeyScreen = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Transferir</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
-      <Text style={styles.subtitle}>Para quem você quer transferir?</Text>
-
-      {/* Key Input */}
-      <View style={styles.inputContainer}>
-        <TextInput
-          mode="outlined"
-          label="Chave PIX"
-          value={pixKey}
-          onChangeText={(text) => {
-            setPixKey(text);
-            setError(null);
-          }}
-          style={styles.input}
-          error={!!error}
-          disabled={loading}
-        />
-        {error && <Text style={styles.errorText}>{error}</Text>}
-      </View>
-
-      {/* Favorites Section */}
-      <View style={styles.favoritesSection}>
-        <View style={styles.favoriteHeader}>
-          <MaterialCommunityIcons name="star" size={20} color="#682145" />
-          <Text style={styles.favoriteTitle}>Favoritos</Text>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.backText}>‹</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Transferir</Text>
+            <Text style={styles.subtitle}>Para quem você quer transferir?</Text>
+          </View>
         </View>
-        <Text style={styles.favoriteSubtitle}>Você ainda não possui favoritos</Text>
-      </View>
 
-      {/* Agency and Account Section */}
-      <View style={styles.agencySection}>
-        <View style={styles.agencyHeader}>
-          <MaterialCommunityIcons name="bank" size={20} color="#682145" />
-          <Text style={styles.agencyTitle}>Agência e Conta</Text>
+        {/* Content */}
+        <View style={styles.content}>
+          {/* Key Input */}
+          <TextInput
+            mode="outlined"
+            label="Chave PIX"
+            value={pixKey}
+            onChangeText={(text) => {
+              setPixKey(text);
+              setError(null);
+            }}
+            style={styles.input}
+            placeholder="Digite a chave PIX"
+            error={!!error}
+            disabled={loading}
+            outlineColor="#E0E0E0"
+            activeOutlineColor="#E91E63"
+            theme={{ colors: { error: '#E91E63' } }}
+          />
+          {error && <Text style={styles.errorText}>{error}</Text>}
+
+          {/* Options */}
+          <View style={styles.optionsContainer}>
+            <List.Item
+              title="Favoritos"
+              description="Você ainda não possui favoritos"
+              left={props => <List.Icon {...props} icon="star" color="#E91E63" />}
+              style={styles.listItem}
+              titleStyle={styles.listItemTitle}
+              descriptionStyle={styles.listItemDescription}
+            />
+            
+            <List.Item
+              title="Agência e Conta"
+              description="Insira os dados bancários caso não tenha uma chave para transferência"
+              left={props => <List.Icon {...props} icon="bank" color="#E91E63" />}
+              style={styles.listItem}
+              titleStyle={styles.listItemTitle}
+              descriptionStyle={styles.listItemDescription}
+            />
+          </View>
         </View>
-        <Text style={styles.agencySubtitle}>Insira os dados bancários caso não tenha uma chave para transferência</Text>
-      </View>
 
-      {/* Continue Button */}
-      <View style={styles.footer}>
-        <Button
-          mode="contained"
-          onPress={handleContinue}
-          style={styles.continueButton}
-          labelStyle={styles.continueButtonLabel}
-          loading={loading}
-          disabled={loading || !pixKey.trim()}
-        >
-          CONTINUAR
-        </Button>
+        {/* Continue Button */}
+        <View style={styles.buttonContainer}>
+          <Button
+            mode="contained"
+            onPress={handleContinue}
+            style={styles.button}
+            contentStyle={styles.buttonContent}
+            labelStyle={styles.buttonLabel}
+            loading={loading}
+            disabled={loading || !pixKey.trim()}
+          >
+            CONTINUAR
+          </Button>
+        </View>
       </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFF'
+  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF'
   },
   header: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 16,
+    marginBottom: 20,
+    paddingTop: 12,
   },
   backButton: {
     padding: 8,
+    marginLeft: -8,
+  },
+  backText: {
+    color: '#E91E63',
+    fontSize: 32,
+    fontWeight: '300',
+  },
+  headerContent: {
+    paddingHorizontal: 4,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#000',
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#000',
-    paddingHorizontal: 16,
-    marginBottom: 24,
+    color: '#666',
+    opacity: 0.8,
   },
-  inputContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 24,
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
   },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
+    marginBottom: 8,
   },
   errorText: {
-    color: '#B00020',
+    color: '#E91E63',
     fontSize: 12,
-    marginTop: 4,
+    marginTop: -4,
+    marginBottom: 16,
     marginLeft: 4,
   },
-  favoritesSection: {
-    paddingHorizontal: 16,
-    marginBottom: 24,
+  optionsContainer: {
+    marginTop: 24,
   },
-  favoriteHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
+  listItem: {
+    paddingLeft: 0,
+    paddingRight: 0,
   },
-  favoriteTitle: {
+  listItemTitle: {
     fontSize: 16,
     color: '#000',
-    marginLeft: 8,
+    fontWeight: '500',
   },
-  favoriteSubtitle: {
+  listItemDescription: {
     fontSize: 14,
     color: '#666',
-    marginLeft: 28,
+    opacity: 0.8,
   },
-  agencySection: {
-    paddingHorizontal: 16,
-  },
-  agencyHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  agencyTitle: {
-    fontSize: 16,
-    color: '#000',
-    marginLeft: 8,
-  },
-  agencySubtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 28,
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 16,
+  buttonContainer: {
+    padding: 20,
     paddingBottom: 32,
-    backgroundColor: '#fff',
   },
-  continueButton: {
-    backgroundColor: '#1B1B1B',
-    borderRadius: 25,
+  button: {
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
   },
-  continueButtonLabel: {
+  buttonContent: {
+    height: 56,
+  },
+  buttonLabel: {
     fontSize: 16,
-    color: '#fff',
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+    color: '#FFF',
   },
 });
 

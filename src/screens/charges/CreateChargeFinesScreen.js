@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
 import { Text, TextInput, Button } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useCharge } from '../../contexts/ChargeContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const CreateChargeFinesScreen = ({ navigation }) => {
   const { chargeData, updateChargeData } = useCharge();
@@ -46,117 +46,145 @@ const CreateChargeFinesScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
+      
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
-        </TouchableOpacity>
+        <View style={styles.headerTop}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backText}>‹</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Multas e Juros</Text>
+          <Text style={styles.subtitle}>
+            Configure as multas e juros para pagamentos após o vencimento
+          </Text>
+        </View>
       </View>
 
-      <Text style={styles.title}>Multas, Juros e Descontos</Text>
-      <Text style={styles.subtitle}>
-        Você pode adicionar multas e juros ao valor após o vencimento e descontos para pagamentos antecipados
-      </Text>
+      {/* Content */}
+      <View style={styles.content}>
+        {/* Multa */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Multa por Atraso</Text>
+            <Text style={styles.sectionSubtitle}>Cobrança única após o vencimento</Text>
+          </View>
+          <View style={styles.inputContainer}>
+            <TextInput
+              value={chargeData.multa}
+              onChangeText={(text) => updateChargeData({ multa: text })}
+              style={[styles.input, chargeData.multa && styles.filledInput]}
+              keyboardType="numeric"
+              error={!!errors.multa}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={chargeData.multa ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: chargeData.multa ? '600' : '400' } } }}
+              right={<TextInput.Affix text="%" />}
+            />
+          </View>
+          {errors.multa && <Text style={styles.errorText}>{errors.multa}</Text>}
+        </View>
 
-      {/* Multa */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Adicionar Multas</Text>
-          <Text style={styles.sectionSubtitle}>Cobrança única</Text>
+        {/* Juros */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Juros ao Dia</Text>
+            <Text style={styles.sectionSubtitle}>Cobrança por dia de atraso</Text>
+          </View>
+          <View style={styles.inputContainer}>
+            <TextInput
+              value={chargeData.juros}
+              onChangeText={(text) => updateChargeData({ juros: text })}
+              style={[styles.input, chargeData.juros && styles.filledInput]}
+              keyboardType="numeric"
+              error={!!errors.juros}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={chargeData.juros ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: chargeData.juros ? '600' : '400' } } }}
+              right={<TextInput.Affix text="%" />}
+            />
+          </View>
+          {errors.juros && <Text style={styles.errorText}>{errors.juros}</Text>}
         </View>
-        <View style={styles.inputContainer}>
-          <TextInput
-            value={chargeData.multa}
-            onChangeText={(text) => updateChargeData({ multa: text })}
-            style={styles.input}
-            mode="outlined"
-            keyboardType="numeric"
-            error={!!errors.multa}
-            outlineColor="#E0E0E0"
-            activeOutlineColor="#000"
-            right={<TextInput.Affix text="%" />}
-          />
-        </View>
-        {errors.multa && <Text style={styles.errorText}>{errors.multa}</Text>}
-      </View>
-
-      {/* Juros */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Adicionar Juros</Text>
-          <Text style={styles.sectionSubtitle}>Cobrança diária</Text>
-        </View>
-        <View style={styles.inputContainer}>
-          <TextInput
-            value={chargeData.juros}
-            onChangeText={(text) => updateChargeData({ juros: text })}
-            style={styles.input}
-            mode="outlined"
-            keyboardType="numeric"
-            error={!!errors.juros}
-            outlineColor="#E0E0E0"
-            activeOutlineColor="#000"
-            right={<TextInput.Affix text="%" />}
-          />
-        </View>
-        {errors.juros && <Text style={styles.errorText}>{errors.juros}</Text>}
       </View>
 
       {/* Next Button */}
-      <Button
-        mode="contained"
-        onPress={handleNext}
-        style={styles.nextButton}
-        labelStyle={styles.nextButtonLabel}
-      >
-        PRÓXIMO
-      </Button>
-    </View>
+      <View style={styles.buttonContainer}>
+        <Button
+          mode="contained"
+          onPress={handleNext}
+          style={styles.button}
+          contentStyle={styles.buttonContent}
+          labelStyle={styles.buttonLabel}
+        >
+          PRÓXIMO
+        </Button>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
   },
   header: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    marginBottom: 20,
+    paddingTop: 12,
   },
   backButton: {
     padding: 8,
+    marginLeft: -8,
   },
-  title: {
-    fontSize: 24,
+  backText: {
+    color: '#E91E63',
+    fontSize: 32,
+    fontWeight: '300',
+  },
+  headerContent: {
+    paddingHorizontal: 4,
+  },
+  headerTitle: {
+    fontSize: 28,
     fontWeight: 'bold',
-    marginHorizontal: 24,
-    marginTop: 24,
     color: '#000',
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    marginHorizontal: 24,
-    marginTop: 8,
-    marginBottom: 32,
-    color: '#000',
+    color: '#666',
+    opacity: 0.8,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 24,
   },
   section: {
-    marginHorizontal: 24,
-    marginBottom: 24,
+    marginBottom: 32,
   },
   sectionHeader: {
     marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#000',
   },
   sectionSubtitle: {
@@ -170,25 +198,36 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F5F5F5',
+    height: 56,
+    borderRadius: 8,
+    fontSize: 16,
+  },
+  filledInput: {
+    backgroundColor: '#F5F5F5',
   },
   errorText: {
     color: '#B00020',
     fontSize: 12,
-    marginTop: 4,
-    marginLeft: 8,
+    marginTop: 8,
+    marginLeft: 4,
   },
-  nextButton: {
-    backgroundColor: '#000',
-    marginHorizontal: 24,
-    marginTop: 'auto',
-    marginBottom: 24,
-    borderRadius: 25,
+  buttonContainer: {
+    padding: 20,
+    paddingBottom: 32,
   },
-  nextButtonLabel: {
+  button: {
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
+  },
+  buttonContent: {
+    height: 56,
+  },
+  buttonLabel: {
     fontSize: 16,
-    color: '#FFF',
     fontWeight: 'bold',
+    letterSpacing: 0.5,
+    color: '#FFF',
   },
 });
 

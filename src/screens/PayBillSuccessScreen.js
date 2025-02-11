@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Animated, Easing } from 'react-native';
 import { Text } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
@@ -8,8 +8,34 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function PayBillSuccessScreen({ route }) {
   const navigation = useNavigation();
   const { paymentData } = route.params;
+  const scaleValue = new Animated.Value(0);
+  const opacityValue = new Animated.Value(0);
 
   useEffect(() => {
+    // Animar o ícone de check
+    Animated.sequence([
+      Animated.timing(scaleValue, {
+        toValue: 1.2,
+        duration: 200,
+        easing: Easing.easeOut,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleValue, {
+        toValue: 1,
+        duration: 150,
+        easing: Easing.easeIn,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Animar o texto
+    Animated.timing(opacityValue, {
+      toValue: 1,
+      duration: 300,
+      delay: 200,
+      useNativeDriver: true,
+    }).start();
+
     // Aguarda 2 segundos e navega para o comprovante
     const timer = setTimeout(() => {
       navigation.replace('PayBillReceipt', { paymentData });
@@ -21,10 +47,26 @@ export default function PayBillSuccessScreen({ route }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <View style={styles.iconContainer}>
-          <MaterialCommunityIcons name="check" size={40} color="#9ACD32" />
-        </View>
-        <Text style={styles.text}>Pronto,{'\n'}validação concluída!</Text>
+        <Animated.View 
+          style={[
+            styles.iconContainer,
+            {
+              transform: [{ scale: scaleValue }],
+            },
+          ]}
+        >
+          <MaterialCommunityIcons
+            name="check"
+            size={48}
+            color="#fff"
+          />
+        </Animated.View>
+        <Animated.View style={{ opacity: opacityValue }}>
+          <Text style={styles.text}>
+            Pagamento{'\n'}
+            realizado com sucesso!
+          </Text>
+        </Animated.View>
       </View>
     </SafeAreaView>
   );
@@ -33,7 +75,7 @@ export default function PayBillSuccessScreen({ route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#4D4D4D',
+    backgroundColor: '#682145',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -41,18 +83,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 32,
   },
   text: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 24,
+    fontWeight: 'bold',
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 32,
   },
 });

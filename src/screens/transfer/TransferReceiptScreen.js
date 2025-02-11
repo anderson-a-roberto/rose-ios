@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Share } from 'react-native';
-import { Text, Button } from 'react-native-paper';
+import { View, StyleSheet, TouchableOpacity, Share, StatusBar } from 'react-native';
+import { Text, Button, Divider } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
@@ -34,30 +34,36 @@ const TransferReceiptScreen = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={() => navigation.navigate('Dashboard2')}
-        >
-          <MaterialCommunityIcons name="close" size={24} color="#000" />
-        </TouchableOpacity>
+        <View style={styles.headerTop}>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => navigation.navigate('Dashboard2')}
+          >
+            <Text style={styles.closeText}>×</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Comprovante</Text>
+          <Text style={styles.subtitle}>Transferência realizada</Text>
+        </View>
       </View>
-
-      <Text style={styles.title}>Meu Comprovante</Text>
 
       {/* Receipt Content */}
       <View style={styles.content}>
-        <Text style={styles.transactionType}>Transferência Realizada</Text>
         <Text style={styles.amount}>{formatCurrency(transferData.valor)}</Text>
 
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Status</Text>
-          <Text style={styles.infoValue}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Status</Text>
+          <Text style={styles.sectionValue}>
             {transferData.status === 'PROCESSING' ? 'Em processamento' : 'Concluída'}
           </Text>
         </View>
+
+        <Divider style={styles.divider} />
 
         {/* Destination Section */}
         <View style={styles.section}>
@@ -72,14 +78,27 @@ const TransferReceiptScreen = ({ navigation, route }) => {
           </View>
         </View>
 
-        {/* Share Button */}
+        <Divider style={styles.divider} />
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Data e hora</Text>
+          <Text style={styles.sectionValue}>
+            {new Date(transferData.data).toLocaleString('pt-BR')}
+          </Text>
+        </View>
+      </View>
+
+      {/* Share Button */}
+      <View style={styles.buttonContainer}>
         <Button
           mode="contained"
           onPress={handleShare}
-          style={styles.shareButton}
+          style={styles.button}
+          contentStyle={styles.buttonContent}
+          labelStyle={styles.buttonLabel}
           icon="share-variant"
         >
-          <Text style={styles.shareButtonLabel}>Compartilhar comprovante</Text>
+          Compartilhar comprovante
         </Button>
       </View>
     </SafeAreaView>
@@ -87,77 +106,104 @@ const TransferReceiptScreen = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF'
   },
   header: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+  },
+  headerTop: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    padding: 16,
+    alignItems: 'center',
+    paddingTop: 12,
   },
   closeButton: {
     padding: 8,
+    marginRight: -8,
   },
-  title: {
-    fontSize: 24,
+  closeText: {
+    color: '#E91E63',
+    fontSize: 40,
+    fontWeight: '300',
+    lineHeight: 40,
+  },
+  headerContent: {
+    paddingHorizontal: 4,
+  },
+  headerTitle: {
+    fontSize: 28,
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 24,
     color: '#000',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    opacity: 0.8,
   },
   content: {
     flex: 1,
-    padding: 16,
-  },
-  transactionType: {
-    fontSize: 16,
-    color: '#000',
-    textAlign: 'center',
-    marginBottom: 8,
+    paddingHorizontal: 24,
   },
   amount: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#682145',
+    color: '#000',
     textAlign: 'center',
-    marginBottom: 32,
+    marginVertical: 32,
   },
   section: {
-    marginBottom: 24,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
-    padding: 16,
+    marginVertical: 16,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '500',
-    marginBottom: 16,
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+  },
+  sectionValue: {
+    fontSize: 16,
     color: '#000',
+  },
+  divider: {
+    backgroundColor: '#E0E0E0',
+    height: 1,
+    marginVertical: 16,
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    alignItems: 'center',
+    marginVertical: 4,
   },
   infoLabel: {
     fontSize: 14,
-    color: '#000',
+    color: '#666',
   },
   infoValue: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#000',
     fontWeight: '500',
   },
-  shareButton: {
-    marginTop: 'auto',
-    backgroundColor: '#000',
-    borderRadius: 25,
+  buttonContainer: {
+    padding: 20,
+    paddingBottom: 32,
   },
-  shareButtonLabel: {
+  button: {
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
+  },
+  buttonContent: {
+    height: 56,
+  },
+  buttonLabel: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    letterSpacing: 0.5,
+    color: '#FFF',
   },
 });
 

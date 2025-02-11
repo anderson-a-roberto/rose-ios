@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { Text, TextInput, Button } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { View, StyleSheet, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
+import { Text, TextInput, Button, Switch } from 'react-native-paper';
 import { useCharge } from '../../contexts/ChargeContext';
 import MaskInput from 'react-native-mask-input';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+const formatCEP = (text) => {
+  const numbers = text.replace(/\D/g, '');
+  return numbers.replace(/(\d{5})(\d{3})/, '$1-$2');
+};
+
 const CreateChargeAddressScreen = ({ navigation }) => {
   const { chargeData, updateChargeData } = useCharge();
   const [errors, setErrors] = useState({});
+  const [noNumber, setNoNumber] = useState(false);
 
   const validateFields = () => {
     const newErrors = {};
@@ -22,7 +27,7 @@ const CreateChargeAddressScreen = ({ navigation }) => {
     if (!chargeData.cidade) newErrors.cidade = 'Cidade é obrigatória';
     if (!chargeData.estado) newErrors.estado = 'Estado é obrigatório';
     if (!chargeData.rua) newErrors.rua = 'Endereço é obrigatório';
-    if (!chargeData.numero) newErrors.numero = 'Número é obrigatório';
+    if (!chargeData.numero && !noNumber) newErrors.numero = 'Número é obrigatório';
     if (!chargeData.bairro) newErrors.bairro = 'Bairro é obrigatório';
 
     setErrors(newErrors);
@@ -31,8 +36,13 @@ const CreateChargeAddressScreen = ({ navigation }) => {
 
   const handleNext = () => {
     if (validateFields()) {
-      navigation.navigate('CreateChargeConfirmData');
+      navigation.navigate('CreateChargeAmount');
     }
+  };
+
+  const handleNoNumber = () => {
+    setNoNumber(!noNumber);
+    updateChargeData({ numero: !noNumber ? 'S/N' : '' });
   };
 
   const fetchAddress = async (cep) => {
@@ -57,206 +67,264 @@ const CreateChargeAddressScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
+      
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
-        </TouchableOpacity>
+        <View style={styles.headerTop}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backText}>‹</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Endereço</Text>
+          <Text style={styles.subtitle}>
+            Insira o endereço do contato para gerar a cobrança
+          </Text>
+        </View>
       </View>
 
-      <ScrollView style={styles.scrollView}>
-        <Text style={styles.title}>Endereço</Text>
-        <Text style={styles.subtitle}>Insira o endereço do contato</Text>
-
-        {/* Form */}
+      {/* Content */}
+      <ScrollView 
+        style={styles.content}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
         <View style={styles.form}>
+          <Text style={styles.label}>CEP</Text>
           <TextInput
-            label="CEP"
             value={chargeData.cep}
             onChangeText={(text) => {
-              updateChargeData({ cep: text });
+              const formatted = formatCEP(text);
+              updateChargeData({ cep: formatted });
               if (text.replace(/\D/g, '').length === 8) {
                 fetchAddress(text);
               }
             }}
-            style={styles.input}
-            mode="outlined"
+            style={[styles.input, chargeData.cep && styles.filledInput]}
             error={!!errors.cep}
-            outlineColor="#E0E0E0"
-            activeOutlineColor="#000"
-            render={props => (
-              <MaskInput
-                {...props}
-                mask={[/\d/, /\d/, /\d/, /\d/, /\d/, '-', /\d/, /\d/, /\d/]}
-              />
-            )}
+            keyboardType="numeric"
+            maxLength={9}
+            placeholder="00000-000"
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            textColor={chargeData.cep ? '#000' : '#999'}
+            theme={{ fonts: { regular: { fontWeight: chargeData.cep ? '600' : '400' } } }}
           />
           {errors.cep && <Text style={styles.errorText}>{errors.cep}</Text>}
 
-          <View style={styles.row}>
-            <TextInput
-              label="Cidade"
-              value={chargeData.cidade}
-              onChangeText={(text) => updateChargeData({ cidade: text })}
-              style={[styles.input, styles.flex1, { marginRight: 8 }]}
-              mode="outlined"
-              error={!!errors.cidade}
-              outlineColor="#E0E0E0"
-              activeOutlineColor="#000"
-            />
-            <TextInput
-              label="Estado"
-              value={chargeData.estado}
-              onChangeText={(text) => updateChargeData({ estado: text.toUpperCase() })}
-              style={[styles.input, { width: 80 }]}
-              mode="outlined"
-              error={!!errors.estado}
-              outlineColor="#E0E0E0"
-              activeOutlineColor="#000"
-              maxLength={2}
-            />
-          </View>
-          {(errors.cidade || errors.estado) && (
-            <Text style={styles.errorText}>{errors.cidade || errors.estado}</Text>
-          )}
-
+          <Text style={styles.label}>Cidade</Text>
           <TextInput
-            label="Endereço"
+            value={chargeData.cidade}
+            onChangeText={(text) => updateChargeData({ cidade: text })}
+            style={[styles.input, chargeData.cidade && styles.filledInput]}
+            error={!!errors.cidade}
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            textColor={chargeData.cidade ? '#000' : '#999'}
+            theme={{ fonts: { regular: { fontWeight: chargeData.cidade ? '600' : '400' } } }}
+          />
+          {errors.cidade && <Text style={styles.errorText}>{errors.cidade}</Text>}
+
+          <Text style={styles.label}>Estado</Text>
+          <TextInput
+            value={chargeData.estado}
+            onChangeText={(text) => updateChargeData({ estado: text.toUpperCase() })}
+            style={[styles.input, chargeData.estado && styles.filledInput]}
+            error={!!errors.estado}
+            maxLength={2}
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            textColor={chargeData.estado ? '#000' : '#999'}
+            theme={{ fonts: { regular: { fontWeight: chargeData.estado ? '600' : '400' } } }}
+          />
+          {errors.estado && <Text style={styles.errorText}>{errors.estado}</Text>}
+
+          <Text style={styles.label}>Endereço</Text>
+          <TextInput
             value={chargeData.rua}
             onChangeText={(text) => updateChargeData({ rua: text })}
-            style={styles.input}
-            mode="outlined"
+            style={[styles.input, chargeData.rua && styles.filledInput]}
             error={!!errors.rua}
-            outlineColor="#E0E0E0"
-            activeOutlineColor="#000"
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            textColor={chargeData.rua ? '#000' : '#999'}
+            theme={{ fonts: { regular: { fontWeight: chargeData.rua ? '600' : '400' } } }}
           />
           {errors.rua && <Text style={styles.errorText}>{errors.rua}</Text>}
 
+          <Text style={styles.label}>Número</Text>
           <TextInput
-            label="Número"
             value={chargeData.numero}
             onChangeText={(text) => updateChargeData({ numero: text })}
-            style={styles.input}
-            mode="outlined"
+            style={[styles.input, chargeData.numero && styles.filledInput]}
             error={!!errors.numero}
-            outlineColor="#E0E0E0"
-            activeOutlineColor="#000"
             keyboardType="numeric"
+            disabled={noNumber}
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            textColor={chargeData.numero ? '#000' : '#999'}
+            theme={{ fonts: { regular: { fontWeight: chargeData.numero ? '600' : '400' } } }}
           />
+          <View style={styles.switchContainer}>
+            <Switch
+              value={noNumber}
+              onValueChange={handleNoNumber}
+              color="#E91E63"
+            />
+            <Text style={styles.switchLabel}>SEM NÚMERO</Text>
+          </View>
           {errors.numero && <Text style={styles.errorText}>{errors.numero}</Text>}
 
+          <Text style={styles.label}>Bairro</Text>
           <TextInput
-            label="Bairro"
             value={chargeData.bairro}
             onChangeText={(text) => updateChargeData({ bairro: text })}
-            style={styles.input}
-            mode="outlined"
+            style={[styles.input, chargeData.bairro && styles.filledInput]}
             error={!!errors.bairro}
-            outlineColor="#E0E0E0"
-            activeOutlineColor="#000"
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            textColor={chargeData.bairro ? '#000' : '#999'}
+            theme={{ fonts: { regular: { fontWeight: chargeData.bairro ? '600' : '400' } } }}
           />
           {errors.bairro && <Text style={styles.errorText}>{errors.bairro}</Text>}
 
+          <Text style={styles.label}>Complemento</Text>
           <TextInput
-            label="Complemento"
             value={chargeData.complemento}
             onChangeText={(text) => updateChargeData({ complemento: text })}
-            style={styles.input}
-            mode="outlined"
-            outlineColor="#E0E0E0"
-            activeOutlineColor="#000"
+            style={[styles.input, chargeData.complemento && styles.filledInput]}
+            placeholder="Opcional"
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            textColor={chargeData.complemento ? '#000' : '#999'}
+            theme={{ fonts: { regular: { fontWeight: chargeData.complemento ? '600' : '400' } } }}
           />
-          <Text style={styles.optionalText}>Opcional</Text>
         </View>
       </ScrollView>
 
       {/* Next Button */}
-      <Button
-        mode="contained"
-        onPress={handleNext}
-        style={styles.nextButton}
-        labelStyle={styles.nextButtonLabel}
-      >
-        PRÓXIMO
-      </Button>
+      <View style={styles.buttonContainer}>
+        <Button
+          mode="contained"
+          onPress={handleNext}
+          style={styles.button}
+          contentStyle={styles.buttonContent}
+          labelStyle={styles.buttonLabel}
+          disabled={!chargeData.cep || !chargeData.cidade || !chargeData.estado || !chargeData.rua || (!chargeData.numero && !noNumber) || !chargeData.bairro}
+        >
+          PRÓXIMO
+        </Button>
+      </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
-  },
-  scrollView: {
-    flex: 1,
+    backgroundColor: '#FFF',
   },
   header: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    marginBottom: 20,
+    paddingTop: 12,
   },
   backButton: {
     padding: 8,
+    marginLeft: -8,
   },
-  title: {
-    fontSize: 24,
+  backText: {
+    color: '#E91E63',
+    fontSize: 32,
+    fontWeight: '300',
+  },
+  headerContent: {
+    paddingHorizontal: 4,
+  },
+  headerTitle: {
+    fontSize: 28,
     fontWeight: 'bold',
-    marginHorizontal: 24,
-    marginTop: 24,
     color: '#000',
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    marginHorizontal: 24,
-    marginTop: 8,
-    marginBottom: 32,
-    color: '#000',
+    color: '#666',
+    opacity: 0.8,
+  },
+  content: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   form: {
     paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingTop: 24,
+  },
+  label: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+    marginLeft: 4,
   },
   input: {
-    marginBottom: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#F5F5F5',
+    height: 56,
+    borderRadius: 8,
+    marginBottom: 24,
+    fontSize: 16,
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  flex1: {
-    flex: 1,
+  filledInput: {
+    backgroundColor: '#F5F5F5',
   },
   errorText: {
     color: '#B00020',
     fontSize: 12,
-    marginTop: -12,
-    marginBottom: 16,
-    marginLeft: 8,
+    marginTop: -20,
+    marginBottom: 24,
+    marginLeft: 4,
   },
-  optionalText: {
-    color: '#666',
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: -16,
+    marginBottom: 24,
+  },
+  switchLabel: {
+    marginLeft: 8,
     fontSize: 12,
-    marginTop: -12,
-    marginBottom: 16,
-    marginLeft: 8,
+    color: '#666',
+    fontWeight: '500',
   },
-  nextButton: {
-    backgroundColor: '#000',
-    marginHorizontal: 24,
-    marginVertical: 24,
-    borderRadius: 25,
+  buttonContainer: {
+    padding: 20,
+    paddingBottom: 32,
   },
-  nextButtonLabel: {
+  button: {
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
+  },
+  buttonContent: {
+    height: 56,
+  },
+  buttonLabel: {
     fontSize: 16,
-    color: '#FFF',
     fontWeight: 'bold',
+    letterSpacing: 0.5,
+    color: '#FFF',
   },
 });
 

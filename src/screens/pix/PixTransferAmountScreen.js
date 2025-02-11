@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text, Button, TextInput } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -39,123 +39,164 @@ const PixTransferAmountScreen = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Transferência</Text>
-        <View style={{ width: 24 }} />
-      </View>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.backText}>‹</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Transferência</Text>
+            <Text style={styles.subtitle}>Quanto você quer transferir?</Text>
+          </View>
+        </View>
 
-      <Text style={styles.subtitle}>Quanto você quer transferir?</Text>
+        <View style={styles.content}>
+          {/* Available Balance */}
+          <Text style={styles.balanceLabel}>
+            Saldo Disponível: <Text style={styles.balanceValue}>{formatBalance(balance)}</Text>
+          </Text>
 
-      {/* Available Balance */}
-      <Text style={styles.balanceLabel}>
-        Saldo Disponível: {formatBalance(balance)}
-      </Text>
+          {/* Amount Input */}
+          <View style={styles.amountContainer}>
+            <Text style={styles.currencySymbol}>R$</Text>
+            <TextInput
+              mode="flat"
+              value={amount}
+              onChangeText={handleAmountChange}
+              keyboardType="numeric"
+              style={styles.amountInput}
+              placeholder="0,00"
+              placeholderTextColor="#666"
+              autoFocus={true}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              selectionColor="#E91E63"
+            />
+          </View>
+        </View>
 
-      {/* Amount Input */}
-      <View style={styles.amountContainer}>
-        <Text style={styles.currencySymbol}>R$</Text>
-        <TextInput
-          mode="flat"
-          value={amount}
-          onChangeText={handleAmountChange}
-          keyboardType="numeric"
-          style={styles.amountInput}
-          placeholder="0,00"
-          placeholderTextColor="#666"
-          autoFocus={true}
-        />
-      </View>
-
-      {/* Continue Button */}
-      <View style={styles.footer}>
-        <Button
-          mode="contained"
-          onPress={handleContinue}
-          style={styles.continueButton}
-          labelStyle={styles.continueButtonLabel}
-          disabled={!amount || amount === '0,00'}
-        >
-          CONTINUAR
-        </Button>
-      </View>
+        {/* Continue Button */}
+        <View style={styles.buttonContainer}>
+          <Button
+            mode="contained"
+            onPress={handleContinue}
+            style={styles.button}
+            contentStyle={styles.buttonContent}
+            labelStyle={styles.buttonLabel}
+            disabled={!amount || amount === '0,00'}
+          >
+            CONTINUAR
+          </Button>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFF'
+  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF'
   },
   header: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 16,
+    marginBottom: 20,
+    paddingTop: 12,
   },
   backButton: {
     padding: 8,
+    marginLeft: -8,
+  },
+  backText: {
+    color: '#E91E63',
+    fontSize: 32,
+    fontWeight: '300',
+  },
+  headerContent: {
+    paddingHorizontal: 4,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#000',
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#000',
-    paddingHorizontal: 16,
-    marginBottom: 8,
+    color: '#666',
+    opacity: 0.8,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
   },
   balanceLabel: {
     fontSize: 14,
-    color: '#000',
-    paddingHorizontal: 16,
+    color: '#666',
     marginBottom: 32,
+  },
+  balanceValue: {
+    color: '#000',
+    fontWeight: '500',
   },
   amountContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 32,
-    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    paddingBottom: 8,
   },
   currencySymbol: {
     fontSize: 32,
-    fontWeight: 'bold',
     color: '#000',
     marginRight: 8,
+    fontWeight: '500',
   },
   amountInput: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    backgroundColor: 'transparent',
     flex: 1,
-    textAlign: 'left',
+    fontSize: 32,
+    backgroundColor: 'transparent',
+    paddingHorizontal: 0,
     color: '#000',
-    height: 80,
+    height: 56,
   },
-  footer: {
-    padding: 16,
+  buttonContainer: {
+    padding: 20,
     paddingBottom: 32,
   },
-  continueButton: {
-    backgroundColor: '#1B1B1B',
-    borderRadius: 25,
+  button: {
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
   },
-  continueButtonLabel: {
+  buttonContent: {
+    height: 56,
+  },
+  buttonLabel: {
     fontSize: 16,
-    color: '#fff',
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+    color: '#FFF',
   },
 });
 

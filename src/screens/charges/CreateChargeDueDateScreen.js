@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
 import { Text, Button } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useCharge } from '../../contexts/ChargeContext';
 import MaskInput from 'react-native-mask-input';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const CreateChargeDueDateScreen = ({ navigation }) => {
   const { chargeData, updateChargeData } = useCharge();
@@ -46,129 +46,181 @@ const CreateChargeDueDateScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
+      
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
-        </TouchableOpacity>
+        <View style={styles.headerTop}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backText}>‹</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Data de Vencimento</Text>
+          <Text style={styles.subtitle}>
+            Defina a data limite para o pagamento do boleto
+          </Text>
+        </View>
       </View>
 
-      <Text style={styles.title}>Data de Vencimento</Text>
-      <Text style={styles.subtitle}>Qual a data de vencimento do boleto?</Text>
+      {/* Content */}
+      <View style={styles.content}>
+        {/* Data Input */}
+        <View style={styles.inputSection}>
+          <Text style={styles.inputLabel}>Data de Vencimento</Text>
+          <View style={styles.inputContainer}>
+            <MaskInput
+              value={chargeData.dataVencimento}
+              onChangeText={handleDateChange}
+              style={[
+                styles.input,
+                chargeData.dataVencimento && styles.filledInput,
+                errors.dataVencimento && styles.inputError
+              ]}
+              keyboardType="numeric"
+              placeholder="00/00/0000"
+              placeholderTextColor="#999"
+              mask={[/\d/, /\d/, '/', /\d/, /\d/, '/', /\d/, /\d/, /\d/, /\d/]}
+            />
+          </View>
+          {errors.dataVencimento && (
+            <Text style={styles.errorText}>{errors.dataVencimento}</Text>
+          )}
+        </View>
 
-      {/* Data Input */}
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Data de Vencimento</Text>
-        <MaskInput
-          value={chargeData.dataVencimento}
-          onChangeText={handleDateChange}
-          style={[
-            styles.input,
-            errors.dataVencimento && styles.inputError
-          ]}
-          keyboardType="numeric"
-          placeholder="00/00/0000"
-          placeholderTextColor="#666"
-          mask={[/\d/, /\d/, '/', /\d/, /\d/, '/', /\d/, /\d/, /\d/, /\d/]}
-        />
-        {errors.dataVencimento && (
-          <Text style={styles.errorText}>{errors.dataVencimento}</Text>
-        )}
+        {/* Processing Info */}
+        <View style={styles.infoContainer}>
+          <Text style={styles.processingInfo}>
+            O boleto leva até 3 dias úteis para ser processado
+          </Text>
+        </View>
       </View>
-
-      {/* Processing Info */}
-      <Text style={styles.processingInfo}>
-        O boleto leva 3 dias úteis para ser processado
-      </Text>
 
       {/* Next Button */}
-      <Button
-        mode="contained"
-        onPress={handleNext}
-        style={styles.nextButton}
-        labelStyle={styles.nextButtonLabel}
-      >
-        PRÓXIMO
-      </Button>
-    </View>
+      <View style={styles.buttonContainer}>
+        <Button
+          mode="contained"
+          onPress={handleNext}
+          style={styles.button}
+          contentStyle={styles.buttonContent}
+          labelStyle={styles.buttonLabel}
+        >
+          PRÓXIMO
+        </Button>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
   },
   header: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    marginBottom: 20,
+    paddingTop: 12,
   },
   backButton: {
     padding: 8,
+    marginLeft: -8,
   },
-  title: {
-    fontSize: 24,
+  backText: {
+    color: '#E91E63',
+    fontSize: 32,
+    fontWeight: '300',
+  },
+  headerContent: {
+    paddingHorizontal: 4,
+  },
+  headerTitle: {
+    fontSize: 28,
     fontWeight: 'bold',
-    marginHorizontal: 24,
-    marginTop: 24,
-    color: '#000',
-  },
-  subtitle: {
-    fontSize: 16,
-    marginHorizontal: 24,
-    marginTop: 8,
-    marginBottom: 32,
-    color: '#000',
-  },
-  inputContainer: {
-    marginHorizontal: 24,
-  },
-  inputLabel: {
-    fontSize: 14,
     color: '#000',
     marginBottom: 8,
   },
-  input: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 4,
-    paddingHorizontal: 12,
+  subtitle: {
     fontSize: 16,
+    color: '#666',
+    opacity: 0.8,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+  },
+  inputSection: {
+    marginBottom: 24,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
     color: '#000',
+    marginBottom: 16,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  input: {
+    flex: 1,
+    height: 56,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: '#999',
+    fontWeight: '400',
+  },
+  filledInput: {
+    color: '#000',
+    fontWeight: '600',
   },
   inputError: {
+    borderWidth: 1,
     borderColor: '#B00020',
   },
   errorText: {
     color: '#B00020',
     fontSize: 12,
-    marginTop: 4,
+    marginTop: 8,
     marginLeft: 4,
+  },
+  infoContainer: {
+    marginTop: 16,
   },
   processingInfo: {
     fontSize: 14,
     color: '#666',
-    marginHorizontal: 24,
-    marginTop: 16,
+    opacity: 0.8,
   },
-  nextButton: {
-    backgroundColor: '#000',
-    marginHorizontal: 24,
-    marginTop: 'auto',
-    marginBottom: 24,
-    borderRadius: 25,
+  buttonContainer: {
+    padding: 20,
+    paddingBottom: 32,
   },
-  nextButtonLabel: {
+  button: {
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
+  },
+  buttonContent: {
+    height: 56,
+  },
+  buttonLabel: {
     fontSize: 16,
-    color: '#FFF',
     fontWeight: 'bold',
+    letterSpacing: 0.5,
+    color: '#FFF',
   },
 });
 

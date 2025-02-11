@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Text, TextInput } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
+import { Text, TextInput, Button } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../config/supabase';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,7 +14,7 @@ export default function PayBillScreen({ route }) {
 
   const handleContinue = async () => {
     if (!barCode) {
-      // TODO: Mostrar erro no campo
+      setError('Digite o código de barras');
       return;
     }
 
@@ -56,122 +55,177 @@ export default function PayBillScreen({ route }) {
     }
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.navigate('Dashboard2')}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={20} color="black" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Pagar Conta</Text>
-      </View>
-
-      {/* Content */}
-      <View style={styles.content}>
-        <Text style={styles.subtitle}>Digite o código de barras do seu boleto</Text>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Código de Barras</Text>
-          <TextInput
-            value={barCode}
-            onChangeText={setBarCode}
-            style={styles.input}
-            placeholder="00000000 00000 00000 00000000 0 00000000000000"
-            keyboardType="numeric"
-            error={!!error}
-            disabled={loading}
-          />
-          {error && <Text style={styles.errorText}>{error}</Text>}
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#E91E63" />
+          <Text style={styles.loadingText}>Consultando boleto...</Text>
         </View>
-      </View>
+      </SafeAreaView>
+    );
+  }
 
-      {/* Footer */}
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[
-            styles.continueButton,
-            (loading || !barCode) && styles.continueButtonDisabled
-          ]}
-          onPress={handleContinue}
-          disabled={loading || !barCode}
-        >
-          {loading ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.continueButtonText}>CONTINUAR</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+  return (
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.navigate('Dashboard2')}
+            >
+              <Text style={styles.backText}>‹</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Pagar Conta</Text>
+            <Text style={styles.subtitle}>Digite o código de barras do seu boleto</Text>
+          </View>
+        </View>
+
+        {/* Content */}
+        <View style={styles.content}>
+          <View style={styles.inputContainer}>
+            <TextInput
+              value={barCode}
+              onChangeText={(text) => {
+                setBarCode(text);
+                setError(null);
+              }}
+              mode="flat"
+              style={styles.input}
+              placeholder="00000000 00000 00000 00000000 0 00000000000000"
+              placeholderTextColor="#666"
+              keyboardType="numeric"
+              error={!!error}
+              disabled={loading}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              selectionColor="#E91E63"
+            />
+          </View>
+
+          {error ? (
+            <Text style={styles.errorText}>{error}</Text>
+          ) : null}
+        </View>
+
+        {/* Continue Button */}
+        <View style={styles.buttonContainer}>
+          <Button
+            mode="contained"
+            onPress={handleContinue}
+            style={styles.button}
+            contentStyle={styles.buttonContent}
+            labelStyle={styles.buttonLabel}
+            disabled={loading || !barCode}
+          >
+            CONTINUAR
+          </Button>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFF'
+  },
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFF'
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    padding: 24,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
   },
   header: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    marginBottom: 20,
+    paddingTop: 12,
   },
   backButton: {
-    marginRight: 16,
+    padding: 8,
+    marginLeft: -8,
+  },
+  backText: {
+    color: '#E91E63',
+    fontSize: 32,
+    fontWeight: '300',
+  },
+  headerContent: {
+    paddingHorizontal: 4,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '500',
-  },
-  content: {
-    flex: 1,
-    padding: 16,
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666666',
-    marginBottom: 24,
+    color: '#666',
+    opacity: 0.8,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
   },
   inputContainer: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: 14,
-    color: '#666666',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#FFFFFF',
-    height: 48,
+    backgroundColor: 'transparent',
+    fontSize: 16,
+    paddingHorizontal: 0,
+    height: 56,
   },
   errorText: {
+    color: '#B00020',
     fontSize: 14,
-    color: '#FF0000',
-    marginBottom: 8,
+    marginTop: 8,
   },
-  footer: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E5E5',
+  buttonContainer: {
+    padding: 20,
+    paddingBottom: 32,
   },
-  continueButton: {
-    backgroundColor: '#1D1D1D',
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+  button: {
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
   },
-  continueButtonDisabled: {
-    opacity: 0.5,
+  buttonContent: {
+    height: 56,
   },
-  continueButtonText: {
-    color: '#FFFFFF',
+  buttonLabel: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+    color: '#FFF',
   },
 });

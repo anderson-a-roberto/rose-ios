@@ -10,7 +10,7 @@ export default function PayBillLoadingScreen() {
         <View style={styles.iconContainer}>
           <ActivityIndicator size="large" color="#FFFFFF" />
         </View>
-        <Text style={styles.text}>Aguarde,{'\n'}estamos validando...</Text>
+        <Text style={styles.text}>Aguarde,{'\n'}estamos processando...</Text>
       </View>
     </SafeAreaView>
   );
@@ -19,7 +19,7 @@ export default function PayBillLoadingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#4D4D4D',
+    backgroundColor: '#682145',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -27,18 +27,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 32,
   },
   text: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 24,
+    fontWeight: 'bold',
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 32,
   },
 });

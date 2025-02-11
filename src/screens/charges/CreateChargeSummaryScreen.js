@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
 import { Text, Button } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useCharge } from '../../contexts/ChargeContext';
 import { supabase } from '../../config/supabase';
 import useDashboard from '../../hooks/useDashboard';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const DataItem = ({ label, value }) => (
+const DataItem = ({ label, value, valueStyle }) => (
   <View style={styles.dataItem}>
     <Text style={styles.dataLabel}>{label}</Text>
-    <Text style={styles.dataValue}>{value}</Text>
+    <Text style={[styles.dataValue, valueStyle]}>{value}</Text>
   </View>
 );
 
@@ -88,23 +88,31 @@ const CreateChargeSummaryScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
+      
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
-        </TouchableOpacity>
+        <View style={styles.headerTop}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backText}>‹</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Resumo da Cobrança</Text>
+          <Text style={styles.subtitle}>
+            Confira os dados antes de gerar o boleto
+          </Text>
+        </View>
       </View>
 
       <ScrollView style={styles.scrollView}>
-        <Text style={styles.title}>Resumo</Text>
-        <Text style={styles.subtitle}>Dados do Boleto</Text>
-
         {/* Valor da Cobrança */}
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Valores</Text>
           <DataItem 
             label="Valor da Cobrança" 
             value={formatCurrency(chargeData.valor)}
@@ -119,15 +127,16 @@ const CreateChargeSummaryScreen = ({ navigation }) => {
         {/* Multa e Juros */}
         {(chargeData.multa !== '0' || chargeData.juros !== '0') && (
           <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Multas e Juros</Text>
             {chargeData.multa !== '0' && (
               <DataItem 
-                label="Multa" 
+                label="Multa por Atraso" 
                 value={`${chargeData.multa}%`}
               />
             )}
             {chargeData.juros !== '0' && (
               <DataItem 
-                label="Juros" 
+                label="Juros ao Dia" 
                 value={`${chargeData.juros}%`}
               />
             )}
@@ -136,103 +145,148 @@ const CreateChargeSummaryScreen = ({ navigation }) => {
 
         {/* Datas */}
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Data</Text>
           <DataItem 
             label="Data de Vencimento" 
             value={chargeData.dataVencimento}
           />
         </View>
 
-        {/* Assunto */}
+        {/* Dados do Pagador */}
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Dados do Pagador</Text>
           <DataItem 
-            label="Assunto do Boleto" 
-            value="Cobrança"
+            label="Nome" 
+            value={chargeData.nome}
+          />
+          <DataItem 
+            label="CPF/CNPJ" 
+            value={chargeData.cpfCnpj}
+          />
+          <DataItem 
+            label="Endereço" 
+            value={`${chargeData.rua}, ${chargeData.numero}${chargeData.complemento ? ` - ${chargeData.complemento}` : ''}`}
+          />
+          <DataItem 
+            label="Bairro" 
+            value={chargeData.bairro}
+          />
+          <DataItem 
+            label="Cidade/UF" 
+            value={`${chargeData.cidade}/${chargeData.estado}`}
+          />
+          <DataItem 
+            label="CEP" 
+            value={chargeData.cep}
           />
         </View>
       </ScrollView>
 
       {/* Confirm Button */}
-      <Button
-        mode="contained"
-        onPress={handleConfirm}
-        style={styles.confirmButton}
-        labelStyle={styles.confirmButtonLabel}
-        loading={loading}
-        disabled={loading}
-      >
-        CONFIRMAR
-      </Button>
-    </View>
+      <View style={styles.buttonContainer}>
+        <Button
+          mode="contained"
+          onPress={handleConfirm}
+          style={styles.button}
+          contentStyle={styles.buttonContent}
+          labelStyle={styles.buttonLabel}
+          loading={loading}
+          disabled={loading}
+        >
+          GERAR BOLETO
+        </Button>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
+  },
+  header: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingTop: 12,
+  },
+  backButton: {
+    padding: 8,
+    marginLeft: -8,
+  },
+  backText: {
+    color: '#E91E63',
+    fontSize: 32,
+    fontWeight: '300',
+  },
+  headerContent: {
+    paddingHorizontal: 4,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    opacity: 0.8,
   },
   scrollView: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  backButton: {
-    padding: 8,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginHorizontal: 24,
-    marginTop: 24,
-    color: '#000',
-  },
-  subtitle: {
-    fontSize: 16,
-    marginHorizontal: 24,
-    marginTop: 8,
-    marginBottom: 32,
-    color: '#000',
-  },
   section: {
-    marginHorizontal: 24,
+    marginHorizontal: 20,
     marginBottom: 24,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    elevation: 2,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    padding: 20,
   },
-  dataItem: {
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
     marginBottom: 16,
   },
   dataItem: {
     marginBottom: 16,
   },
   dataLabel: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#666',
     marginBottom: 4,
   },
   dataValue: {
     fontSize: 16,
     color: '#000',
+    fontWeight: '500',
   },
   taxValue: {
-    color: '#FF0000',
+    color: '#E91E63',
   },
-  confirmButton: {
-    backgroundColor: '#000',
-    marginHorizontal: 24,
-    marginVertical: 24,
-    borderRadius: 25,
+  buttonContainer: {
+    padding: 20,
+    paddingBottom: 32,
   },
-  confirmButtonLabel: {
+  button: {
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
+  },
+  buttonContent: {
+    height: 56,
+  },
+  buttonLabel: {
     fontSize: 16,
-    color: '#FFF',
     fontWeight: 'bold',
+    letterSpacing: 0.5,
+    color: '#FFF',
   },
 });
 

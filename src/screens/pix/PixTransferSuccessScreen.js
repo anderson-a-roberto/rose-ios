@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, StatusBar } from 'react-native';
 import { Text } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 const PixTransferSuccessScreen = ({ navigation, route }) => {
@@ -16,48 +17,63 @@ const PixTransferSuccessScreen = ({ navigation, route }) => {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.iconContainer}>
-          <MaterialCommunityIcons
-            name="check"
-            size={40}
-            color="#fff"
-          />
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar backgroundColor="#682145" barStyle="light-content" />
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <View style={styles.iconContainer}>
+            <MaterialCommunityIcons
+              name="check-circle-outline"
+              size={40}
+              color="#FFF"
+            />
+          </View>
+          <Text style={styles.title}>Transferência realizada!</Text>
+          <Text style={styles.subtitle}>
+            Sua transferência foi concluída com sucesso
+          </Text>
         </View>
-        <Text style={styles.text}>
-          Pronto,{'\n'}
-          validação concluída!
-        </Text>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#682145'
+  },
   container: {
     flex: 1,
-    backgroundColor: '#4D4D4D',
+    backgroundColor: '#682145',
     justifyContent: 'center',
     alignItems: 'center',
   },
   content: {
     alignItems: 'center',
+    paddingHorizontal: 32,
   },
   iconContainer: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
   },
-  text: {
+  title: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 24,
+    fontWeight: 'bold',
     textAlign: 'center',
-    lineHeight: 24,
+    marginBottom: 8,
+  },
+  subtitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    textAlign: 'center',
+    opacity: 0.8,
   },
 });
 

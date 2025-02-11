@@ -35,28 +35,15 @@ const PixKeyItem = ({ keyId, type, value, onCopy, onDelete }) => {
           <MaterialCommunityIcons name="content-copy" size={16} color="#682145" />
         </TouchableOpacity>
         
-        <Menu
-          visible={menuVisible}
-          onDismiss={() => setMenuVisible(false)}
-          anchor={
-            <TouchableOpacity onPress={() => setMenuVisible(true)}>
-              <MaterialCommunityIcons name="dots-vertical" size={24} color="#E91E63" />
-            </TouchableOpacity>
-          }
+        <TouchableOpacity 
+          style={styles.deleteButton} 
+          onPress={() => {
+            onDelete();
+            setMenuVisible(false);
+          }}
         >
-          <Menu.Item
-            onPress={() => {
-              setMenuVisible(false);
-              onDelete();
-            }}
-            title="Excluir"
-            titleStyle={{ color: '#FFF' }}
-            style={{ backgroundColor: '#E91E63' }}
-            leadingIcon={({ size, color }) => (
-              <MaterialCommunityIcons name="delete-outline" size={size} color="#FFF" />
-            )}
-          />
-        </Menu>
+          <Text style={styles.deleteButtonText}>Excluir</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -439,6 +426,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#682145',
     marginRight: 8,
+    fontWeight: '500',
+  },
+  deleteButton: {
+    backgroundColor: '#E91E63',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 4,
+    marginLeft: 8,
+  },
+  deleteButtonText: {
+    color: '#FFF',
+    fontSize: 14,
     fontWeight: '500',
   },
   buttonContainer: {

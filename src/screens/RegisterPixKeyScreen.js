@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
 import { Text, Button, Portal, Modal, RadioButton } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { supabase } from '../config/supabase';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const KEY_TYPES = {
   EVP: "Chave Aleatória",
@@ -10,6 +11,19 @@ const KEY_TYPES = {
   EMAIL: "Email",
   PHONE: "Telefone",
   CNPJ: "CNPJ"
+};
+
+const getIconForKeyType = (key) => {
+  switch (key) {
+    case 'EVP':
+      return 'key-variant';
+    case 'PHONE':
+      return 'phone';
+    case 'EMAIL':
+      return 'email';
+    default:
+      return 'key-variant';
+  }
 };
 
 const RegisterPixKeyScreen = ({ navigation }) => {
@@ -100,15 +114,13 @@ const RegisterPixKeyScreen = ({ navigation }) => {
         <View style={styles.modalContent}>
           <MaterialCommunityIcons
             name="check-circle"
-            size={48}
-            color="#4CAF50"
-            style={styles.successIcon}
+            size={64}
+            color="#E91E63"
+            style={styles.modalIcon}
           />
-          <Text style={styles.modalTitle}>Chave cadastrada com sucesso!</Text>
-          <Text style={styles.modalText}>
-            Agora usuários do PIX podem fazer transações para você informando essa chave, 
-            sem a necessidade de digitar seus dados. Esses usuários terão visibilidade 
-            dos dados atrelado a essa chave.
+          <Text style={styles.modalTitle}>Chave PIX cadastrada!</Text>
+          <Text style={styles.modalSubtitle}>
+            {successData?.keyType}: {successData?.key}
           </Text>
           <Button
             mode="contained"
@@ -116,10 +128,11 @@ const RegisterPixKeyScreen = ({ navigation }) => {
               setShowSuccessModal(false);
               navigation.navigate('PixKeysScreen', { updatePixKeys: true });
             }}
-            style={styles.okButton}
-            labelStyle={styles.okButtonLabel}
+            style={styles.modalButton}
+            contentStyle={styles.buttonContent}
+            labelStyle={styles.buttonLabel}
           >
-            OK
+            VOLTAR PARA MINHAS CHAVES
           </Button>
         </View>
       </Modal>
@@ -127,155 +140,194 @@ const RegisterPixKeyScreen = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={20} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Cadastrar Chave</Text>
-        <View style={{ width: 40 }} />
-      </View>
-
-      <Text style={styles.subtitle}>
-        Selecione uma chave para cadastrar. Cada chave só poderá ser vinculada a uma única conta.
-      </Text>
-
-      <ScrollView style={styles.content}>
-        <Text style={styles.sectionTitle}>Selecione a chave desejada</Text>
-
-        <RadioButton.Group
-          onValueChange={value => setSelectedType(value)}
-          value={selectedType}
-        >
-          {Object.entries(KEY_TYPES).map(([type, label]) => (
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
             <TouchableOpacity
-              key={type}
-              style={styles.radioItem}
-              onPress={() => setSelectedType(type)}
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
             >
-              <View style={styles.radioLeft}>
-                <MaterialCommunityIcons
-                  name={type === 'EVP' ? 'key-variant' : type === 'PHONE' ? 'phone' : 'email'}
-                  size={24}
-                  color="#682145"
-                />
-                <View style={styles.radioTextContainer}>
-                  <Text style={styles.radioLabel}>{label}</Text>
-                  {type === 'CPF' && <Text style={styles.radioValue}>123.456.789-10</Text>}
-                  {type === 'PHONE' && <Text style={styles.radioValue}>(11) 91234-5678</Text>}
-                  {type === 'EMAIL' && <Text style={styles.radioValue}>exemplo@email.com</Text>}
-                </View>
-              </View>
-              <RadioButton value={type} color="#682145" />
+              <Text style={styles.backText}>‹</Text>
             </TouchableOpacity>
-          ))}
-        </RadioButton.Group>
+          </View>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Cadastrar Chave</Text>
+            <Text style={styles.subtitle}>
+              Selecione uma chave para cadastrar. Cada chave só poderá ser vinculada a uma única conta.
+            </Text>
+          </View>
+        </View>
 
-        {error && <Text style={styles.errorText}>{error}</Text>}
-      </ScrollView>
+        <ScrollView style={styles.content}>
+          <Text style={styles.sectionTitle}>Selecione a chave desejada</Text>
+          
+          {/* Key Type Options */}
+          <View style={styles.optionsContainer}>
+            {Object.entries(KEY_TYPES).map(([key, label]) => (
+              <TouchableOpacity
+                key={key}
+                style={[
+                  styles.optionCard,
+                  selectedType === key && styles.optionCardSelected
+                ]}
+                onPress={() => setSelectedType(key)}
+              >
+                <View style={styles.optionContent}>
+                  <MaterialCommunityIcons
+                    name={getIconForKeyType(key)}
+                    size={24}
+                    color="#E91E63"
+                  />
+                  <View style={styles.optionTextContainer}>
+                    <Text style={styles.optionTitle}>{label}</Text>
+                    {key === 'EVP' && (
+                      <Text style={styles.optionSubtitle}>
+                        Chave aleatória gerada automaticamente
+                      </Text>
+                    )}
+                  </View>
+                </View>
+                <RadioButton
+                  value={key}
+                  status={selectedType === key ? 'checked' : 'unchecked'}
+                  onPress={() => setSelectedType(key)}
+                  color="#E91E63"
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
 
-      {/* Footer Buttons */}
-      <View style={styles.footer}>
-        <Button
-          mode="contained"
-          onPress={handleCreateKey}
-          style={styles.registerButton}
-          labelStyle={styles.registerButtonLabel}
-          loading={loading}
-          disabled={loading || !selectedType}
-        >
-          CADASTRAR CHAVE
-        </Button>
+        {/* Register Button */}
+        <View style={styles.buttonContainer}>
+          <Button
+            mode="contained"
+            onPress={handleCreateKey}
+            style={styles.button}
+            contentStyle={styles.buttonContent}
+            labelStyle={styles.buttonLabel}
+            loading={loading}
+            disabled={loading || !selectedType}
+          >
+            CADASTRAR CHAVE
+          </Button>
+          {error && <Text style={styles.errorText}>{error}</Text>}
+        </View>
       </View>
-
+      
+      {/* Success Modal */}
       <SuccessModal />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFF'
+  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF'
   },
   header: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 16,
+    marginBottom: 20,
+    paddingTop: 12,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 8,
+    marginLeft: -8,
+  },
+  backText: {
+    color: '#E91E63',
+    fontSize: 32,
+    fontWeight: '300',
+  },
+  headerContent: {
+    paddingHorizontal: 4,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#000',
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#000',
-    paddingHorizontal: 16,
-    marginBottom: 24,
+    fontSize: 16,
+    color: '#666',
+    opacity: 0.8,
+    lineHeight: 24,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 16,
+    padding: 20,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '500',
     color: '#000',
     marginBottom: 16,
   },
-  radioItem: {
+  optionsContainer: {
+    gap: 12,
+  },
+  optionCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 8,
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
-  radioLeft: {
+  optionCardSelected: {
+    borderColor: '#E91E63',
+  },
+  optionContent: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
-  radioTextContainer: {
+  optionTextContainer: {
     marginLeft: 16,
+    flex: 1,
   },
-  radioLabel: {
+  optionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
     color: '#000',
     marginBottom: 4,
   },
-  radioValue: {
+  optionSubtitle: {
     fontSize: 14,
-    color: '#000',
+    color: '#666',
   },
-  footer: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+  buttonContainer: {
+    padding: 20,
+    paddingBottom: 32,
   },
-  registerButton: {
-    backgroundColor: '#1B1B1B',
-    borderRadius: 25,
+  button: {
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
   },
-  registerButtonLabel: {
-    fontSize: 14,
+  buttonContent: {
+    height: 56,
+  },
+  buttonLabel: {
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#fff',
+    letterSpacing: 0.5,
+    color: '#FFF',
   },
   errorText: {
     color: '#F44336',
@@ -284,39 +336,34 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     backgroundColor: 'white',
+    padding: 24,
     margin: 20,
-    borderRadius: 8,
-    padding: 20,
+    borderRadius: 12,
+    elevation: 4,
   },
   modalContent: {
     alignItems: 'center',
   },
-  successIcon: {
+  modalIcon: {
     marginBottom: 16,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#000',
-    marginBottom: 16,
+    marginBottom: 8,
     textAlign: 'center',
   },
-  modalText: {
-    fontSize: 14,
-    color: '#000',
-    textAlign: 'center',
+  modalSubtitle: {
+    fontSize: 16,
+    color: '#666',
     marginBottom: 24,
-    lineHeight: 20,
+    textAlign: 'center',
   },
-  okButton: {
-    backgroundColor: '#1B1B1B',
+  modalButton: {
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
     width: '100%',
-    borderRadius: 25,
-  },
-  okButtonLabel: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#fff',
   },
 });
 

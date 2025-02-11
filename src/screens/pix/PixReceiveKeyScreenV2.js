@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
 import { Text, Button, Portal, Modal, RadioButton, ActivityIndicator } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -98,12 +98,13 @@ const PixReceiveKeyScreenV2 = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
+          <Text style={styles.backButtonText}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Chaves</Text>
         <View style={{ width: 24 }} />
@@ -121,7 +122,7 @@ const PixReceiveKeyScreenV2 = ({ navigation, route }) => {
         >
           {keys.map((key) => (
             <TouchableOpacity
-              key={key.key} // Usando key.key como identificador único
+              key={key.key}
               style={styles.keyItem}
               onPress={() => {
                 setSelectedKey(key);
@@ -129,13 +130,17 @@ const PixReceiveKeyScreenV2 = ({ navigation, route }) => {
             >
               <View style={styles.keyContent}>
                 <View style={styles.keyIconContainer}>
-                  <MaterialCommunityIcons name="key-variant" size={24} color="#682145" />
+                  <MaterialCommunityIcons name="key-variant" size={24} color="#E91E63" />
                 </View>
                 <View style={styles.keyInfo}>
                   <Text style={styles.keyType}>{KEY_TYPES[key.keyType] || key.keyType}</Text>
                   <Text style={styles.keyValue}>{key.key}</Text>
                 </View>
-                <RadioButton value={key.key} />
+                <RadioButton 
+                  value={key.key}
+                  color="#E91E63"
+                  uncheckedColor="#E91E63"
+                />
               </View>
             </TouchableOpacity>
           ))}
@@ -172,12 +177,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 16,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 24,
   },
   backButton: {
     padding: 8,
+    marginLeft: -8,
+  },
+  backButtonText: {
+    color: '#E91E63',
+    fontSize: 32,
+    fontWeight: '300',
   },
   headerTitle: {
     fontSize: 20,
@@ -186,13 +197,13 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#000',
-    paddingHorizontal: 16,
+    color: '#666',
+    paddingHorizontal: 24,
     marginBottom: 24,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 24,
   },
   keyItem: {
     marginBottom: 12,
@@ -233,19 +244,22 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
   },
   footer: {
-    padding: 16,
+    padding: 24,
     paddingBottom: 32,
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
   },
   continueButton: {
-    backgroundColor: '#1B1B1B',
-    borderRadius: 25,
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
+    height: 56,
   },
   continueButtonLabel: {
     fontSize: 16,
-    color: '#fff',
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+    color: '#FFF',
   },
 });
 
