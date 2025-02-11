@@ -2,12 +2,17 @@ import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { Text, TextInput } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { supabase } from '../config/supabase';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useOnboarding } from '../contexts/OnboardingContext';
 
 export default function LoginScreen() {
   const navigation = useNavigation();
-  const [document, setDocument] = useState('');
+  const route = useRoute();
+  const { documentNumber: initialDocument, accountType } = route.params;
+  const { updateOnboardingData } = useOnboarding();
+  const [document, setDocument] = useState(initialDocument || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -50,7 +55,16 @@ export default function LoginScreen() {
 
       // Se não encontrar registro, vai para cadastro
       if (!kycData) {
-        navigation.navigate('AccountType');
+        // Atualiza o contexto com os dados iniciais
+        updateOnboardingData({
+          accountType,
+          ...(accountType === 'PF' 
+            ? { personalData: { documentNumber: numbers } }
+            : { companyData: { documentNumber: numbers } }
+          ),
+        });
+        
+        navigation.navigate('OnboardingTerms');
         return;
       }
 
@@ -65,7 +79,16 @@ export default function LoginScreen() {
         navigation.navigate('OnboardingSuccess');
       } else {
         // Se nenhuma condição for atendida, vai para cadastro
-        navigation.navigate('AccountType');
+        // Atualiza o contexto com os dados iniciais
+        updateOnboardingData({
+          accountType,
+          ...(accountType === 'PF' 
+            ? { personalData: { documentNumber: numbers } }
+            : { companyData: { documentNumber: numbers } }
+          ),
+        });
+        
+        navigation.navigate('OnboardingTerms');
       }
 
     } catch (error) {
@@ -77,7 +100,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -122,7 +145,7 @@ export default function LoginScreen() {
           <Text style={styles.continueButtonText}>CONTINUAR</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

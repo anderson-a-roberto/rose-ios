@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   expirationText: {
     fontSize: 12,
     color: '#666',
-  },
+    },
 });
 
 export default QRCodeDynamicDialog;

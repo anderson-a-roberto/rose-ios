@@ -4,6 +4,9 @@ const OnboardingContext = createContext({});
 
 const initialState = {
   accountType: null, // 'PF' ou 'PJ'
+  // Termos e condições
+  termsAccepted: false,
+  termsAcceptedAt: null,
   // Dados PF
   personalData: {
     documentNumber: '',
@@ -88,6 +91,14 @@ export function OnboardingProvider({ children }) {
 
   const resetOnboardingData = () => {
     setOnboardingData(initialState);
+  };
+
+  const setTermsAccepted = () => {
+    setOnboardingData((prevData) => ({
+      ...prevData,
+      termsAccepted: true,
+      termsAcceptedAt: new Date().toISOString(),
+    }));
   };
 
   const addPartner = (partner) => {
@@ -189,6 +200,7 @@ export function OnboardingProvider({ children }) {
         onboardingData,
         updateOnboardingData,
         resetOnboardingData,
+        setTermsAccepted,
         addPartner,
         updatePartner,
         removePartner,

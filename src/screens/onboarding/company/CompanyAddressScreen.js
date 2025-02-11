@@ -1,220 +1,282 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Text, TextInput } from 'react-native-paper';
+import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { Text, TextInput, Button } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useOnboarding } from '../../../contexts/OnboardingContext';
 import TestDataButton from '../../../components/TestDataButton';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+const formatCEP = (text) => {
+  const numbers = text.replace(/\D/g, '');
+  return numbers.replace(/(\d{5})(\d{3})/, '$1-$2');
+};
 
 const CompanyAddressScreen = ({ navigation }) => {
   const { onboardingData, updateOnboardingData } = useOnboarding();
+  const { companyAddress } = onboardingData;
+
   const [formData, setFormData] = useState({
-    postalCode: '',
-    street: '',
-    number: '',
-    addressComplement: '',
-    neighborhood: '',
-    city: '',
-    state: '',
+    postalCode: companyAddress?.postalCode || '',
+    street: companyAddress?.street || '',
+    number: companyAddress?.number || '',
+    complement: companyAddress?.complement || '',
+    neighborhood: companyAddress?.neighborhood || '',
+    city: companyAddress?.city || '',
+    state: companyAddress?.state || '',
   });
 
-  const formatCEP = (text) => {
-    const numbers = text.replace(/\D/g, '');
-    return numbers.replace(/^(\d{5})(\d{3})/, '$1-$2');
-  };
-
-  const handleCEPChange = (text) => {
-    const formattedCEP = formatCEP(text);
-    setFormData(prev => ({ ...prev, postalCode: formattedCEP }));
-
-    // Se o CEP estiver completo, buscar endereço
-    if (text.replace(/\D/g, '').length === 8) {
-      fetchAddress(text.replace(/\D/g, ''));
+  const handleChange = (field, value) => {
+    let formattedValue = value;
+    
+    if (field === 'postalCode') {
+      formattedValue = formatCEP(value);
     }
-  };
-
-  const fetchAddress = async (cep) => {
-    try {
-      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-      const data = await response.json();
-
-      if (!data.erro) {
-        setFormData(prev => ({
-          ...prev,
-          street: data.logradouro,
-          neighborhood: data.bairro,
-          city: data.localidade,
-          state: data.uf,
-        }));
-      }
-    } catch (error) {
-      console.error('Erro ao buscar CEP:', error);
-    }
+    
+    setFormData(prev => ({
+      ...prev,
+      [field]: formattedValue
+    }));
   };
 
   const handleNext = () => {
     updateOnboardingData({
-      companyAddress: formData
+      companyAddress: {
+        ...formData,
+        postalCode: formData.postalCode.replace(/\D/g, '')
+      }
     });
-    navigation.navigate('PartnerData');
-  };
-
-  const isFormValid = () => {
-    const requiredFields = ['postalCode', 'street', 'number', 'neighborhood', 'city', 'state'];
-    return requiredFields.every(field => formData[field].trim() !== '');
+    navigation.navigate('CompanyContact');
   };
 
   return (
-    <View style={styles.container}>
-      <TestDataButton 
-        section="companyAddress" 
-        onFill={(data) => setFormData(data)}
-      />
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.headerTop}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <MaterialCommunityIcons name="chevron-left" size={32} color="#E91E63" style={{ marginTop: -4 }} />
+          </TouchableOpacity>
+          <TestDataButton 
+            section="companyAddress" 
+            onFill={(data) => setFormData(data)}
+          />
+        </View>
 
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Endereço da empresa</Text>
+          <Text style={styles.headerSubtitle}>
+            Informe o endereço da sede da sua empresa
+          </Text>
+        </View>
+
+        {/* Form */}
+        <View style={styles.form}>
+          <TextInput
+            label="CEP"
+            value={formData.postalCode}
+            onChangeText={(value) => handleChange('postalCode', value)}
+            mode="flat"
+            style={styles.input}
+            contentStyle={styles.inputContent}
+            theme={{
+              colors: {
+                primary: '#E91E63',
+                error: '#B00020',
+                onSurfaceVariant: '#666666',
+                onSurface: '#000000',
+              },
+            }}
+            keyboardType="numeric"
+            maxLength={9}
+          />
+
+          <TextInput
+            label="Rua/Avenida"
+            value={formData.street}
+            onChangeText={(value) => handleChange('street', value)}
+            mode="flat"
+            style={styles.input}
+            contentStyle={styles.inputContent}
+            theme={{
+              colors: {
+                primary: '#E91E63',
+                error: '#B00020',
+                onSurfaceVariant: '#666666',
+                onSurface: '#000000',
+              },
+            }}
+          />
+
+          <TextInput
+            label="Número"
+            value={formData.number}
+            onChangeText={(value) => handleChange('number', value)}
+            mode="flat"
+            style={styles.input}
+            contentStyle={styles.inputContent}
+            theme={{
+              colors: {
+                primary: '#E91E63',
+                error: '#B00020',
+                onSurfaceVariant: '#666666',
+                onSurface: '#000000',
+              },
+            }}
+            keyboardType="numeric"
+          />
+
+          <TextInput
+            label="Complemento (opcional)"
+            value={formData.complement}
+            onChangeText={(value) => handleChange('complement', value)}
+            mode="flat"
+            style={styles.input}
+            contentStyle={styles.inputContent}
+            theme={{
+              colors: {
+                primary: '#E91E63',
+                error: '#B00020',
+                onSurfaceVariant: '#666666',
+                onSurface: '#000000',
+              },
+            }}
+          />
+
+          <TextInput
+            label="Bairro"
+            value={formData.neighborhood}
+            onChangeText={(value) => handleChange('neighborhood', value)}
+            mode="flat"
+            style={styles.input}
+            contentStyle={styles.inputContent}
+            theme={{
+              colors: {
+                primary: '#E91E63',
+                error: '#B00020',
+                onSurfaceVariant: '#666666',
+                onSurface: '#000000',
+              },
+            }}
+          />
+
+          <TextInput
+            label="Cidade"
+            value={formData.city}
+            onChangeText={(value) => handleChange('city', value)}
+            mode="flat"
+            style={styles.input}
+            contentStyle={styles.inputContent}
+            theme={{
+              colors: {
+                primary: '#E91E63',
+                error: '#B00020',
+                onSurfaceVariant: '#666666',
+                onSurface: '#000000',
+              },
+            }}
+          />
+
+          <TextInput
+            label="Estado"
+            value={formData.state}
+            onChangeText={(value) => handleChange('state', value)}
+            mode="flat"
+            style={styles.input}
+            contentStyle={styles.inputContent}
+            theme={{
+              colors: {
+                primary: '#E91E63',
+                error: '#B00020',
+                onSurfaceVariant: '#666666',
+                onSurface: '#000000',
+              },
+            }}
+          />
+        </View>
+      </ScrollView>
+
+      {/* Footer */}
+      <View style={styles.footer}>
+        <Button
+          mode="contained"
+          onPress={handleNext}
+          style={styles.continueButton}
+          labelStyle={styles.continueButtonLabel}
         >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
-        </TouchableOpacity>
+          CONTINUAR
+        </Button>
       </View>
-
-      <Text style={styles.title}>Endereço da Empresa</Text>
-      <Text style={styles.subtitle}>
-        Informe o endereço comercial da sua empresa
-      </Text>
-
-      <View style={styles.inputContainer}>
-        <TextInput
-          label="CEP"
-          value={formData.postalCode}
-          onChangeText={handleCEPChange}
-          mode="outlined"
-          style={styles.input}
-          keyboardType="numeric"
-          maxLength={9}
-        />
-
-        <TextInput
-          label="Rua"
-          value={formData.street}
-          onChangeText={(value) => setFormData(prev => ({ ...prev, street: value }))}
-          mode="outlined"
-          style={styles.input}
-        />
-
-        <TextInput
-          label="Número"
-          value={formData.number}
-          onChangeText={(value) => setFormData(prev => ({ ...prev, number: value }))}
-          mode="outlined"
-          style={styles.input}
-          keyboardType="numeric"
-        />
-
-        <TextInput
-          label="Complemento (opcional)"
-          value={formData.addressComplement}
-          onChangeText={(value) => setFormData(prev => ({ ...prev, addressComplement: value }))}
-          mode="outlined"
-          style={styles.input}
-        />
-
-        <TextInput
-          label="Bairro"
-          value={formData.neighborhood}
-          onChangeText={(value) => setFormData(prev => ({ ...prev, neighborhood: value }))}
-          mode="outlined"
-          style={styles.input}
-        />
-
-        <TextInput
-          label="Cidade"
-          value={formData.city}
-          onChangeText={(value) => setFormData(prev => ({ ...prev, city: value }))}
-          mode="outlined"
-          style={styles.input}
-        />
-
-        <TextInput
-          label="Estado"
-          value={formData.state}
-          onChangeText={(value) => setFormData(prev => ({ ...prev, state: value }))}
-          mode="outlined"
-          style={styles.input}
-          maxLength={2}
-          autoCapitalize="characters"
-        />
-      </View>
-
-      <TouchableOpacity
-        style={[
-          styles.continueButton,
-          !isFormValid() && styles.continueButtonDisabled
-        ]}
-        onPress={handleNext}
-        disabled={!isFormValid()}
-      >
-        <Text style={styles.continueButtonText}>CONTINUAR</Text>
-      </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFF',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
   },
-  header: {
+  headerTop: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 16,
+    paddingTop: 8,
   },
   backButton: {
-    padding: 8,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginHorizontal: 24,
-    marginTop: 24,
+  headerContent: {
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '600',
     color: '#000',
+    marginBottom: 8,
   },
-  subtitle: {
+  headerSubtitle: {
     fontSize: 16,
-    marginHorizontal: 24,
-    marginTop: 8,
-    marginBottom: 32,
-    color: '#666',
+    lineHeight: 24,
+    color: '#666666',
   },
-  inputContainer: {
-    flex: 1,
+  form: {
     paddingHorizontal: 24,
   },
   input: {
     marginBottom: 16,
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
+  },
+  inputContent: {
+    fontFamily: 'Roboto',
+    fontSize: 16,
+    backgroundColor: 'transparent',
+    paddingHorizontal: 0,
+  },
+  footer: {
+    padding: 24,
+    backgroundColor: '#FFF',
   },
   continueButton: {
-    backgroundColor: '#000',
-    marginHorizontal: 24,
-    marginBottom: 24,
-    height: 56,
-    borderRadius: 28,
+    height: 48,
     justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#E91E63',
+    borderRadius: 4,
   },
-  continueButtonDisabled: {
-    backgroundColor: '#CCCCCC',
-  },
-  continueButtonText: {
-    color: '#FFF',
+  continueButtonLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '500',
+    color: '#FFF',
   },
 });
 

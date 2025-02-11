@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { Text, TextInput, Button, Checkbox } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { View, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Platform } from 'react-native';
+import { Text, TextInput, Button, Switch } from 'react-native-paper';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import TestDataButton from '../../components/TestDataButton';
 
@@ -61,167 +60,289 @@ const AddressScreen = ({ navigation }) => {
     navigation.navigate('OnboardingPassword');
   };
 
+  const isFormValid = () => {
+    return (
+      formData.postalCode &&
+      formData.street &&
+      (formData.number || formData.noNumber) &&
+      formData.neighborhood &&
+      formData.city &&
+      formData.state
+    );
+  };
+
   return (
-    <View style={styles.container}>
-      <TestDataButton 
-        section="addressData" 
-        onFill={(data) => setFormData({ ...data, noNumber: false })}
-      />
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={styles.scrollView}>
-        <Text style={styles.title}>Meu Endereço</Text>
-        <Text style={styles.subtitle}>
-          Falta pouco! Agora precisaremos das informações do seu endereço
-        </Text>
-
-        <TextInput
-          label="CEP"
-          value={formData.postalCode}
-          onChangeText={(value) => handleChange('postalCode', value)}
-          mode="outlined"
-          style={styles.input}
-          keyboardType="numeric"
-          maxLength={9}
-        />
-
-        <TextInput
-          label="Cidade"
-          value={formData.city}
-          onChangeText={(value) => handleChange('city', value)}
-          mode="outlined"
-          style={styles.input}
-        />
-
-        <TextInput
-          label="Estado"
-          value={formData.state}
-          onChangeText={(value) => handleChange('state', value)}
-          mode="outlined"
-          style={styles.input}
-        />
-
-        <TextInput
-          label="Endereço"
-          value={formData.street}
-          onChangeText={(value) => handleChange('street', value)}
-          mode="outlined"
-          style={styles.input}
-        />
-
-        <TextInput
-          label="Número"
-          value={formData.number}
-          onChangeText={(value) => handleChange('number', value)}
-          mode="outlined"
-          style={styles.input}
-          editable={!formData.noNumber}
-        />
-
-        <View style={styles.checkboxContainer}>
-          <Checkbox
-            status={formData.noNumber ? 'checked' : 'unchecked'}
-            onPress={handleNoNumber}
-            color="#000"
-          />
-          <Text style={styles.checkboxLabel}>SEM NÚMERO</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.backText}>‹</Text>
+            </TouchableOpacity>
+            <TestDataButton 
+              section="addressData" 
+              onFill={(data) => setFormData({ ...data, noNumber: false })}
+              style={styles.testButton}
+            />
+          </View>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Meu Endereço</Text>
+            <Text style={styles.subtitle}>
+              Falta pouco! Agora precisaremos das informações do seu endereço
+            </Text>
+          </View>
         </View>
 
-        <TextInput
-          label="Bairro"
-          value={formData.neighborhood}
-          onChangeText={(value) => handleChange('neighborhood', value)}
-          mode="outlined"
-          style={styles.input}
-        />
+        {/* Content */}
+        <ScrollView 
+          style={styles.content} 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
+          <View style={styles.form}>
+            <Text style={styles.label}>CEP</Text>
+            <TextInput
+              value={formData.postalCode}
+              onChangeText={(value) => handleChange('postalCode', value)}
+              style={[styles.input, formData.postalCode && styles.filledInput]}
+              keyboardType="numeric"
+              maxLength={9}
+              placeholder="00000-000"
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={formData.postalCode ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: formData.postalCode ? '600' : '400' } } }}
+            />
 
-        <TextInput
-          label="Complemento"
-          value={formData.complement}
-          onChangeText={(value) => handleChange('complement', value)}
-          mode="outlined"
-          style={styles.input}
-        />
-      </ScrollView>
+            <Text style={styles.label}>Cidade</Text>
+            <TextInput
+              value={formData.city}
+              onChangeText={(value) => handleChange('city', value)}
+              style={[styles.input, styles.disabledInput]}
+              disabled
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor="#999"
+              theme={{ fonts: { regular: { fontWeight: '600' } } }}
+            />
 
-      <Button
-        mode="contained"
-        onPress={handleNext}
-        style={styles.continueButton}
-        labelStyle={styles.continueButtonLabel}
-      >
-        CONTINUAR
-      </Button>
-    </View>
+            <Text style={styles.label}>Estado</Text>
+            <TextInput
+              value={formData.state}
+              onChangeText={(value) => handleChange('state', value)}
+              style={[styles.input, styles.disabledInput]}
+              disabled
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor="#999"
+              theme={{ fonts: { regular: { fontWeight: '600' } } }}
+            />
+
+            <Text style={styles.label}>Endereço</Text>
+            <TextInput
+              value={formData.street}
+              onChangeText={(value) => handleChange('street', value)}
+              style={[styles.input, formData.street && styles.filledInput]}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={formData.street ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: formData.street ? '600' : '400' } } }}
+            />
+
+            <Text style={styles.label}>Número</Text>
+            <TextInput
+              value={formData.number}
+              onChangeText={(value) => handleChange('number', value)}
+              style={[styles.input, formData.number && styles.filledInput]}
+              keyboardType="numeric"
+              disabled={formData.noNumber}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={formData.number ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: formData.number ? '600' : '400' } } }}
+            />
+            <View style={styles.switchContainer}>
+              <Switch
+                value={formData.noNumber}
+                onValueChange={handleNoNumber}
+                color="#E91E63"
+              />
+              <Text style={styles.switchLabel}>SEM NÚMERO</Text>
+            </View>
+
+            <Text style={styles.label}>Bairro</Text>
+            <TextInput
+              value={formData.neighborhood}
+              onChangeText={(value) => handleChange('neighborhood', value)}
+              style={[styles.input, formData.neighborhood && styles.filledInput]}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={formData.neighborhood ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: formData.neighborhood ? '600' : '400' } } }}
+            />
+
+            <Text style={styles.label}>Complemento</Text>
+            <TextInput
+              value={formData.complement}
+              onChangeText={(value) => handleChange('complement', value)}
+              style={[styles.input, formData.complement && styles.filledInput]}
+              placeholder="Opcional"
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={formData.complement ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: formData.complement ? '600' : '400' } } }}
+            />
+          </View>
+        </ScrollView>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Button
+            mode="contained"
+            onPress={handleNext}
+            style={styles.continueButton}
+            labelStyle={styles.continueButtonLabel}
+            disabled={!isFormValid()}
+          >
+            Continuar
+          </Button>
+        </View>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFF',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
+    minHeight: '100%',
   },
   header: {
+    paddingTop: Platform.OS === 'ios' ? 8 : 16,
+    paddingBottom: 24,
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 16,
+    marginBottom: 24,
+  },
+  headerContent: {
+    paddingHorizontal: 24,
   },
   backButton: {
-    padding: 8,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  scrollView: {
-    flex: 1,
+  backText: {
+    fontSize: 32,
+    color: '#E91E63',
+    marginTop: -4,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginHorizontal: 24,
-    marginTop: 24,
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '600',
     color: '#000',
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    marginHorizontal: 24,
-    marginTop: 8,
-    marginBottom: 32,
-    color: '#666',
+    color: '#666666',
+    lineHeight: 24,
+  },
+  content: {
+    flex: 1,
+    flexGrow: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  form: {
+    paddingHorizontal: 24,
+    paddingBottom: Platform.OS === 'android' ? 32 : 24,
+  },
+  label: {
+    fontSize: 13,
+    color: '#666666',
+    marginBottom: 8,
+    marginTop: 16,
   },
   input: {
-    marginHorizontal: 24,
-    marginBottom: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
+    fontSize: 16,
+    height: 48,
+    paddingHorizontal: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    width: '100%',
   },
-  checkboxContainer: {
+  filledInput: {
+    fontWeight: '500',
+  },
+  disabledInput: {
+    backgroundColor: '#FFF',
+    borderBottomWidth: 0,
+    opacity: 1,
+  },
+  switchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 24,
+    marginTop: 8,
     marginBottom: 16,
+    width: '100%',
+    position: 'relative',
+    zIndex: 1,
   },
-  checkboxLabel: {
+  switchLabel: {
     marginLeft: 8,
-    fontSize: 14,
-    color: '#666',
+    fontSize: 13,
+    color: '#666666',
+    fontWeight: '500',
+  },
+  footer: {
+    padding: 16,
+    backgroundColor: '#FFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    ...Platform.select({
+      android: {
+        elevation: 8,
+      },
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+    }),
   },
   continueButton: {
-    backgroundColor: '#000',
-    marginHorizontal: 24,
-    marginVertical: 24,
-    borderRadius: 25,
+    height: 48,
+    justifyContent: 'center',
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
   },
   continueButtonLabel: {
     fontSize: 16,
+    fontWeight: '500',
     color: '#FFF',
-    fontWeight: 'bold',
+    textTransform: 'uppercase',
   },
 });
 

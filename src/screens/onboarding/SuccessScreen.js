@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, SafeAreaView, Image } from 'react-native';
 import { Text, Button } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 
 const SuccessScreen = ({ navigation }) => {
@@ -13,40 +12,64 @@ const SuccessScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <MaterialCommunityIcons 
-          name="check-circle-outline" 
-          size={64} 
-          color="#000" 
-          style={styles.icon}
-        />
-        
-        <Text style={styles.title}>Obrigado pelo seu cadastro!</Text>
-        <Text style={styles.message}>
-          Seu cadastro foi recebido com sucesso e está em análise.
-        </Text>
-        <Text style={styles.submessage}>
-          Você receberá uma notificação assim que seu cadastro for aprovado.
-        </Text>
-      </View>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        {/* Logo */}
+        <View style={styles.logoContainer}>
+          <Image
+            source={require('../../assets/images/logo-white.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </View>
 
-      <Button
-        mode="contained"
-        onPress={handleGoToHome}
-        style={styles.button}
-        labelStyle={styles.buttonLabel}
-      >
-        VOLTAR PARA A PÁGINA INICIAL
-      </Button>
-    </View>
+        {/* Content */}
+        <View style={styles.content}>
+          <View style={styles.checkCircle}>
+            <Text style={styles.checkMark}>✓</Text>
+          </View>
+          
+          <Text style={styles.title}>Obrigado pelo seu cadastro!</Text>
+          <Text style={styles.message}>
+            Seu cadastro foi recebido com sucesso e está em análise.
+          </Text>
+          <Text style={styles.submessage}>
+            Você receberá uma notificação assim que seu cadastro for aprovado.
+          </Text>
+        </View>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Button
+            mode="contained"
+            onPress={handleGoToHome}
+            style={styles.button}
+            labelStyle={styles.buttonLabel}
+          >
+            Voltar para a página inicial
+          </Button>
+        </View>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#682145',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+  },
+  logoContainer: {
+    alignItems: 'center',
+    paddingTop: 40,
+    paddingBottom: 20,
+  },
+  logo: {
+    width: 120,
+    height: 40,
   },
   content: {
     flex: 1,
@@ -54,41 +77,54 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
   },
-  icon: {
+  checkCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#FFF',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 24,
+  },
+  checkMark: {
+    color: '#682145',
+    fontSize: 40,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 16,
-    color: '#000',
+    color: '#FFF',
   },
   message: {
     fontSize: 16,
     textAlign: 'center',
-    color: '#666',
+    color: '#FFF',
+    opacity: 0.8,
     lineHeight: 24,
     marginBottom: 8,
   },
   submessage: {
     fontSize: 16,
     textAlign: 'center',
-    color: '#666',
+    color: '#FFF',
+    opacity: 0.8,
     lineHeight: 24,
   },
+  footer: {
+    padding: 16,
+  },
   button: {
-    backgroundColor: '#000',
-    marginHorizontal: 24,
-    marginBottom: 24,
-    borderRadius: 25,
-    height: 48,
+    height: 56,
     justifyContent: 'center',
+    backgroundColor: '#E91E63',
+    borderRadius: 4,
   },
   buttonLabel: {
     fontSize: 16,
-    color: '#FFF',
     fontWeight: 'bold',
+    color: '#FFF',
   },
 });
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, FlatList, Dimensions } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, FlatList, Dimensions, Image } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { supabase } from '../config/supabase';
@@ -15,6 +15,8 @@ import CreateChargeForm from '../components/charges/CreateChargeForm';
 import ManageChargesForm from '../components/charges/ManageChargesForm';
 import useDashboard from '../hooks/useDashboard';
 import ProfileSettingsForm from '../components/profile/ProfileSettingsForm';
+import ReceiptModal from '../components/extrato/receipts/ReceiptModal';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const ActionButton = ({ icon, label, onPress }) => (
   <TouchableOpacity style={styles.actionButton} onPress={onPress}>
@@ -49,8 +51,8 @@ const formatDate = (dateString) => {
   });
 };
 
-const TransactionItem = ({ date, description, value, isPositive, movementType }) => (
-  <View style={styles.transactionItem}>
+const TransactionItem = ({ date, description, value, isPositive, movementType, onPress }) => (
+  <TouchableOpacity style={styles.transactionItem} onPress={onPress}>
     <Text style={[styles.transactionType, { color: isPositive ? '#4CAF50' : '#F44336' }]}>
       {isPositive ? '+' : '-'}
     </Text>
@@ -62,7 +64,7 @@ const TransactionItem = ({ date, description, value, isPositive, movementType })
       </Text>
       <Text style={styles.transactionDate}>{formatDate(date)}</Text>
     </View>
-  </View>
+  </TouchableOpacity>
 );
 
 export default function Dashboard2Screen({ navigation }) {
@@ -84,6 +86,8 @@ export default function Dashboard2Screen({ navigation }) {
   const [showManageCharges, setShowManageCharges] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [userName, setUserName] = useState('Usuário');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
 
   const menuItems = [
     { id: 'pix', icon: 'bank-transfer', label: 'Pix', onPress: () => navigation.navigate('HomePix', { balance }) },
@@ -320,13 +324,18 @@ export default function Dashboard2Screen({ navigation }) {
     }
   };
 
+  const handleTransactionPress = (transaction) => {
+    setSelectedTransaction(transaction);
+    setModalVisible(true);
+  };
+
   useEffect(() => {
     fetchBalance();
     loadUserName();
   }, []);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.userInfo}>
@@ -338,9 +347,11 @@ export default function Dashboard2Screen({ navigation }) {
             <Text style={styles.accountInfo}>Agência: {userAccount?.substring(0, 4) || '----'} | Conta: {userAccount?.substring(4) || '----'}</Text>
           </View>
         </View>
-        <View style={styles.logo}>
-          <Text style={styles.logoText}>nk</Text>
-        </View>
+        <Image 
+          source={require('../assets/images/logo.png')} 
+          style={styles.logo}
+          resizeMode="contain"
+        />
       </View>
 
       {/* Frame do Saldo */}
@@ -412,6 +423,7 @@ export default function Dashboard2Screen({ navigation }) {
                 value={transaction.amount}
                 isPositive={transaction.movementType.includes('CREDIT') || transaction.movementType.includes('IN')}
                 movementType={transaction.movementType}
+                onPress={() => handleTransactionPress(transaction)}
               />
             ))}
           </ScrollView>
@@ -454,7 +466,13 @@ export default function Dashboard2Screen({ navigation }) {
       ) : (
         <></>
       )}
-    </View>
+
+      <ReceiptModal
+        visible={modalVisible}
+        onDismiss={() => setModalVisible(false)}
+        transaction={selectedTransaction}
+      />
+    </SafeAreaView>
   );
 };
 
@@ -492,17 +510,9 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   logo: {
-    backgroundColor: '#FFFFFF',
     width: 40,
     height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoText: {
-    color: '#682145',
-    fontSize: 18,
-    fontWeight: 'bold',
+    tintColor: '#FFFFFF'
   },
   balanceFrame: {
     width: 343,
@@ -570,24 +580,20 @@ const styles = StyleSheet.create({
   },
   actionsContainer: {
     height: 130,
-    marginBottom: 30,
+    marginTop: 29,
+    marginBottom: 29,
   },
   actionsList: {
     paddingHorizontal: 20,
     gap: 5,
   },
   actionButton: {
-    backgroundColor: 'rgba(104, 33, 69, 0.3)',
+    backgroundColor: '#73294f',
     borderRadius: 12,
     padding: 16,
     width: 111,
     height: 130,
     position: 'relative',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   actionButtonText: {
     color: '#FFFFFF',

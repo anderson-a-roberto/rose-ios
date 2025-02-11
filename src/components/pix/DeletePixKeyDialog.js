@@ -15,7 +15,8 @@ const DeletePixKeyDialog = ({ visible, onDismiss, onConfirm, loading }) => {
           <Button
             mode="outlined"
             onPress={onDismiss}
-            style={styles.button}
+            style={styles.cancelButton}
+            labelStyle={styles.cancelButtonLabel}
             disabled={loading}
           >
             Cancelar
@@ -23,9 +24,10 @@ const DeletePixKeyDialog = ({ visible, onDismiss, onConfirm, loading }) => {
           <Button
             mode="contained"
             onPress={onConfirm}
-            style={styles.button}
-            buttonColor="#F44336"
+            style={styles.confirmButton}
+            labelStyle={styles.confirmButtonLabel}
             loading={loading}
+            textColor="#FFF"
           >
             Excluir
           </Button>
@@ -38,31 +40,51 @@ const DeletePixKeyDialog = ({ visible, onDismiss, onConfirm, loading }) => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: 'white',
-    padding: 20,
+    padding: 24,
     margin: 20,
-    borderRadius: 10,
+    borderRadius: 12,
+    elevation: 4,
   },
   content: {
     alignItems: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#333',
+    marginBottom: 12,
+    color: '#000',
+    textAlign: 'center',
   },
   message: {
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
     marginBottom: 24,
+    lineHeight: 24,
   },
   buttons: {
     flexDirection: 'row',
-    gap: 16,
+    gap: 12,
+    width: '100%',
   },
-  button: {
+  cancelButton: {
     flex: 1,
+    borderColor: '#E91E63',
+    borderWidth: 2,
+  },
+  cancelButtonLabel: {
+    color: '#E91E63',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  confirmButton: {
+    flex: 1,
+    backgroundColor: '#E91E63',
+  },
+  confirmButtonLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFF',
   },
 });
 

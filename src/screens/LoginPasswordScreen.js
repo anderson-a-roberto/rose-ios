@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Linking, StatusBar } from 'react-native';
 import { Text, TextInput } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { supabase } from '../config/supabase';
@@ -8,6 +8,7 @@ const LoginPasswordScreen = ({ route, navigation }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const { documentNumber } = route.params;
 
   const getUserEmail = async (documentNumber) => {
@@ -62,6 +63,7 @@ const LoginPasswordScreen = ({ route, navigation }) => {
   const handleLogin = async () => {
     try {
       setError('');
+      setLoading(true);
 
       // Busca o email real do usuário
       const email = await getUserEmail(documentNumber);
@@ -99,62 +101,87 @@ const LoginPasswordScreen = ({ route, navigation }) => {
         setError('Usuário não encontrado');
       } else if (error.message === 'Invalid login credentials') {
         setError('Senha incorreta');
-      } else if (error.message === 'Sessão não estabelecida após login') {
-        setError('Erro ao estabelecer sessão');
       } else {
         setError('Erro ao fazer login. Tente novamente.');
       }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
+        <TouchableOpacity 
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
+          <MaterialCommunityIcons name="arrow-left" size={24} color="#000000" />
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.title}>Senha</Text>
-      <Text style={styles.subtitle}>Agora insira sua senha</Text>
+      {/* Content */}
+      <View style={styles.content}>
+        <Text style={styles.title}>Digite sua senha</Text>
+        <Text style={styles.subtitle}>Para acessar sua conta, digite sua senha</Text>
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          label="Senha"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry={!showPassword}
-          mode="outlined"
-          style={styles.input}
-          error={!!error}
-          right={
-            <TextInput.Icon
-              icon={showPassword ? 'eye-off' : 'eye'}
-              onPress={() => setShowPassword(!showPassword)}
-            />
-          }
-        />
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        <View style={styles.form}>
+          <TextInput
+            mode="flat"
+            label="Senha"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+            error={!!error}
+            style={styles.input}
+            contentStyle={styles.inputContent}
+            theme={{
+              colors: {
+                primary: '#E91E63',
+                error: '#B00020',
+                onSurfaceVariant: '#666666',
+                onSurface: '#000000',
+              },
+            }}
+            right={
+              <TextInput.Icon
+                icon={showPassword ? 'eye-off' : 'eye'}
+                onPress={() => setShowPassword(!showPassword)}
+                color="#666666"
+              />
+            }
+          />
+          
+          {error ? (
+            <Text style={styles.errorText}>{error}</Text>
+          ) : null}
 
-        <TouchableOpacity onPress={() => {}}>
-          <Text style={styles.forgotPassword}>Esqueceu a senha? Clique aqui!</Text>
-        </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.forgotPassword}
+            onPress={() => {/* TODO: Implementar recuperação de senha */}}
+          >
+            <Text style={styles.forgotPasswordText}>
+              Esqueceu sua senha?
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <TouchableOpacity
-        style={[
-          styles.continueButton,
-          !password && styles.continueButtonDisabled
-        ]}
-        onPress={handleLogin}
-        disabled={!password}
-      >
-        <Text style={styles.continueButtonText}>CONTINUAR</Text>
-      </TouchableOpacity>
+      {/* Footer */}
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={[styles.button, loading && styles.buttonDisabled]}
+          onPress={handleLogin}
+          disabled={!password || loading}
+        >
+          <Text style={styles.buttonText}>
+            {loading ? 'ENTRANDO...' : 'ENTRAR'}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -165,64 +192,78 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    height: 56,
+    justifyContent: 'center',
     paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
   },
   backButton: {
-    padding: 8,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginHorizontal: 24,
-    marginTop: 24,
-    color: '#000',
-  },
-  subtitle: {
-    fontSize: 16,
-    marginHorizontal: 24,
-    marginTop: 8,
-    marginBottom: 32,
-    color: '#666',
-  },
-  inputContainer: {
-    paddingHorizontal: 24,
-  },
-  input: {
-    marginBottom: 16,
-    backgroundColor: '#fff',
-  },
-  errorText: {
-    color: '#B00020',
-    fontSize: 12,
-    marginTop: -8,
-    marginBottom: 16,
-  },
-  forgotPassword: {
-    color: '#666',
-    textDecorationLine: 'underline',
-    marginTop: 8,
-  },
-  continueButton: {
-    backgroundColor: '#000',
-    marginHorizontal: 24,
-    marginTop: 'auto',
-    marginBottom: 24,
-    height: 56,
-    borderRadius: 28,
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  continueButtonDisabled: {
-    backgroundColor: '#CCCCCC',
+  content: {
+    flex: 1,
+    padding: 24,
   },
-  continueButtonText: {
-    color: '#FFF',
-    fontSize: 16,
+  title: {
+    fontSize: 20,
     fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666666',
+    marginBottom: 32,
+  },
+  form: {
+    gap: 16,
+  },
+  input: {
+    backgroundColor: 'transparent',
+  },
+  inputContent: {
+    fontFamily: 'Roboto',
+    fontSize: 16,
+    backgroundColor: 'transparent',
+    paddingHorizontal: 0,
+  },
+  errorText: {
+    color: '#B00020',
+    fontSize: 14,
+    marginTop: -8,
+  },
+  forgotPassword: {
+    alignSelf: 'center',
+    marginTop: 8,
+  },
+  forgotPasswordText: {
+    color: '#666666',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
+  footer: {
+    padding: 24,
+    borderTopWidth: 1,
+    borderTopColor: '#F5F5F5',
+  },
+  button: {
+    backgroundColor: '#E91E63',
+    height: 48,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonDisabled: {
+    opacity: 0.7,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
 

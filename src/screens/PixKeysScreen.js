@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Clipboard } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Clipboard, StatusBar } from 'react-native';
 import { Text, Button, Menu, Snackbar } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { supabase } from '../config/supabase';
@@ -40,7 +40,7 @@ const PixKeyItem = ({ keyId, type, value, onCopy, onDelete }) => {
           onDismiss={() => setMenuVisible(false)}
           anchor={
             <TouchableOpacity onPress={() => setMenuVisible(true)}>
-              <MaterialCommunityIcons name="dots-vertical" size={24} color="#666" />
+              <MaterialCommunityIcons name="dots-vertical" size={24} color="#E91E63" />
             </TouchableOpacity>
           }
         >
@@ -50,7 +50,11 @@ const PixKeyItem = ({ keyId, type, value, onCopy, onDelete }) => {
               onDelete();
             }}
             title="Excluir"
-            leadingIcon="delete"
+            titleStyle={{ color: '#FFF' }}
+            style={{ backgroundColor: '#E91E63' }}
+            leadingIcon={({ size, color }) => (
+              <MaterialCommunityIcons name="delete-outline" size={size} color="#FFF" />
+            )}
           />
         </Menu>
       </View>
@@ -196,148 +200,178 @@ const PixKeysScreen = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.backText}>‹</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Minhas Chaves</Text>
+            <Text style={styles.subtitle}>Cadastre e gerencie suas chaves</Text>
+          </View>
+        </View>
+
+        {/* Content */}
+        <View style={styles.contentContainer}>
+          {/* Tabs */}
+          <View style={styles.tabContainer}>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'active' && styles.activeTab]}
+              onPress={() => setActiveTab('active')}
+            >
+              <Text style={[styles.tabText, activeTab === 'active' && styles.activeTabText]}>
+                Ativas
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'pending' && styles.activeTab]}
+              onPress={() => setActiveTab('pending')}
+            >
+              <Text style={[styles.tabText, activeTab === 'pending' && styles.activeTabText]}>
+                Pendentes
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Keys List */}
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            {loading ? (
+              <Text style={styles.messageText}>Carregando...</Text>
+            ) : error ? (
+              <Text style={styles.messageText}>{error}</Text>
+            ) : pixKeys.length === 0 ? (
+              <Text style={styles.messageText}>Você ainda não possui chaves cadastradas</Text>
+            ) : (
+              pixKeys.map((key) => (
+                <PixKeyItem
+                  key={`${key.keyType}-${key.key}`}
+                  keyId={key.id}
+                  type={key.keyType}
+                  value={key.key}
+                  onCopy={() => handleCopyKey(key.key)}
+                  onDelete={() => {
+                    setSelectedKeyToDelete(key);
+                    setShowDeleteDialog(true);
+                  }}
+                />
+              ))
+            )}
+          </ScrollView>
+
+          {/* Register Button */}
+          <View style={styles.buttonContainer}>
+            <Button
+              mode="contained"
+              onPress={() => navigation.navigate('RegisterPixKey')}
+              style={styles.button}
+              contentStyle={styles.buttonContent}
+              labelStyle={styles.buttonLabel}
+            >
+              CADASTRAR CHAVE
+            </Button>
+          </View>
+        </View>
+
+        {/* Delete Dialog */}
+        <DeletePixKeyDialog
+          visible={showDeleteDialog}
+          onDismiss={() => setShowDeleteDialog(false)}
+          onConfirm={handleDeleteKey}
+          loading={loading}
+        />
+
+        {/* Snackbar */}
+        <Snackbar
+          visible={snackbarVisible}
+          onDismiss={() => setSnackbarVisible(false)}
+          duration={3000}
         >
-          <MaterialCommunityIcons name="arrow-left" size={20} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Minhas Chaves</Text>
-        <View style={{ width: 40 }} />
+          {snackbarMessage}
+        </Snackbar>
       </View>
-
-      <Text style={styles.subtitle}>Cadastre e gerencie suas chaves</Text>
-
-      {/* Tabs */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'active' && styles.activeTab]}
-          onPress={() => setActiveTab('active')}
-        >
-          <Text style={[styles.tabText, activeTab === 'active' && styles.activeTabText]}>
-            Ativas
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'pending' && styles.activeTab]}
-          onPress={() => setActiveTab('pending')}
-        >
-          <Text style={[styles.tabText, activeTab === 'pending' && styles.activeTabText]}>
-            Pendentes
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Keys List */}
-      <ScrollView style={styles.content}>
-        {loading ? (
-          <Text style={styles.loadingText}>Carregando...</Text>
-        ) : error ? (
-          <Text style={styles.errorText}>{error}</Text>
-        ) : pixKeys.length === 0 ? (
-          <Text style={styles.emptyText}>Você ainda não possui chaves cadastradas</Text>
-        ) : (
-          pixKeys.map((key) => (
-            <PixKeyItem
-              key={key.id}
-              keyId={key.id}
-              type={key.keyType}
-              value={key.key}
-              onCopy={() => handleCopyKey(key.key)}
-              onDelete={() => {
-                setSelectedKeyToDelete(key);
-                setShowDeleteDialog(true);
-              }}
-            />
-          ))
-        )}
-      </ScrollView>
-
-      {/* Register Button */}
-      <View style={styles.footer}>
-        <Button
-          mode="contained"
-          onPress={() => navigation.navigate('RegisterPixKey')}
-          style={styles.registerButton}
-          labelStyle={styles.registerButtonLabel}
-        >
-          CADASTRAR CHAVE
-        </Button>
-      </View>
-
-      {/* Delete Dialog */}
-      <DeletePixKeyDialog
-        visible={showDeleteDialog}
-        onDismiss={() => {
-          setShowDeleteDialog(false);
-          setSelectedKeyToDelete(null);
-        }}
-        onConfirm={handleDeleteKey}
-        loading={loading}
-      />
-
-      {/* Snackbar */}
-      <Snackbar
-        visible={snackbarVisible}
-        onDismiss={() => setSnackbarVisible(false)}
-        duration={3000}
-      >
-        {snackbarMessage}
-      </Snackbar>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFF'
+  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF'
   },
   header: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 16,
+    marginBottom: 20,
+    paddingTop: 12,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 8,
+    marginLeft: -8,
+  },
+  backText: {
+    color: '#E91E63',
+    fontSize: 32,
+    fontWeight: '300',
+  },
+  headerContent: {
+    paddingHorizontal: 4,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#000',
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#000',
-    paddingHorizontal: 16,
-    marginBottom: 16,
+    fontSize: 16,
+    color: '#666',
+    opacity: 0.8,
+  },
+  contentContainer: {
+    flex: 1,
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
   },
   tabContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
   },
   tab: {
+    flex: 1,
+    alignItems: 'center',
     paddingVertical: 12,
-    marginRight: 24,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   },
   activeTab: {
-    borderBottomWidth: 2,
     borderBottomColor: '#682145',
   },
   tabText: {
-    fontSize: 14,
-    color: '#000',
+    fontSize: 16,
+    color: '#666',
+    fontWeight: '500',
   },
   activeTabText: {
     color: '#682145',
@@ -345,13 +379,20 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+  messageText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 24,
   },
   keyItem: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
     borderRadius: 8,
     padding: 16,
-    marginBottom: 16,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
@@ -364,67 +405,60 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
-    justifyContent: 'center',
+    backgroundColor: '#F5E6ED',
     alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 12,
   },
   keyInfo: {
     flex: 1,
   },
   keyType: {
-    fontSize: 12,
-    color: '#000',
+    fontSize: 14,
+    color: '#666',
     marginBottom: 4,
   },
   keyValue: {
     fontSize: 16,
-    fontWeight: 'bold',
     color: '#000',
+    fontWeight: '500',
   },
   keyActions: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    paddingTop: 12,
   },
   copyButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 8,
   },
   copyButtonText: {
     fontSize: 14,
     color: '#682145',
-    marginRight: 4,
+    marginRight: 8,
+    fontWeight: '500',
   },
-  footer: {
-    padding: 16,
+  buttonContainer: {
+    padding: 20,
+    backgroundColor: '#FFF',
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
   },
-  registerButton: {
-    backgroundColor: '#1B1B1B',
-    borderRadius: 25,
+  button: {
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
   },
-  registerButtonLabel: {
-    fontSize: 14,
+  buttonContent: {
+    height: 56,
+  },
+  buttonLabel: {
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#fff',
-  },
-  loadingText: {
-    textAlign: 'center',
-    color: '#666',
-    marginTop: 24,
-  },
-  errorText: {
-    textAlign: 'center',
-    color: '#F44336',
-    marginTop: 24,
-  },
-  emptyText: {
-    textAlign: 'center',
-    color: '#666',
-    marginTop: 24,
+    letterSpacing: 0.5,
+    color: '#FFF',
   },
 });
 

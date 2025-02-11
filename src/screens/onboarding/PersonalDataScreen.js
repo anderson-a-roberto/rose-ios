@@ -4,6 +4,7 @@ import { Text, TextInput, Button } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import TestDataButton from '../../components/TestDataButton';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const formatCPF = (text) => {
   const numbers = text.replace(/\D/g, '');
@@ -59,158 +60,207 @@ const PersonalDataScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <TestDataButton 
-        section="personalData" 
-        onFill={(data) => setFormData(data)}
-      />
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={styles.scrollView}>
-        <Text style={styles.title}>Dados Pessoais</Text>
-        <Text style={styles.subtitle}>
-          Vamos precisar de algumas informações para seguir com seu cadastro
-        </Text>
-
-        <TextInput
-          label="Nome Completo"
-          value={formData.fullName}
-          onChangeText={(value) => handleChange('fullName', value)}
-          mode="outlined"
-          style={styles.input}
-        />
-
-        <TextInput
-          label="CPF"
-          value={formData.documentNumber}
-          onChangeText={(value) => handleChange('documentNumber', value)}
-          mode="outlined"
-          style={styles.input}
-          keyboardType="numeric"
-          maxLength={14}
-        />
-
-        <TextInput
-          label="Data de Nascimento"
-          value={formData.birthDate}
-          onChangeText={(value) => handleChange('birthDate', value)}
-          mode="outlined"
-          style={styles.input}
-          keyboardType="numeric"
-          maxLength={10}
-          placeholder="DD/MM/AAAA"
-        />
-
-        <TextInput
-          label="Nome Completo da Mãe"
-          value={formData.motherName}
-          onChangeText={(value) => handleChange('motherName', value)}
-          mode="outlined"
-          style={styles.input}
-        />
-
-        {/* PEP Selection */}
-        <TouchableOpacity
-          style={styles.pepContainer}
-          onPress={() => navigation.navigate('OnboardingPepInfo')}
-        >
-          <View style={styles.pepTextContainer}>
-            <Text style={styles.pepLabel}>Pessoa Politicamente Exposta</Text>
-            <Text style={styles.pepValue}>
-              {formData.isPep ? 'Sim' : 'Não sou e não tenho vínculo...'}
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.backText}>‹</Text>
+            </TouchableOpacity>
+            <TestDataButton 
+              section="personalData" 
+              onFill={(data) => setFormData(data)}
+              style={styles.testButton}
+            />
+          </View>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Dados Pessoais</Text>
+            <Text style={styles.subtitle}>
+              Vamos precisar de algumas informações para seguir com seu cadastro
             </Text>
           </View>
-          <MaterialCommunityIcons name="chevron-right" size={24} color="#666" />
-        </TouchableOpacity>
-      </ScrollView>
+        </View>
 
-      <Button
-        mode="contained"
-        onPress={handleNext}
-        style={styles.continueButton}
-        labelStyle={styles.continueButtonLabel}
-      >
-        CONTINUAR
-      </Button>
-    </View>
+        {/* Content */}
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.form}>
+            <Text style={styles.label}>Nome Completo</Text>
+            <TextInput
+              value={formData.fullName}
+              onChangeText={(value) => handleChange('fullName', value)}
+              style={[styles.input, formData.fullName && styles.filledInput]}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={formData.fullName ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: formData.fullName ? '600' : '400' } } }}
+            />
+
+            <Text style={styles.label}>CPF</Text>
+            <TextInput
+              value={formData.documentNumber}
+              onChangeText={(value) => handleChange('documentNumber', value)}
+              style={[styles.input, formData.documentNumber && styles.filledInput]}
+              keyboardType="numeric"
+              maxLength={14}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={formData.documentNumber ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: formData.documentNumber ? '600' : '400' } } }}
+            />
+
+            <Text style={styles.label}>Data de Nascimento</Text>
+            <TextInput
+              value={formData.birthDate}
+              onChangeText={(value) => handleChange('birthDate', value)}
+              style={[styles.input, formData.birthDate && styles.filledInput]}
+              keyboardType="numeric"
+              maxLength={10}
+              placeholder="DD/MM/AAAA"
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={formData.birthDate ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: formData.birthDate ? '600' : '400' } } }}
+            />
+
+            <Text style={styles.label}>Nome Completo da Mãe</Text>
+            <TextInput
+              value={formData.motherName}
+              onChangeText={(value) => handleChange('motherName', value)}
+              style={[styles.input, formData.motherName && styles.filledInput]}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={formData.motherName ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: formData.motherName ? '600' : '400' } } }}
+            />
+
+            {/* PEP Selection */}
+            <Text style={styles.label}>Pessoa Politicamente Exposta</Text>
+            <TouchableOpacity
+              style={[styles.input, styles.pepButton]}
+              onPress={() => navigation.navigate('OnboardingPepInfo')}
+            >
+              <Text style={styles.pepText}>
+                {formData.isPep ? 'Sim' : 'Não sou e não tenho vínculo...'}
+              </Text>
+              <MaterialCommunityIcons name="chevron-right" size={24} color="#666" />
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Button
+            mode="contained"
+            onPress={handleNext}
+            style={styles.continueButton}
+            labelStyle={styles.continueButtonLabel}
+          >
+            CONTINUAR
+          </Button>
+        </View>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFF',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 16,
+    paddingTop: 8,
+    paddingBottom: 24,
+    backgroundColor: '#FFF',
   },
-  backButton: {
-    padding: 8,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginHorizontal: 24,
-    marginTop: 24,
-    color: '#000',
-  },
-  subtitle: {
-    fontSize: 16,
-    marginHorizontal: 24,
-    marginTop: 8,
-    marginBottom: 32,
-    color: '#666',
-  },
-  input: {
-    marginHorizontal: 24,
-    marginBottom: 16,
-    backgroundColor: '#fff',
-  },
-  pepContainer: {
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 8,
-    paddingHorizontal: 24,
-    marginTop: 8,
+    paddingHorizontal: 16,
+    marginBottom: 24,
   },
-  pepTextContainer: {
+  headerContent: {
+    paddingHorizontal: 24,
+  },
+  backButton: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backText: {
+    fontSize: 32,
+    color: '#E91E63',
+    marginTop: -4,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666666',
+    lineHeight: 24,
+  },
+  content: {
     flex: 1,
   },
-  pepLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
+  form: {
+    paddingHorizontal: 24,
   },
-  pepValue: {
+  label: {
+    fontSize: 13,
+    color: '#666666',
+    marginBottom: 8,
+    marginTop: 16,
+  },
+  input: {
+    backgroundColor: '#FFF',
     fontSize: 16,
-    color: '#000',
+    height: 48,
+    paddingHorizontal: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  filledInput: {
+    backgroundColor: '#FFF',
+  },
+  pepButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+  },
+  pepText: {
+    fontSize: 16,
+    color: '#999',
+  },
+  footer: {
+    padding: 16,
+    paddingBottom: 24,
+    backgroundColor: '#FFF',
   },
   continueButton: {
-    backgroundColor: '#000',
-    marginHorizontal: 24,
-    marginVertical: 24,
-    borderRadius: 25,
+    borderRadius: 4,
+    backgroundColor: '#E91E63',
+    height: 48,
   },
   continueButtonLabel: {
     fontSize: 16,
-    color: '#FFF',
-    fontWeight: 'bold',
+    fontWeight: '500',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
   },
 });
 

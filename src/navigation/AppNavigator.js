@@ -21,6 +21,21 @@ import WelcomeScreen from '../screens/WelcomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import PasswordScreen from '../screens/PasswordScreen';
 
+// Onboarding Screens
+import OnboardingTermsScreen from '../screens/onboarding/TermsScreen';
+import OnboardingPersonalDataScreen from '../screens/onboarding/PersonalDataScreen';
+import PepInfoScreen from '../screens/onboarding/PepInfoScreen';
+import AddressScreen from '../screens/onboarding/AddressScreen';
+import PhoneScreen from '../screens/onboarding/PhoneScreen';
+import EmailScreen from '../screens/onboarding/EmailScreen';
+import OnboardingPasswordScreen from '../screens/onboarding/PasswordScreen';
+import OnboardingSuccessScreen from '../screens/onboarding/SuccessScreen';
+import CompanyDataScreen from '../screens/onboarding/company/CompanyDataScreen';
+import CompanyAddressScreen from '../screens/onboarding/company/CompanyAddressScreen';
+import PartnerDataScreen from '../screens/onboarding/company/PartnerDataScreen';
+import CompanyContactScreen from '../screens/onboarding/company/CompanyContactScreen';
+import CompanyPasswordScreen from '../screens/onboarding/company/CompanyPasswordScreen';
+
 const Stack = createStackNavigator();
 
 const linking = {
@@ -45,6 +60,20 @@ const linking = {
       Welcome: 'welcome',
       Login: 'login',
       Password: 'password',
+      // Onboarding routes
+      OnboardingTerms: 'onboarding/terms',
+      OnboardingPersonalData: 'onboarding/personal-data',
+      OnboardingPepInfo: 'onboarding/pep-info',
+      OnboardingAddress: 'onboarding/address',
+      OnboardingPhone: 'onboarding/phone',
+      OnboardingEmail: 'onboarding/email',
+      OnboardingPassword: 'onboarding/password',
+      OnboardingSuccess: 'onboarding/success',
+      CompanyData: 'onboarding/company-data',
+      CompanyAddress: 'onboarding/company-address',
+      PartnerData: 'onboarding/partner-data',
+      CompanyContact: 'onboarding/company-contact',
+      CompanyPassword: 'onboarding/company-password',
     },
   },
 };
@@ -57,7 +86,7 @@ const AppNavigator = () => {
           headerShown: false,
           cardStyle: { backgroundColor: '#FF1493' }
         }}
-        initialRouteName="LoginCPF"
+        initialRouteName="Welcome"
       >
         <Stack.Screen name="LoginCPF" component={LoginCPFScreen} />
         <Stack.Screen name="LoginPassword" component={LoginPasswordScreen} />
@@ -77,6 +106,21 @@ const AppNavigator = () => {
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Password" component={PasswordScreen} />
+
+        {/* Onboarding Screens */}
+        <Stack.Screen name="OnboardingTerms" component={OnboardingTermsScreen} />
+        <Stack.Screen name="OnboardingPersonalData" component={OnboardingPersonalDataScreen} />
+        <Stack.Screen name="OnboardingPepInfo" component={PepInfoScreen} />
+        <Stack.Screen name="OnboardingAddress" component={AddressScreen} />
+        <Stack.Screen name="OnboardingPhone" component={PhoneScreen} />
+        <Stack.Screen name="OnboardingEmail" component={EmailScreen} />
+        <Stack.Screen name="OnboardingPassword" component={OnboardingPasswordScreen} />
+        <Stack.Screen name="OnboardingSuccess" component={OnboardingSuccessScreen} />
+        <Stack.Screen name="CompanyData" component={CompanyDataScreen} />
+        <Stack.Screen name="CompanyAddress" component={CompanyAddressScreen} />
+        <Stack.Screen name="PartnerData" component={PartnerDataScreen} />
+        <Stack.Screen name="CompanyContact" component={CompanyContactScreen} />
+        <Stack.Screen name="CompanyPassword" component={CompanyPasswordScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

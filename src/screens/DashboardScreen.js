@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const ActionButton = ({ icon, label, onPress }) => (
@@ -27,6 +27,7 @@ const TransactionItem = ({ description, date, amount }) => (
 const DashboardScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="#682145" barStyle="light-content" />
       <ScrollView>
         {/* Header */}
         <View style={styles.header}>
@@ -79,7 +80,7 @@ const DashboardScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FF00FF',
+    backgroundColor: '#682145',
   },
   header: {
     flexDirection: 'row',

@@ -54,6 +54,7 @@ import CompanyDataScreen from './src/screens/onboarding/company/CompanyDataScree
 import CompanyAddressScreen from './src/screens/onboarding/company/CompanyAddressScreen';
 import PartnerDataScreen from './src/screens/onboarding/company/PartnerDataScreen';
 import CompanyContactScreen from './src/screens/onboarding/company/CompanyContactScreen';
+import TermsScreen from './src/screens/onboarding/TermsScreen';
 
 const Stack = createStackNavigator();
 
@@ -66,9 +67,13 @@ const App = () => {
         // Primeiro, limpar qualquer sessão existente
         await supabase.auth.signOut();
         
-        // Verificar parâmetros da URL
-        const params = new URLSearchParams(window.location.search);
-        const flow = params.get('flow');
+        let flow = null;
+        
+        // Verificar se estamos na web
+        if (typeof window !== 'undefined' && window.location) {
+          const params = new URLSearchParams(window.location.search);
+          flow = params.get('flow');
+        }
         
         // Verificar sessão atual
         const { data: { session } } = await supabase.auth.getSession();
@@ -81,15 +86,16 @@ const App = () => {
           console.log('Redirecionando para onboarding');
           setInitialRoute('AccountType');
         } else if (session) {
-          console.log('Redirecionando para dashboard');
+          console.log('Usuário autenticado, redirecionando para dashboard');
           setInitialRoute('Dashboard2');
         } else {
-          console.log('Redirecionando para welcome');
+          console.log('Usuário não autenticado, redirecionando para welcome');
           setInitialRoute('Welcome');
         }
       } catch (error) {
         console.error('Erro ao inicializar app:', error);
-        setInitialRoute('Welcome'); // Fallback para welcome em caso de erro
+        // Em caso de erro, redirecionar para welcome
+        setInitialRoute('Welcome');
       }
     };
 
@@ -118,6 +124,7 @@ const App = () => {
                 {/* Onboarding PF */}
                 <Stack.Screen name="AccountType" component={AccountTypeScreen} />
                 <Stack.Screen name="OnboardingPersonalData" component={PersonalDataScreen} />
+                <Stack.Screen name="OnboardingTerms" component={TermsScreen} />
                 <Stack.Screen name="OnboardingPepInfo" component={PepInfoScreen} />
                 <Stack.Screen name="OnboardingAddress" component={AddressScreen} />
                 <Stack.Screen name="OnboardingPassword" component={PasswordScreen} />

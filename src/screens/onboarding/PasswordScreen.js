@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Text, TextInput, Button } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { View, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
+import { Text, TextInput, Button, HelperText } from 'react-native-paper';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import TestDataButton from '../../components/TestDataButton';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { supabase } from '../../config/supabase';
 
 const PasswordScreen = ({ navigation }) => {
   const { onboardingData, updateOnboardingData } = useOnboarding();
@@ -13,160 +14,216 @@ const PasswordScreen = ({ navigation }) => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleNext = () => {
-    updateOnboardingData({
-      securityData: {
-        password: formData.password
-      }
-    });
-    // Se for PJ (tem dados da empresa), vai para CompanyContact
-    // Se for PF, segue o fluxo normal
-    if (onboardingData.companyData) {
-      navigation.navigate('CompanyContact');
-    } else {
+  const handleNext = async () => {
+    if (formData.password !== formData.confirmPassword) {
+      setError('As senhas não coincidem');
+      return;
+    }
+
+    if (onboardingData.accountType === 'PJ') {
+      setError('Fluxo inválido para PJ');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      // 1. Salvar senha
+      updateOnboardingData({
+        securityData: {
+          password: formData.password
+        }
+      });
+
+      // 2. Navegar para a próxima tela
       navigation.navigate('OnboardingPhone');
+    } catch (err) {
+      console.log('Erro ao salvar senha:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <TestDataButton 
-        section="securityData" 
-        onFill={(data) => setFormData(data)}
-      />
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
-        </TouchableOpacity>
-      </View>
-
-      <Text style={styles.title}>Senha do App</Text>
-      <Text style={styles.subtitle}>
-        Nesta etapa, você vai precisar cadastrar uma senha de acesso ao app
-      </Text>
-
-      <View style={styles.inputContainer}>
-        <TextInput
-          label="Senha de acesso ao app"
-          value={formData.password}
-          onChangeText={(value) => setFormData(prev => ({ ...prev, password: value }))}
-          mode="outlined"
-          style={styles.input}
-          secureTextEntry={!showPassword}
-          right={
-            <TextInput.Icon
-              icon={showPassword ? "eye-off" : "eye"}
-              onPress={() => setShowPassword(!showPassword)}
-              color="#666"
-            />
-          }
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <TestDataButton 
+          section="securityData" 
+          onFill={(data) => setFormData(data)}
         />
 
-        <TextInput
-          label="Confirmar Senha de acesso ao app"
-          value={formData.confirmPassword}
-          onChangeText={(value) => setFormData(prev => ({ ...prev, confirmPassword: value }))}
-          mode="outlined"
-          style={styles.input}
-          secureTextEntry={!showConfirmPassword}
-          right={
-            <TextInput.Icon
-              icon={showConfirmPassword ? "eye-off" : "eye"}
-              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-              color="#666"
-            />
-          }
-        />
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <MaterialCommunityIcons name="chevron-left" size={32} color="#E91E63" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Senha do App</Text>
+            <Text style={styles.subtitle}>
+              Nesta etapa, você vai precisar cadastrar uma senha de acesso ao app
+            </Text>
+          </View>
+        </View>
 
-        <View style={styles.rulesContainer}>
-          <Text style={styles.rulesTitle}>Regras da Senha</Text>
-          <Text style={styles.ruleItem}>• A senha deve ter 8 caracteres;</Text>
-          <Text style={styles.ruleItem}>• Deverá ter ao menos uma letra maiúscula</Text>
-          <Text style={styles.ruleItem}>  e uma letra minúscula;</Text>
-          <Text style={styles.ruleItem}>• Possuir ao menos 1 caracter especial;</Text>
-          <Text style={styles.ruleItem}>• Possuir ao menos 1 número.</Text>
+        {/* Content */}
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.form}>
+            <TextInput
+              label="Senha"
+              value={formData.password}
+              onChangeText={(value) => setFormData(prev => ({ ...prev, password: value }))}
+              secureTextEntry={!showPassword}
+              right={
+                <TextInput.Icon
+                  icon={showPassword ? "eye-off" : "eye"}
+                  onPress={() => setShowPassword(!showPassword)}
+                  color="#666666"
+                />
+              }
+              mode="flat"
+              style={styles.input}
+              contentStyle={styles.inputContent}
+              theme={{
+                colors: {
+                  primary: '#E91E63',
+                  error: '#B00020',
+                  onSurfaceVariant: '#666666',
+                  onSurface: '#000000',
+                },
+              }}
+            />
+
+            <TextInput
+              label="Confirmar Senha"
+              value={formData.confirmPassword}
+              onChangeText={(value) => setFormData(prev => ({ ...prev, confirmPassword: value }))}
+              secureTextEntry={!showConfirmPassword}
+              right={
+                <TextInput.Icon
+                  icon={showConfirmPassword ? "eye-off" : "eye"}
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  color="#666666"
+                />
+              }
+              mode="flat"
+              style={styles.input}
+              contentStyle={styles.inputContent}
+              theme={{
+                colors: {
+                  primary: '#E91E63',
+                  error: '#B00020',
+                  onSurfaceVariant: '#666666',
+                  onSurface: '#000000',
+                },
+              }}
+            />
+
+            {error ? (
+              <HelperText type="error" visible={true}>
+                {error}
+              </HelperText>
+            ) : null}
+          </View>
+        </ScrollView>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Button
+            mode="contained"
+            onPress={handleNext}
+            style={styles.continueButton}
+            labelStyle={styles.continueButtonLabel}
+            loading={loading}
+            disabled={loading || !formData.password || !formData.confirmPassword}
+          >
+            {loading ? 'SALVANDO...' : 'CONTINUAR'}
+          </Button>
         </View>
       </View>
-
-      <Button
-        mode="contained"
-        onPress={handleNext}
-        style={styles.continueButton}
-        labelStyle={styles.continueButtonLabel}
-      >
-        CONTINUAR
-      </Button>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFF',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
   },
   header: {
+    paddingBottom: 24,
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 16,
+    paddingTop: 8,
   },
   backButton: {
-    padding: 8,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginHorizontal: 24,
-    marginTop: 24,
-    color: '#000',
+  headerContent: {
+    paddingHorizontal: 24,
   },
-  subtitle: {
-    fontSize: 16,
-    marginHorizontal: 24,
-    marginTop: 8,
-    marginBottom: 32,
-    color: '#666',
-  },
-  inputContainer: {
-    flex: 1,
-  },
-  input: {
-    marginHorizontal: 24,
-    marginBottom: 16,
-    backgroundColor: '#fff',
-  },
-  rulesContainer: {
-    marginHorizontal: 24,
-    marginTop: 16,
-  },
-  rulesTitle: {
-    fontSize: 14,
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '600',
     color: '#000',
     marginBottom: 8,
   },
-  ruleItem: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
-    lineHeight: 20,
+  subtitle: {
+    fontSize: 16,
+    color: '#666666',
+    lineHeight: 24,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+  form: {
+    marginTop: 16,
+  },
+  input: {
+    backgroundColor: '#FFF',
+    marginBottom: 16,
+  },
+  inputContent: {
+    backgroundColor: '#FFF',
+    fontSize: 16,
+    paddingHorizontal: 0,
+  },
+  footer: {
+    padding: 16,
+    backgroundColor: '#FFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
   },
   continueButton: {
-    backgroundColor: '#000',
-    marginHorizontal: 24,
-    marginVertical: 24,
-    borderRadius: 25,
+    backgroundColor: '#E91E63',
+    height: 48,
   },
   continueButtonLabel: {
     fontSize: 16,
+    fontWeight: '500',
     color: '#FFF',
-    fontWeight: 'bold',
+    textTransform: 'uppercase',
   },
 });
 

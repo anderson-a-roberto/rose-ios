@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../config/supabase';
 import StatementTableRow from '../components/extrato/StatementTableRow';
 import ReceiptModal from '../components/extrato/receipts/ReceiptModal';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function StatementScreen({ route }) {
   const navigation = useNavigation();
@@ -174,7 +175,7 @@ export default function StatementScreen({ route }) {
   const toggleBalance = () => setShowBalance(!showBalance);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Card do Topo */}
       <View style={styles.topCard}>
         {/* Header */}
@@ -297,7 +298,7 @@ export default function StatementScreen({ route }) {
         onDismiss={() => setModalVisible(false)}
         transaction={selectedTransaction}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
