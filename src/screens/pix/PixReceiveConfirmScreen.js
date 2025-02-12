@@ -132,7 +132,7 @@ const PixReceiveConfirmScreen = ({ navigation, route }) => {
         throw new Error(response.error?.message || 'Erro ao gerar QR Code');
       }
 
-      setQrCodeData(response.body);
+      setQrCodeData(response);  
       setShowDynamicQR(true);
     } catch (err) {
       console.error('Erro ao gerar QR Code dinâmico:', err);

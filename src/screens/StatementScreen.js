@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Text, Button, TextInput } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -7,68 +7,31 @@ import { supabase } from '../config/supabase';
 import StatementTableRow from '../components/extrato/StatementTableRow';
 import ReceiptModal from '../components/extrato/receipts/ReceiptModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTransactionsQuery } from '../hooks/useTransactionsQuery';
+import useDashboard from '../hooks/useDashboard';
 
 export default function StatementScreen({ route }) {
   const navigation = useNavigation();
+  const { userAccount, userTaxId } = useDashboard();
   const { balance } = route.params;
   const [showBalance, setShowBalance] = useState(true);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [transactions, setTransactions] = useState([]);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [searchDates, setSearchDates] = useState({ dateFrom: null, dateTo: null });
 
-  useEffect(() => {
-    fetchTransactions();
-  }, []);
-
-  const fetchTransactions = async () => {
-    try {
-      setLoading(true);
-
-      // Buscar usuário logado
-      const { data: { user } } = await supabase.auth.getUser();
-
-      // Buscar CPF do usuário
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('document_number')
-        .eq('id', user.id)
-        .single();
-
-      // Buscar número da conta
-      const { data: kycData } = await supabase
-        .from('kyc_proposals_v2')
-        .select('account')
-        .eq('document_number', profileData.document_number)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      // Buscar extrato
-      const { data: statementData, error: statementError } = await supabase.functions.invoke('get-account-statement', {
-        body: {
-          account: kycData.account,
-          documentNumber: profileData.document_number,
-          dateFrom: '',
-          dateTo: ''
-        }
-      });
-
-      if (statementError) throw statementError;
-
-      if (statementData.status === 'SUCCESS' && statementData.body?.movements) {
-        setTransactions(statementData.body.movements);
-      } else {
-        throw new Error('Erro ao obter extrato');
-      }
-    } catch (err) {
-      console.error('Erro ao buscar transações:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { 
+    data: transactions = [], 
+    isLoading: loading,
+    error,
+    refetch: refetchTransactions
+  } = useTransactionsQuery(
+    userAccount, 
+    userTaxId,
+    searchDates.dateFrom,
+    searchDates.dateTo
+  );
 
   const formatDate = (text) => {
     const numbers = text.replace(/\D/g, '');
@@ -111,52 +74,14 @@ export default function StatementScreen({ route }) {
         return;
       }
 
-      setLoading(true);
-
-      // Buscar usuário logado
-      const { data: { user } } = await supabase.auth.getUser();
-
-      // Buscar CPF do usuário
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('document_number')
-        .eq('id', user.id)
-        .single();
-
-      // Buscar número da conta
-      const { data: kycData } = await supabase
-        .from('kyc_proposals_v2')
-        .select('account')
-        .eq('document_number', profileData.document_number)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      // Formatar datas para ISO string (apenas a data, sem hora)
-      const dateFrom = parsedStartDate.toISOString().split('T')[0];
-      const dateTo = parsedEndDate.toISOString().split('T')[0];
-
-      // Buscar extrato
-      const { data: statementData, error: statementError } = await supabase.functions.invoke('get-account-statement', {
-        body: {
-          account: kycData.account,
-          documentNumber: profileData.document_number,
-          dateFrom,
-          dateTo
-        }
+      // Atualizar as datas de busca para disparar uma nova query
+      setSearchDates({
+        dateFrom: parsedStartDate.toISOString().split('T')[0],
+        dateTo: parsedEndDate.toISOString().split('T')[0]
       });
-
-      if (statementError) throw statementError;
-
-      if (statementData.status === 'SUCCESS' && statementData.body?.movements) {
-        setTransactions(statementData.body.movements);
-      } else {
-        throw new Error('Erro ao obter extrato');
-      }
     } catch (err) {
-      console.error('Erro ao buscar transações:', err);
-    } finally {
-      setLoading(false);
+      console.error('Erro ao processar datas:', err);
+      alert('Erro ao processar as datas. Verifique o formato.');
     }
   };
 
@@ -229,15 +154,6 @@ export default function StatementScreen({ route }) {
               outlineColor="#e92176"
               activeOutlineColor="#e92176"
               textColor="white"
-              theme={{
-                colors: {
-                  background: '#682145',
-                  placeholder: '#e92176',
-                  text: 'white',
-                  onSurfaceVariant: 'white'
-                },
-                roundness: 25,
-              }}
             />
             <TextInput
               style={styles.dateInput}
@@ -250,48 +166,53 @@ export default function StatementScreen({ route }) {
               outlineColor="#e92176"
               activeOutlineColor="#e92176"
               textColor="white"
-              theme={{
-                colors: {
-                  background: '#682145',
-                  placeholder: '#e92176',
-                  text: 'white',
-                  onSurfaceVariant: 'white'
-                },
-                roundness: 25,
-              }}
             />
-            <Button
-              mode="contained"
-              onPress={handleSubmit}
-              style={styles.searchButton}
-              buttonColor="#e92176"
-              textColor="white"
-              loading={loading}
-            >
-              Buscar
-            </Button>
           </View>
+          <Button
+            mode="contained"
+            onPress={handleSubmit}
+            style={styles.filterButton}
+            buttonColor="#e92176"
+            labelStyle={styles.filterButtonLabel}
+          >
+            Filtrar
+          </Button>
         </View>
       </View>
 
       {/* Lista de Transações */}
-      <View style={styles.transactionsContainer}>
-        {loading ? (
-          <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color="#682145" />
+      <ScrollView style={styles.transactionsContainer}>
+        {error ? (
+          <View style={styles.errorContainer}>
+            <MaterialCommunityIcons 
+              name="refresh-circle" 
+              size={48} 
+              color="#E91E63" 
+            />
+            <Text style={styles.errorText}>
+              Não foi possível carregar o extrato
+            </Text>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={refetchTransactions}
+            >
+              <Text style={styles.retryButtonText}>Tentar Novamente</Text>
+            </TouchableOpacity>
           </View>
+        ) : loading ? (
+          <ActivityIndicator size="large" color="#E91E63" style={styles.loader} />
+        ) : transactions.length === 0 ? (
+          <Text style={styles.emptyText}>Nenhuma transação encontrada</Text>
         ) : (
-          <ScrollView>
-            {transactions.map((transaction, index) => (
-              <StatementTableRow
-                key={transaction.id || index}
-                transaction={transaction}
-                onPress={handleTransactionPress}
-              />
-            ))}
-          </ScrollView>
+          transactions.map((transaction, index) => (
+            <StatementTableRow
+              key={index}
+              transaction={transaction}
+              onPress={() => handleTransactionPress(transaction)}
+            />
+          ))
         )}
-      </View>
+      </ScrollView>
 
       <ReceiptModal
         visible={modalVisible}
@@ -300,7 +221,7 @@ export default function StatementScreen({ route }) {
       />
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -354,6 +275,19 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
   },
+  hiddenBalanceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    height: 48,
+    justifyContent: 'flex-start',
+  },
+  hiddenBalanceDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'white',
+  },
   filterContainer: {
     paddingHorizontal: 16,
   },
@@ -367,11 +301,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#682145',
     height: 40,
   },
-  searchButton: {
-    height: 40,
+  filterButton: {
+    height: 48,
     justifyContent: 'center',
     borderRadius: 25,
-    paddingHorizontal: 16,
+    backgroundColor: '#e92176',
+    width: '100%',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  filterButtonLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'white',
+    textTransform: 'uppercase',
   },
   transactionsContainer: {
     flex: 1,
@@ -383,15 +326,42 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
-  hiddenBalanceContainer: {
-    flexDirection: 'row',
+  errorContainer: {
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
+    padding: 20,
+    backgroundColor: '#FFF',
+    borderRadius: 8,
+    margin: 16,
   },
-  hiddenBalanceDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'white',
+  errorText: {
+    color: '#666',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#E91E63',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    elevation: 2,
+  },
+  retryButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  loader: {
+    marginVertical: 20,
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#666',
+    marginVertical: 20,
+  },
+  transactionsList: {
+    paddingVertical: 16,
   },
 });

@@ -55,8 +55,19 @@ import CompanyAddressScreen from './src/screens/onboarding/company/CompanyAddres
 import PartnerDataScreen from './src/screens/onboarding/company/PartnerDataScreen';
 import CompanyContactScreen from './src/screens/onboarding/company/CompanyContactScreen';
 import TermsScreen from './src/screens/onboarding/TermsScreen';
+import ProfileSettingsScreen from './src/screens/ProfileSettingsScreen';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const Stack = createStackNavigator();
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 1000 * 30, // 30 segundos
+    },
+  },
+});
 
 const App = () => {
   const [initialRoute, setInitialRoute] = useState(null);
@@ -108,102 +119,122 @@ const App = () => {
   }
 
   return (
-    <SafeAreaProvider>
-      <NavigationContainer>
-        <PaperProvider>
-          <ChargeProvider>
-            <OnboardingProvider>
-              <Stack.Navigator 
-                initialRouteName={initialRoute}
-                screenOptions={{ headerShown: false }}
-              >
-                <Stack.Screen name="Welcome" component={WelcomeScreen} />
-                <Stack.Screen name="Login" component={LoginScreen} />
-                <Stack.Screen name="LoginPassword" component={LoginPasswordScreen} />
-                
-                {/* Onboarding PF */}
-                <Stack.Screen name="AccountType" component={AccountTypeScreen} />
-                <Stack.Screen name="OnboardingPersonalData" component={PersonalDataScreen} />
-                <Stack.Screen name="OnboardingTerms" component={TermsScreen} />
-                <Stack.Screen name="OnboardingPepInfo" component={PepInfoScreen} />
-                <Stack.Screen name="OnboardingAddress" component={AddressScreen} />
-                <Stack.Screen name="OnboardingPassword" component={PasswordScreen} />
-                <Stack.Screen name="OnboardingPhone" component={PhoneScreen} />
-                <Stack.Screen name="OnboardingEmail" component={EmailScreen} />
-                <Stack.Screen name="OnboardingSuccess" component={SuccessScreen} />
+    <QueryClientProvider client={queryClient}>
+      <SafeAreaProvider>
+        <NavigationContainer>
+          <PaperProvider>
+            <ChargeProvider>
+              <OnboardingProvider>
+                <Stack.Navigator 
+                  initialRouteName={initialRoute}
+                  screenOptions={{ headerShown: false }}
+                >
+                  <Stack.Screen name="Welcome" component={WelcomeScreen} />
+                  <Stack.Screen name="Login" component={LoginScreen} />
+                  <Stack.Screen name="LoginPassword" component={LoginPasswordScreen} />
+                  
+                  {/* Onboarding PF */}
+                  <Stack.Screen name="AccountType" component={AccountTypeScreen} />
+                  <Stack.Screen name="OnboardingPersonalData" component={PersonalDataScreen} />
+                  <Stack.Screen name="OnboardingTerms" component={TermsScreen} />
+                  <Stack.Screen name="OnboardingPepInfo" component={PepInfoScreen} />
+                  <Stack.Screen name="OnboardingAddress" component={AddressScreen} />
+                  <Stack.Screen name="OnboardingPassword" component={PasswordScreen} />
+                  <Stack.Screen name="OnboardingPhone" component={PhoneScreen} />
+                  <Stack.Screen name="OnboardingEmail" component={EmailScreen} />
+                  <Stack.Screen name="OnboardingSuccess" component={SuccessScreen} />
 
-                {/* Onboarding PJ */}
-                <Stack.Screen
-                  name="CompanyData"
-                  component={CompanyDataScreen}
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="CompanyAddress"
-                  component={CompanyAddressScreen}
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="PartnerData"
-                  component={PartnerDataScreen}
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="CompanyPassword"
-                  component={PasswordScreen}
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="CompanyContact"
-                  component={CompanyContactScreen}
-                  options={{ headerShown: false }}
-                />
-                
-                {/* Dashboard e outras telas */}
-                <Stack.Screen name="Dashboard2" component={Dashboard2Screen} />
-                <Stack.Screen name="Statement" component={StatementScreen} />
-                <Stack.Screen name="Charges" component={ChargesScreen} />
-                <Stack.Screen name="HomePix" component={HomePix} />
-                <Stack.Screen name="PixKeysScreen" component={PixKeysScreen} />
-                <Stack.Screen name="RegisterPixKey" component={RegisterPixKeyScreen} />
-                <Stack.Screen name="PixTransferAmount" component={PixTransferAmountScreen} />
-                <Stack.Screen name="PixTransferKey" component={PixTransferKeyScreen} />
-                <Stack.Screen name="PixTransferConfirm" component={PixTransferConfirmScreen} />
-                <Stack.Screen name="PixTransferLoading" component={PixTransferLoadingScreen} />
-                <Stack.Screen name="PixTransferSuccess" component={PixTransferSuccessScreen} />
-                <Stack.Screen name="PixTransferReceipt" component={PixTransferReceiptScreen} />
-                <Stack.Screen name="PixReceiveAmount" component={PixReceiveAmountScreen} />
-                <Stack.Screen
-                  name="PixReceiveKey"
-                  component={PixReceiveKeyScreenV2}
-                  options={{
-                    headerShown: false,
-                  }}
-                />
-                <Stack.Screen name="PixReceiveConfirm" component={PixReceiveConfirmScreen} />
-                <Stack.Screen name="PayBill" component={PayBillScreen} />
-                <Stack.Screen name="PayBillConfirm" component={PayBillConfirmScreen} />
-                <Stack.Screen name="PayBillLoading" component={PayBillLoadingScreen} />
-                <Stack.Screen name="PayBillSuccess" component={PayBillSuccessScreen} />
-                <Stack.Screen name="PayBillReceipt" component={PayBillReceiptScreen} />
-                <Stack.Screen name="TransferAmount" component={TransferAmountScreen} />
-                <Stack.Screen name="TransferAccount" component={TransferAccountScreen} />
-                <Stack.Screen name="TransferSuccess" component={TransferSuccessScreen} />
-                <Stack.Screen name="TransferReceipt" component={TransferReceiptScreen} />
-                <Stack.Screen name="CreateChargePersonalData" component={CreateChargePersonalDataScreen} />
-                <Stack.Screen name="CreateChargeAddress" component={CreateChargeAddressScreen} />
-                <Stack.Screen name="CreateChargeConfirmData" component={CreateChargeConfirmDataScreen} />
-                <Stack.Screen name="CreateChargeAmount" component={CreateChargeAmountScreen} />
-                <Stack.Screen name="CreateChargeFines" component={CreateChargeFinesScreen} />
-                <Stack.Screen name="CreateChargeDueDate" component={CreateChargeDueDateScreen} />
-                <Stack.Screen name="CreateChargeSummary" component={CreateChargeSummaryScreen} />
-                <Stack.Screen name="CreateChargeSuccess" component={CreateChargeSuccessScreen} />
-              </Stack.Navigator>
-            </OnboardingProvider>
-          </ChargeProvider>
-        </PaperProvider>
-      </NavigationContainer>
-    </SafeAreaProvider>
+                  {/* Onboarding PJ */}
+                  <Stack.Screen
+                    name="CompanyData"
+                    component={CompanyDataScreen}
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="CompanyAddress"
+                    component={CompanyAddressScreen}
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="PartnerData"
+                    component={PartnerDataScreen}
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="CompanyPassword"
+                    component={PasswordScreen}
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="CompanyContact"
+                    component={CompanyContactScreen}
+                    options={{ headerShown: false }}
+                  />
+                  
+                  {/* Dashboard e outras telas */}
+                  <Stack.Screen 
+                    name="Dashboard2" 
+                    component={Dashboard2Screen} 
+                    options={{ headerShown: false }} 
+                  />
+                  <Stack.Screen 
+                    name="ProfileSettings" 
+                    component={ProfileSettingsScreen}
+                    options={{ 
+                      title: 'Configurações',
+                      headerStyle: {
+                        backgroundColor: '#682145',
+                      },
+                      headerTintColor: '#fff',
+                      headerTitleStyle: {
+                        fontWeight: 'bold',
+                      },
+                    }}
+                  />
+                  <Stack.Screen name="Statement" component={StatementScreen} />
+                  <Stack.Screen name="Charges" component={ChargesScreen} />
+                  <Stack.Screen name="HomePix" component={HomePix} />
+                  <Stack.Screen name="PixKeysScreen" component={PixKeysScreen} />
+                  <Stack.Screen name="RegisterPixKey" component={RegisterPixKeyScreen} />
+                  <Stack.Screen name="PixTransferAmount" component={PixTransferAmountScreen} />
+                  <Stack.Screen name="PixTransferKey" component={PixTransferKeyScreen} />
+                  <Stack.Screen name="PixTransferConfirm" component={PixTransferConfirmScreen} />
+                  <Stack.Screen name="PixTransferLoading" component={PixTransferLoadingScreen} />
+                  <Stack.Screen name="PixTransferSuccess" component={PixTransferSuccessScreen} />
+                  <Stack.Screen name="PixTransferReceipt" component={PixTransferReceiptScreen} />
+                  <Stack.Screen name="PixReceiveAmount" component={PixReceiveAmountScreen} />
+                  <Stack.Screen
+                    name="PixReceiveKey"
+                    component={PixReceiveKeyScreenV2}
+                    options={{
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen name="PixReceiveConfirm" component={PixReceiveConfirmScreen} />
+                  <Stack.Screen name="PayBill" component={PayBillScreen} />
+                  <Stack.Screen name="PayBillConfirm" component={PayBillConfirmScreen} />
+                  <Stack.Screen name="PayBillLoading" component={PayBillLoadingScreen} />
+                  <Stack.Screen name="PayBillSuccess" component={PayBillSuccessScreen} />
+                  <Stack.Screen name="PayBillReceipt" component={PayBillReceiptScreen} />
+                  <Stack.Screen name="TransferAmount" component={TransferAmountScreen} />
+                  <Stack.Screen name="TransferAccount" component={TransferAccountScreen} />
+                  <Stack.Screen name="TransferSuccess" component={TransferSuccessScreen} />
+                  <Stack.Screen name="TransferReceipt" component={TransferReceiptScreen} />
+                  <Stack.Screen name="CreateChargePersonalData" component={CreateChargePersonalDataScreen} />
+                  <Stack.Screen name="CreateChargeAddress" component={CreateChargeAddressScreen} />
+                  <Stack.Screen name="CreateChargeConfirmData" component={CreateChargeConfirmDataScreen} />
+                  <Stack.Screen name="CreateChargeAmount" component={CreateChargeAmountScreen} />
+                  <Stack.Screen name="CreateChargeFines" component={CreateChargeFinesScreen} />
+                  <Stack.Screen name="CreateChargeDueDate" component={CreateChargeDueDateScreen} />
+                  <Stack.Screen name="CreateChargeSummary" component={CreateChargeSummaryScreen} />
+                  <Stack.Screen name="CreateChargeSuccess" component={CreateChargeSuccessScreen} />
+                </Stack.Navigator>
+              </OnboardingProvider>
+            </ChargeProvider>
+          </PaperProvider>
+        </NavigationContainer>
+      </SafeAreaProvider>
+    </QueryClientProvider>
   );
 };
 

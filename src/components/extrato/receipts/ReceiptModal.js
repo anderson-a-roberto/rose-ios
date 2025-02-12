@@ -81,7 +81,8 @@ const ReceiptModal = ({ visible, onDismiss, transaction }) => {
             mode="contained"
             onPress={handleDownload}
             style={styles.button}
-            buttonColor="#FF1493"
+            buttonColor="#E91E63"
+            textColor="#FFFFFF"
             icon="file-pdf-box"
             loading={loading}
             disabled={loading}
@@ -93,7 +94,7 @@ const ReceiptModal = ({ visible, onDismiss, transaction }) => {
             mode="outlined"
             onPress={onDismiss}
             style={[styles.button, styles.closeButton]}
-            textColor="#FF1493"
+            textColor="#E91E63"
           >
             Fechar
           </Button>
@@ -122,7 +123,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   closeButton: {
-    borderColor: '#FF1493',
+    borderColor: '#E91E63',
   },
 });
 

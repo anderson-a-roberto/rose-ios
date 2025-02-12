@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, FlatList, Dimensions, Image } from 'react-native';
-import { Text } from 'react-native-paper';
+import { Text, Menu } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { supabase } from '../config/supabase';
 import StatementForm from '../components/extrato/StatementForm';
@@ -14,6 +14,8 @@ import ChargesOptionsForm from '../components/charges/ChargesOptionsForm';
 import CreateChargeForm from '../components/charges/CreateChargeForm';
 import ManageChargesForm from '../components/charges/ManageChargesForm';
 import useDashboard from '../hooks/useDashboard';
+import { useBalanceQuery } from '../hooks/useBalanceQuery';
+import { useTransactionsQuery } from '../hooks/useTransactionsQuery';
 import ProfileSettingsForm from '../components/profile/ProfileSettingsForm';
 import ReceiptModal from '../components/extrato/receipts/ReceiptModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -69,11 +71,15 @@ const TransactionItem = ({ date, description, value, isPositive, movementType, o
 
 export default function Dashboard2Screen({ navigation }) {
   const { userAccount, userTaxId } = useDashboard();
-  const [balance, setBalance] = useState(null);
+  const { data: balance, isLoading: balanceLoading, error: balanceError } = useBalanceQuery();
+  const { 
+    data: transactions = [], 
+    isLoading: transactionsLoading,
+    error: transactionsError,
+    refetch: refetchTransactions
+  } = useTransactionsQuery(userAccount, userTaxId);
+
   const [showBalance, setShowBalance] = useState(true);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [transactions, setTransactions] = useState([]);
   const [showStatement, setShowStatement] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [showTransfer, setShowTransfer] = useState(false);
@@ -88,6 +94,7 @@ export default function Dashboard2Screen({ navigation }) {
   const [userName, setUserName] = useState('Usuário');
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   const menuItems = [
     { id: 'pix', icon: 'bank-transfer', label: 'Pix', onPress: () => navigation.navigate('HomePix', { balance }) },
@@ -102,33 +109,6 @@ export default function Dashboard2Screen({ navigation }) {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(value);
-  };
-
-  const fetchTransactions = async (account, documentNumber) => {
-    try {
-      // Por enquanto usando datas fixas para teste
-      const { data: statementData, error: statementError } = await supabase.functions.invoke('get-account-statement', {
-        body: {
-          account: account,
-          documentNumber: documentNumber,
-          dateFrom: '2025-01-19',
-          dateTo: '2025-01-24'
-        }
-      });
-
-      if (statementError) throw statementError;
-      
-      if (statementData.status === 'SUCCESS' && statementData.body?.movements) {
-        console.log('Primeira transação:', statementData.body.movements[0]);
-        setTransactions(statementData.body.movements);
-      } else {
-        throw new Error('Erro ao obter extrato');
-      }
-
-    } catch (err) {
-      console.error('Erro ao buscar transações:', err);
-      setError('Não foi possível carregar o extrato. Tente novamente mais tarde.');
-    }
   };
 
   const handleStatementSubmit = async (startDate, endDate) => {
@@ -255,58 +235,6 @@ export default function Dashboard2Screen({ navigation }) {
     }
   };
 
-  const fetchBalance = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Buscar usuário logado
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
-
-      // Buscar CPF do usuário
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('document_number')
-        .eq('id', user.id)
-        .single();
-      
-      if (profileError) throw profileError;
-
-      // Buscar número da conta no kyc_proposals_v2
-      const { data: kycData, error: kycError } = await supabase
-        .from('kyc_proposals_v2')
-        .select('account')
-        .eq('document_number', profileData.document_number)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (kycError) throw kycError;
-
-      // Chamar edge function para obter saldo
-      const { data: balanceData, error: balanceError } = await supabase.functions.invoke('get-account-balance', {
-        body: {
-          account: kycData.account,
-          documentNumber: profileData.document_number
-        }
-      });
-
-      if (balanceError) throw balanceError;
-
-      setBalance(balanceData.body.amount);
-
-      // Buscar transações após obter o saldo
-      await fetchTransactions(kycData.account, profileData.document_number);
-
-    } catch (err) {
-      console.error('Erro ao buscar saldo:', err);
-      setError('Não foi possível carregar o saldo. Tente novamente mais tarde.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const loadUserName = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -329,8 +257,23 @@ export default function Dashboard2Screen({ navigation }) {
     setModalVisible(true);
   };
 
+  const handleLogout = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Welcome' }],
+      });
+    } catch (err) {
+      setError('Erro ao fazer logout. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetchBalance();
     loadUserName();
   }, []);
 
@@ -339,9 +282,39 @@ export default function Dashboard2Screen({ navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.userInfo}>
-          <View style={styles.avatarContainer}>
-            <MaterialCommunityIcons name="account-circle" size={40} color="#FFFFFF" />
-          </View>
+          <Menu
+            visible={menuVisible}
+            onDismiss={() => setMenuVisible(false)}
+            anchor={
+              <TouchableOpacity 
+                style={styles.avatarContainer}
+                onPress={() => setMenuVisible(true)}
+              >
+                <MaterialCommunityIcons 
+                  name="account-circle" 
+                  size={40} 
+                  color="#FFFFFF" 
+                />
+              </TouchableOpacity>
+            }
+          >
+            <Menu.Item 
+              onPress={() => {
+                setMenuVisible(false);
+                navigation.navigate('ProfileSettings');
+              }}
+              title="Configurações"
+              leadingIcon="cog"
+            />
+            <Menu.Item 
+              onPress={() => {
+                setMenuVisible(false);
+                handleLogout();
+              }}
+              title="Sair"
+              leadingIcon="logout"
+            />
+          </Menu>
           <View style={styles.userDetails}>
             <Text style={styles.userName}>OLÁ, {userName.toUpperCase()}</Text>
             <Text style={styles.accountInfo}>Agência: {userAccount?.substring(0, 4) || '----'} | Conta: {userAccount?.substring(4) || '----'}</Text>
@@ -380,7 +353,10 @@ export default function Dashboard2Screen({ navigation }) {
               />
             </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.addBalanceButton}>
+          <TouchableOpacity 
+            style={styles.addBalanceButton}
+            onPress={() => navigation.navigate('PixKeysScreen')}
+          >
             <Text style={styles.addBalanceText}>+ ADICIONAR SALDO</Text>
           </TouchableOpacity>
         </View>
@@ -409,24 +385,45 @@ export default function Dashboard2Screen({ navigation }) {
       {/* Transactions Section */}
       <View style={styles.transactionsContainer}>
         <Text style={styles.transactionsTitle}>Últimas Transações</Text>
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#682145" />
+        {transactionsError ? (
+          <View style={styles.errorContainer}>
+            <MaterialCommunityIcons 
+              name="refresh-circle" 
+              size={48} 
+              color="#E91E63" 
+            />
+            <Text style={styles.errorText}>
+              Não foi possível carregar o extrato
+            </Text>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={() => {
+                refetchTransactions();
+              }}
+            >
+              <Text style={styles.retryButtonText}>Tentar Novamente</Text>
+            </TouchableOpacity>
           </View>
+        ) : transactionsLoading ? (
+          <ActivityIndicator size="large" color="#E91E63" style={styles.loader} />
+        ) : transactions.length === 0 ? (
+          <Text style={styles.emptyText}>Nenhuma transação encontrada</Text>
         ) : (
-          <ScrollView>
-            {transactions.map((transaction, index) => (
+          <FlatList
+            data={transactions.slice(0, 5)}
+            renderItem={({ item }) => (
               <TransactionItem
-                key={index}
-                date={transaction.createDate}
-                description={transaction.description}
-                value={transaction.amount}
-                isPositive={transaction.movementType.includes('CREDIT') || transaction.movementType.includes('IN')}
-                movementType={transaction.movementType}
-                onPress={() => handleTransactionPress(transaction)}
+                date={item.createDate}
+                description={item.description}
+                value={item.amount}
+                isPositive={item.movementType === 'CREDIT'}
+                movementType={item.movementType}
+                onPress={() => handleTransactionPress(item)}
               />
-            ))}
-          </ScrollView>
+            )}
+            keyExtractor={(item, index) => index.toString()}
+            style={styles.transactionsList}
+          />
         )}
       </View>
 
@@ -652,10 +649,42 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999999',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  errorContainer: {
     alignItems: 'center',
-    paddingVertical: 20,
+    justifyContent: 'center',
+    padding: 20,
+    backgroundColor: '#FFF',
+    borderRadius: 8,
+    margin: 16,
+  },
+  errorText: {
+    color: '#666',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#E91E63',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    elevation: 2,
+  },
+  retryButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  loader: {
+    marginVertical: 20,
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#666',
+    marginVertical: 20,
+  },
+  transactionsList: {
+    paddingVertical: 16,
   },
 });

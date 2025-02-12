@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { TextInput, Button, Text, ActivityIndicator, Surface } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, Platform, TouchableOpacity } from 'react-native';
+import { TextInput, Button, Text, ActivityIndicator } from 'react-native-paper';
 import { supabase } from '../../config/supabase';
 import MaskInput from 'react-native-mask-input';
 
@@ -55,7 +55,6 @@ export default function ProfileSettingsForm({ onBack }) {
 
       if (profile) {
         setForm({
-          // Dados Pessoais
           fullName: profile.full_name || '',
           socialName: profile.social_name || '',
           email: profile.email || '',
@@ -64,8 +63,6 @@ export default function ProfileSettingsForm({ onBack }) {
           motherName: profile.mother_name || '',
           documentNumber: profile.document_number || '',
           documentType: profile.document_type || 'CPF',
-
-          // Endereço
           addressPostalCode: profile.address_postal_code || '',
           addressStreet: profile.address_street || '',
           addressNumber: profile.address_number || '',
@@ -82,336 +79,169 @@ export default function ProfileSettingsForm({ onBack }) {
     }
   };
 
-  const handleChange = (name, value) => {
-    setForm(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
-
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          // Dados Pessoais
-          full_name: form.fullName,
-          social_name: form.socialName,
-          email: form.email,
-          phone_number: form.phoneNumber,
-          birth_date: form.birthDate,
-          mother_name: form.motherName,
-          document_number: form.documentNumber,
-          document_type: form.documentType,
-
-          // Endereço
-          address_postal_code: form.addressPostalCode,
-          address_street: form.addressStreet,
-          address_number: form.addressNumber,
-          address_complement: form.addressComplement,
-          address_neighborhood: form.addressNeighborhood,
-          address_city: form.addressCity,
-          address_state: form.addressState
-        })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
-      console.log('Perfil atualizado com sucesso!');
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading && !form.fullName) {
+  if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FF1493" />
+        <ActivityIndicator size="large" color="#E91E63" />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <Button
-          icon="arrow-left"
-          onPress={onBack}
+        <TouchableOpacity
           style={styles.backButton}
+          onPress={onBack}
         >
-          Voltar
-        </Button>
+          <Text style={styles.backText}>‹</Text>
+        </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Configurações do Perfil</Text>
+          <Text style={styles.subtitle}>
+            Aqui você pode visualizar e atualizar seus dados cadastrais
+          </Text>
+        </View>
       </View>
 
-      <Text style={styles.title}>Configurações do Perfil</Text>
-
-      {error && (
-        <Text style={styles.errorText}>{error}</Text>
-      )}
-
-      <ScrollView style={styles.form}>
-        {/* Dados Pessoais */}
-        <Surface style={styles.section}>
+      {/* Content */}
+      <ScrollView 
+        style={styles.content}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={styles.form}>
+          {/* Dados Pessoais */}
           <Text style={styles.sectionTitle}>Dados Pessoais</Text>
+          
+          <Text style={styles.label}>Nome Completo</Text>
+          <TextInput
+            value={form.fullName}
+            onChangeText={(text) => setForm(prev => ({ ...prev, fullName: text }))}
+            style={[styles.input, form.fullName && styles.filledInput]}
+            disabled
+          />
 
-          <View style={styles.row}>
-            <View style={styles.column}>
-              <Text style={styles.label}>Nome Completo</Text>
-              <TextInput
-                value={form.fullName}
-                onChangeText={(value) => handleChange('fullName', value)}
-                mode="outlined"
-                style={styles.input}
-                disabled={loading}
-                outlineColor="#666"
-                activeOutlineColor="#000"
-                textColor="#000"
-              />
-            </View>
-            <View style={styles.column}>
-              <Text style={styles.label}>Nome Social</Text>
-              <TextInput
-                value={form.socialName}
-                onChangeText={(value) => handleChange('socialName', value)}
-                mode="outlined"
-                style={styles.input}
-                disabled={loading}
-                outlineColor="#666"
-                activeOutlineColor="#000"
-                textColor="#000"
-              />
-            </View>
-          </View>
+          <Text style={styles.label}>Nome Social</Text>
+          <TextInput
+            value={form.socialName}
+            onChangeText={(text) => setForm(prev => ({ ...prev, socialName: text }))}
+            style={[styles.input, form.socialName && styles.filledInput]}
+            disabled
+          />
 
-          <View style={styles.row}>
-            <View style={styles.column}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                value={form.email}
-                onChangeText={(value) => handleChange('email', value)}
-                mode="outlined"
-                keyboardType="email-address"
-                style={styles.input}
-                disabled={loading}
-                outlineColor="#666"
-                activeOutlineColor="#000"
-                textColor="#000"
-              />
-            </View>
-            <View style={styles.column}>
-              <Text style={styles.label}>Telefone</Text>
-              <TextInput
-                value={form.phoneNumber}
-                onChangeText={(value) => handleChange('phoneNumber', value)}
-                mode="outlined"
-                keyboardType="phone-pad"
-                style={styles.input}
-                disabled={loading}
-                outlineColor="#666"
-                activeOutlineColor="#000"
-                textColor="#000"
-                render={props => (
-                  <MaskInput
-                    {...props}
-                    mask={['(', /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/, /\d/, /\d/, '-', /\d/, /\d/, /\d/, /\d/]}
-                  />
-                )}
-              />
-            </View>
-          </View>
+          <Text style={styles.label}>Email</Text>
+          <TextInput
+            value={form.email}
+            onChangeText={(text) => setForm(prev => ({ ...prev, email: text }))}
+            style={[styles.input, form.email && styles.filledInput]}
+            disabled
+          />
 
-          <View style={styles.row}>
-            <View style={styles.column}>
-              <Text style={styles.label}>Data de Nascimento</Text>
-              <TextInput
-                value={form.birthDate}
-                onChangeText={(value) => handleChange('birthDate', value)}
-                mode="outlined"
-                style={styles.input}
-                disabled={loading}
-                outlineColor="#666"
-                activeOutlineColor="#000"
-                textColor="#000"
-                render={props => (
-                  <MaskInput
-                    {...props}
-                    mask={[/\d/, /\d/, '/', /\d/, /\d/, '/', /\d/, /\d/, /\d/, /\d/]}
-                  />
-                )}
-              />
-            </View>
-            <View style={styles.column}>
-              <Text style={styles.label}>Nome da Mãe</Text>
-              <TextInput
-                value={form.motherName}
-                onChangeText={(value) => handleChange('motherName', value)}
-                mode="outlined"
-                style={styles.input}
-                disabled={loading}
-                outlineColor="#666"
-                activeOutlineColor="#000"
-                textColor="#000"
-              />
-            </View>
-          </View>
+          <Text style={styles.label}>Telefone</Text>
+          <TextInput
+            value={form.phoneNumber}
+            onChangeText={(text) => setForm(prev => ({ ...prev, phoneNumber: text }))}
+            style={[styles.input, form.phoneNumber && styles.filledInput]}
+            disabled
+          />
 
-          <View style={styles.row}>
-            <View style={styles.column}>
-              <Text style={styles.label}>CPF/CNPJ</Text>
-              <TextInput
-                value={form.documentNumber}
-                mode="outlined"
-                style={styles.input}
-                disabled={true}
-                outlineColor="#666"
-                activeOutlineColor="#000"
-                textColor="#000"
-                render={props => (
-                  <MaskInput
-                    {...props}
-                    mask={[/\d/, /\d/, /\d/, '.', /\d/, /\d/, /\d/, '.', /\d/, /\d/, /\d/, '-', /\d/, /\d/]}
-                  />
-                )}
-              />
-            </View>
-            <View style={styles.column}>
-              <Text style={styles.label}>Tipo do Documento</Text>
-              <TextInput
-                value={form.documentType}
-                mode="outlined"
-                style={styles.input}
-                disabled={true}
-                outlineColor="#666"
-                activeOutlineColor="#000"
-                textColor="#000"
-              />
-            </View>
-          </View>
-        </Surface>
+          <Text style={styles.label}>Data de Nascimento</Text>
+          <TextInput
+            value={form.birthDate}
+            onChangeText={(text) => setForm(prev => ({ ...prev, birthDate: text }))}
+            style={[styles.input, form.birthDate && styles.filledInput]}
+            disabled
+          />
 
-        {/* Endereço */}
-        <Surface style={styles.section}>
-          <Text style={styles.sectionTitle}>Endereço</Text>
+          <Text style={styles.label}>Nome da Mãe</Text>
+          <TextInput
+            value={form.motherName}
+            onChangeText={(text) => setForm(prev => ({ ...prev, motherName: text }))}
+            style={[styles.input, form.motherName && styles.filledInput]}
+            disabled
+          />
+
+          <Text style={styles.label}>CPF/CNPJ</Text>
+          <TextInput
+            value={form.documentNumber}
+            onChangeText={(text) => setForm(prev => ({ ...prev, documentNumber: text }))}
+            style={[styles.input, form.documentNumber && styles.filledInput]}
+            disabled
+          />
+
+          {/* Endereço */}
+          <Text style={[styles.sectionTitle, { marginTop: 32 }]}>Endereço</Text>
 
           <Text style={styles.label}>CEP</Text>
           <TextInput
             value={form.addressPostalCode}
-            onChangeText={(value) => handleChange('addressPostalCode', value)}
-            mode="outlined"
-            style={[styles.input, { marginBottom: 24 }]}
-            disabled={loading}
-            outlineColor="#666"
-            activeOutlineColor="#000"
-            textColor="#000"
-            render={props => (
-              <MaskInput
-                {...props}
-                mask={[/\d/, /\d/, /\d/, /\d/, /\d/, '-', /\d/, /\d/, /\d/]}
-              />
-            )}
+            onChangeText={(text) => setForm(prev => ({ ...prev, addressPostalCode: text }))}
+            style={[styles.input, form.addressPostalCode && styles.filledInput]}
+            disabled
           />
 
           <Text style={styles.label}>Rua</Text>
           <TextInput
             value={form.addressStreet}
-            onChangeText={(value) => handleChange('addressStreet', value)}
-            mode="outlined"
-            style={[styles.input, { marginBottom: 24 }]}
-            disabled={loading}
-            outlineColor="#666"
-            activeOutlineColor="#000"
-            textColor="#000"
+            onChangeText={(text) => setForm(prev => ({ ...prev, addressStreet: text }))}
+            style={[styles.input, form.addressStreet && styles.filledInput]}
+            disabled
           />
 
-          <View style={styles.row}>
-            <View style={styles.column}>
-              <Text style={styles.label}>Número</Text>
-              <TextInput
-                value={form.addressNumber}
-                onChangeText={(value) => handleChange('addressNumber', value)}
-                mode="outlined"
-                style={styles.input}
-                disabled={loading}
-                outlineColor="#666"
-                activeOutlineColor="#000"
-                textColor="#000"
-              />
-            </View>
-            <View style={styles.column}>
-              <Text style={styles.label}>Complemento</Text>
-              <TextInput
-                value={form.addressComplement}
-                onChangeText={(value) => handleChange('addressComplement', value)}
-                mode="outlined"
-                style={styles.input}
-                disabled={loading}
-                outlineColor="#666"
-                activeOutlineColor="#000"
-                textColor="#000"
-              />
-            </View>
-          </View>
+          <Text style={styles.label}>Número</Text>
+          <TextInput
+            value={form.addressNumber}
+            onChangeText={(text) => setForm(prev => ({ ...prev, addressNumber: text }))}
+            style={[styles.input, form.addressNumber && styles.filledInput]}
+            disabled
+          />
+
+          <Text style={styles.label}>Complemento</Text>
+          <TextInput
+            value={form.addressComplement}
+            onChangeText={(text) => setForm(prev => ({ ...prev, addressComplement: text }))}
+            style={[styles.input, form.addressComplement && styles.filledInput]}
+            disabled
+          />
 
           <Text style={styles.label}>Bairro</Text>
           <TextInput
             value={form.addressNeighborhood}
-            onChangeText={(value) => handleChange('addressNeighborhood', value)}
-            mode="outlined"
-            style={[styles.input, { marginBottom: 24 }]}
-            disabled={loading}
-            outlineColor="#666"
-            activeOutlineColor="#000"
-            textColor="#000"
+            onChangeText={(text) => setForm(prev => ({ ...prev, addressNeighborhood: text }))}
+            style={[styles.input, form.addressNeighborhood && styles.filledInput]}
+            disabled
           />
 
-          <View style={styles.row}>
-            <View style={styles.column}>
-              <Text style={styles.label}>Cidade</Text>
-              <TextInput
-                value={form.addressCity}
-                onChangeText={(value) => handleChange('addressCity', value)}
-                mode="outlined"
-                style={styles.input}
-                disabled={loading}
-                outlineColor="#666"
-                activeOutlineColor="#000"
-                textColor="#000"
-              />
-            </View>
-            <View style={styles.column}>
-              <Text style={styles.label}>Estado</Text>
-              <TextInput
-                value={form.addressState}
-                onChangeText={(value) => handleChange('addressState', value)}
-                mode="outlined"
-                style={styles.input}
-                disabled={loading}
-                outlineColor="#666"
-                activeOutlineColor="#000"
-                textColor="#000"
-              />
-            </View>
-          </View>
-        </Surface>
+          <Text style={styles.label}>Cidade</Text>
+          <TextInput
+            value={form.addressCity}
+            onChangeText={(text) => setForm(prev => ({ ...prev, addressCity: text }))}
+            style={[styles.input, form.addressCity && styles.filledInput]}
+            disabled
+          />
 
+          <Text style={styles.label}>Estado</Text>
+          <TextInput
+            value={form.addressState}
+            onChangeText={(text) => setForm(prev => ({ ...prev, addressState: text }))}
+            style={[styles.input, form.addressState && styles.filledInput]}
+            disabled
+          />
+        </View>
+      </ScrollView>
+
+      {/* Footer */}
+      <View style={styles.footer}>
         <Button
           mode="contained"
-          onPress={handleSubmit}
-          style={styles.submitButton}
-          loading={loading}
-          disabled={loading}
+          onPress={onBack}
+          style={styles.button}
+          labelStyle={styles.buttonLabel}
         >
-          Salvar Alterações
+          Voltar
         </Button>
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -419,71 +249,109 @@ export default function ProfileSettingsForm({ onBack }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#FFF',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#FFF',
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
+    paddingTop: Platform.OS === 'ios' ? 8 : 16,
+    paddingBottom: 24,
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
   },
   backButton: {
-    marginRight: 16,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+    marginBottom: 8,
   },
-  title: {
+  backText: {
+    fontSize: 32,
+    color: '#E91E63',
+    marginTop: -4,
+  },
+  headerContent: {
+    paddingHorizontal: 24,
+  },
+  headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 24,
-    paddingHorizontal: 16,
-    color: '#000000',
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#666666',
+    lineHeight: 20,
+  },
+  content: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   form: {
-    flex: 1,
-    padding: 16,
-  },
-  section: {
-    padding: 16,
-    marginBottom: 16,
-    borderRadius: 8,
-    elevation: 2,
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 24,
+    paddingBottom: Platform.OS === 'android' ? 32 : 24,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 24,
-    color: '#000000',
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 24,
-  },
-  column: {
-    flex: 1,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 16,
+    marginTop: 24,
   },
   label: {
-    fontSize: 14,
+    fontSize: 13,
+    color: '#666666',
     marginBottom: 8,
-    color: '#000000',
-    fontWeight: '500',
+    marginTop: 16,
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFF',
+    fontSize: 16,
+    height: 48,
+    paddingHorizontal: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
   },
-  errorText: {
-    color: '#FF0000',
-    marginBottom: 16,
-    paddingHorizontal: 16,
+  filledInput: {
+    fontWeight: '500',
   },
-  submitButton: {
-    marginTop: 24,
-    marginBottom: 40,
-    backgroundColor: '#FF1493',
-    padding: 8,
+  footer: {
+    padding: 16,
+    backgroundColor: '#FFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    ...Platform.select({
+      android: {
+        elevation: 8,
+      },
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+    }),
+  },
+  button: {
+    height: 48,
+    justifyContent: 'center',
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
+  },
+  buttonLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#FFF',
+    textTransform: 'uppercase',
   },
 });
