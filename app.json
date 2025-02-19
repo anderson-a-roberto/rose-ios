@@ -1,28 +1,52 @@
 {
   "expo": {
-    "name": "banco-rose",
-    "slug": "banco-rose",
+    "name": "banco-rose-v2",
+    "slug": "banco-rose-v2",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "updates": {
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/91e98215-8f29-4fa8-bc4a-c0ba9107fa8c"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.banco.rose.v2"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
+      },
+      "package": "com.banco.rose.v2",
+      "permissions": [
+        "INTERNET",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
+      "versionCode": 1,
+      "softwareKeyboardLayoutMode": "pan",
+      "allowBackup": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "91e98215-8f29-4fa8-bc4a-c0ba9107fa8c"
       }
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
+    "owner": "fernandoluz",
+    "sdkVersion": "50.0.0",
+    "runtimeVersion": {
+      "policy": "sdkVersion"
     }
   }
 }
