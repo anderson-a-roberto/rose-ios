@@ -1,55 +1,64 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Share, Platform, Linking } from 'react-native';
-import { Modal, Portal, Button, ActivityIndicator } from 'react-native-paper';
-import { supabase } from '../../../config/supabase';
+import React, { useState, useRef } from 'react';
+import { View, StyleSheet, ScrollView, Platform, Alert } from 'react-native';
+import { Modal, Portal, Button } from 'react-native-paper';
+import { captureRef } from 'react-native-view-shot';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import DepositReceipt from './DepositReceipt';
 import TransferOutReceipt from './TransferOutReceipt';
-import { generateReceiptHtml } from './receiptHtmlGenerator';
 
 const ReceiptModal = ({ visible, onDismiss, transaction }) => {
   const [loading, setLoading] = useState(false);
+  const receiptRef = useRef();
 
   const isCredit = (type) => {
     return ['TEFTRANSFERIN', 'ENTRYCREDIT', 'PIXCREDIT'].includes(type);
   };
 
-  const handleDownload = async () => {
+  const handleShare = async () => {
     try {
       if (!transaction) return;
       setLoading(true);
 
-      const html = generateReceiptHtml(transaction);
-      const { data, error } = await supabase.functions.invoke('html-to-pdf', {
-        body: { html }
-      });
-
-      if (error) throw error;
+      // Verifica se o compartilhamento está disponível
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (!isAvailable) {
+        Alert.alert('Erro', 'Compartilhamento não está disponível neste dispositivo');
+        return;
+      }
 
       const date = new Date(transaction.createDate).toISOString().slice(0,10);
       const type = isCredit(transaction.movementType) ? 'deposito' : 'transferencia';
-      const fileName = `comprovante-${type}-${date}.pdf`;
+      const fileName = `comprovante-${type}-${date}.jpg`;
+      
+      // Captura o comprovante como base64
+      const uri = await captureRef(receiptRef, {
+        format: 'jpg',
+        quality: 0.8,
+        result: 'base64'
+      });
 
-      // Criar um Blob com o PDF
-      const blob = new Blob([data], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
+      // Cria um arquivo temporário
+      const tempUri = FileSystem.cacheDirectory + fileName;
+      await FileSystem.writeAsStringAsync(tempUri, uri, {
+        encoding: FileSystem.EncodingType.Base64
+      });
 
-      if (Platform.OS === 'web') {
-        // No navegador, abrir em nova aba
-        window.open(url, '_blank');
-      } else {
-        // No mobile, compartilhar
-        await Share.share({
-          url: url,
-          title: `Comprovante de ${type}`,
-          message: `Comprovante de ${type} - ${date}`
-        });
-      }
+      // Compartilha o arquivo
+      await Sharing.shareAsync(tempUri, {
+        mimeType: 'image/jpeg',
+        dialogTitle: 'Compartilhar Comprovante'
+      });
 
-      // Limpar o URL do objeto
-      URL.revokeObjectURL(url);
+      // Remove o arquivo temporário após compartilhar
+      await FileSystem.deleteAsync(tempUri);
+
     } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
-      alert('Erro ao gerar PDF. Tente novamente.');
+      console.error('Erro ao compartilhar comprovante:', error);
+      Alert.alert(
+        'Erro',
+        'Não foi possível compartilhar o comprovante. Tente novamente.'
+      );
     } finally {
       setLoading(false);
     }
@@ -73,21 +82,23 @@ const ReceiptModal = ({ visible, onDismiss, transaction }) => {
         contentContainerStyle={styles.modalContainer}
       >
         <ScrollView style={styles.scrollView}>
-          {renderReceipt()}
+          <View ref={receiptRef} collapsable={false} style={styles.receiptContainer}>
+            {renderReceipt()}
+          </View>
         </ScrollView>
 
         <View style={styles.buttonContainer}>
           <Button
             mode="contained"
-            onPress={handleDownload}
+            onPress={handleShare}
             style={styles.button}
             buttonColor="#E91E63"
             textColor="#FFFFFF"
-            icon="file-pdf-box"
+            icon="share-variant"
             loading={loading}
             disabled={loading}
           >
-            {loading ? 'Gerando PDF...' : 'Baixar PDF'}
+            {loading ? 'Processando...' : 'Compartilhar Comprovante'}
           </Button>
 
           <Button
@@ -113,6 +124,10 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     padding: 16,
+  },
+  receiptContainer: {
+    backgroundColor: '#fff',
+    minHeight: 100,
   },
   buttonContainer: {
     padding: 16,

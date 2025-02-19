@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
-import { Text, TextInput, Button, List } from 'react-native-paper';
+import { Text, TextInput, Button } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../config/supabase';
@@ -121,27 +121,6 @@ const PixTransferKeyScreen = ({ navigation, route }) => {
             theme={{ colors: { error: '#E91E63' } }}
           />
           {error && <Text style={styles.errorText}>{error}</Text>}
-
-          {/* Options */}
-          <View style={styles.optionsContainer}>
-            <List.Item
-              title="Favoritos"
-              description="Você ainda não possui favoritos"
-              left={props => <List.Icon {...props} icon="star" color="#E91E63" />}
-              style={styles.listItem}
-              titleStyle={styles.listItemTitle}
-              descriptionStyle={styles.listItemDescription}
-            />
-            
-            <List.Item
-              title="Agência e Conta"
-              description="Insira os dados bancários caso não tenha uma chave para transferência"
-              left={props => <List.Icon {...props} icon="bank" color="#E91E63" />}
-              style={styles.listItem}
-              titleStyle={styles.listItemTitle}
-              descriptionStyle={styles.listItemDescription}
-            />
-          </View>
         </View>
 
         {/* Continue Button */}
@@ -208,35 +187,16 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
   },
   input: {
     backgroundColor: '#FFF',
-    marginBottom: 8,
+    marginTop: 16,
   },
   errorText: {
     color: '#E91E63',
-    fontSize: 12,
-    marginTop: -4,
-    marginBottom: 16,
-    marginLeft: 4,
-  },
-  optionsContainer: {
-    marginTop: 24,
-  },
-  listItem: {
-    paddingLeft: 0,
-    paddingRight: 0,
-  },
-  listItemTitle: {
-    fontSize: 16,
-    color: '#000',
-    fontWeight: '500',
-  },
-  listItemDescription: {
     fontSize: 14,
-    color: '#666',
-    opacity: 0.8,
+    marginTop: 8,
   },
   buttonContainer: {
     padding: 20,

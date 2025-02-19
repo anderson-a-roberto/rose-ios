@@ -1,22 +1,25 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { Text, Button, TextInput } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Platform } from 'react-native';
+import { Text, Button } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
-import { supabase } from '../config/supabase';
+import { useTransactionsQuery } from '../hooks/useTransactionsQuery';
+import useDashboard from '../hooks/useDashboard';
 import StatementTableRow from '../components/extrato/StatementTableRow';
 import ReceiptModal from '../components/extrato/receipts/ReceiptModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTransactionsQuery } from '../hooks/useTransactionsQuery';
-import useDashboard from '../hooks/useDashboard';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { supabase } from '../config/supabase';
 
 export default function StatementScreen({ route }) {
   const navigation = useNavigation();
   const { userAccount, userTaxId } = useDashboard();
   const { balance } = route.params;
   const [showBalance, setShowBalance] = useState(true);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [searchDates, setSearchDates] = useState({ dateFrom: null, dateTo: null });
@@ -33,51 +36,69 @@ export default function StatementScreen({ route }) {
     searchDates.dateTo
   );
 
-  const formatDate = (text) => {
-    const numbers = text.replace(/\D/g, '');
-    let formatted = numbers;
-    if (numbers.length > 2) formatted = numbers.replace(/^(\d{2})/, '$1/');
-    if (numbers.length > 4) formatted = numbers.replace(/^(\d{2})(\d{2})/, '$1/$2/');
-    if (numbers.length > 4) {
-      formatted = numbers.replace(/^(\d{2})(\d{2})(\d{0,4}).*/, '$1/$2/$3');
+  const onStartDateChange = (event, selectedDate) => {
+    setShowStartPicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      // Calcula a data máxima permitida (6 dias após a data selecionada = 7 dias total)
+      const maxEndDate = new Date(selectedDate);
+      maxEndDate.setDate(maxEndDate.getDate() + 6);
+
+      // Se a data final atual estiver mais que 6 dias depois da nova data inicial
+      if (endDate > maxEndDate) {
+        setEndDate(maxEndDate);
+        alert('Período máximo de 7 dias');
+      }
+
+      // Se a data final for menor que a nova data inicial
+      if (endDate < selectedDate) {
+        setEndDate(selectedDate);
+      }
+
+      setStartDate(selectedDate);
     }
-    return formatted;
   };
 
-  const parseDate = (dateString) => {
-    const [day, month, year] = dateString.split('/');
-    return new Date(year, month - 1, day);
+  const onEndDateChange = (event, selectedDate) => {
+    setShowEndPicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      // Calcula a data mínima permitida (6 dias antes da data selecionada = 7 dias total)
+      const minStartDate = new Date(selectedDate);
+      minStartDate.setDate(minStartDate.getDate() - 6);
+
+      // Se a data inicial estiver mais que 6 dias antes da nova data final
+      if (startDate < minStartDate) {
+        setStartDate(minStartDate);
+        alert('Período máximo de 7 dias');
+      }
+
+      // Se a data inicial for maior que a nova data final
+      if (startDate > selectedDate) {
+        setStartDate(selectedDate);
+      }
+
+      setEndDate(selectedDate);
+    }
   };
 
-  const handleSubmit = async () => {
-    if (!startDate || !endDate) {
-      alert('Por favor, preencha as datas inicial e final');
-      return;
-    }
-
-    if (startDate.length !== 10 || endDate.length !== 10) {
-      alert('Por favor, preencha as datas no formato DD/MM/AAAA');
-      return;
-    }
-
+  const handleSubmit = () => {
     try {
-      const parsedStartDate = parseDate(startDate);
-      const parsedEndDate = parseDate(endDate);
+      // Calcula a diferença em dias (incluindo o dia inicial = +1)
+      const diffTime = Math.abs(endDate - startDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-      if (isNaN(parsedStartDate.getTime()) || isNaN(parsedEndDate.getTime())) {
-        alert('Data inválida. Use o formato DD/MM/AAAA');
+      if (diffDays > 7) {
+        alert('Período máximo de 7 dias');
         return;
       }
 
-      if (parsedEndDate < parsedStartDate) {
+      if (endDate < startDate) {
         alert('A data final não pode ser menor que a data inicial');
         return;
       }
 
-      // Atualizar as datas de busca para disparar uma nova query
       setSearchDates({
-        dateFrom: parsedStartDate.toISOString().split('T')[0],
-        dateTo: parsedEndDate.toISOString().split('T')[0]
+        dateFrom: startDate.toISOString().split('T')[0],
+        dateTo: endDate.toISOString().split('T')[0]
       });
     } catch (err) {
       console.error('Erro ao processar datas:', err);
@@ -95,6 +116,14 @@ export default function StatementScreen({ route }) {
       style: 'currency',
       currency: 'BRL'
     }).format(value);
+  };
+
+  const formatDateForDisplay = (date) => {
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   };
 
   const toggleBalance = () => setShowBalance(!showBalance);
@@ -143,30 +172,28 @@ export default function StatementScreen({ route }) {
         {/* Filtros */}
         <View style={styles.filterContainer}>
           <View style={styles.dateInputsRow}>
-            <TextInput
-              style={styles.dateInput}
-              mode="outlined"
-              placeholder="Data Inicial"
-              value={startDate}
-              onChangeText={(text) => setStartDate(formatDate(text))}
-              keyboardType="numeric"
-              maxLength={10}
-              outlineColor="#e92176"
-              activeOutlineColor="#e92176"
-              textColor="white"
-            />
-            <TextInput
-              style={styles.dateInput}
-              mode="outlined"
-              placeholder="Data Final"
-              value={endDate}
-              onChangeText={(text) => setEndDate(formatDate(text))}
-              keyboardType="numeric"
-              maxLength={10}
-              outlineColor="#e92176"
-              activeOutlineColor="#e92176"
-              textColor="white"
-            />
+            <View style={styles.datePickerContainer}>
+              <Text style={styles.dateLabel}>Data Inicial</Text>
+              <TouchableOpacity 
+                style={styles.dateButton}
+                onPress={() => setShowStartPicker(true)}
+              >
+                <Text style={styles.dateButtonText}>
+                  {formatDateForDisplay(startDate)}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.datePickerContainer}>
+              <Text style={styles.dateLabel}>Data Final</Text>
+              <TouchableOpacity 
+                style={styles.dateButton}
+                onPress={() => setShowEndPicker(true)}
+              >
+                <Text style={styles.dateButtonText}>
+                  {formatDateForDisplay(endDate)}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
           <Button
             mode="contained"
@@ -213,6 +240,26 @@ export default function StatementScreen({ route }) {
           ))
         )}
       </ScrollView>
+
+      {showStartPicker && (
+        <DateTimePicker
+          value={startDate}
+          mode="date"
+          display="default"
+          onChange={onStartDateChange}
+          maximumDate={new Date()}
+        />
+      )}
+
+      {showEndPicker && (
+        <DateTimePicker
+          value={endDate}
+          mode="date"
+          display="default"
+          onChange={onEndDateChange}
+          maximumDate={new Date()}
+        />
+      )}
 
       <ReceiptModal
         visible={modalVisible}
@@ -296,10 +343,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  dateInput: {
+  datePickerContainer: {
     flex: 1,
-    backgroundColor: '#682145',
+    marginHorizontal: 8,
+  },
+  dateLabel: {
+    color: 'white',
+    marginBottom: 4,
+    fontSize: 12,
+  },
+  dateButton: {
     height: 40,
+    backgroundColor: '#682145',
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: '#e92176',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  dateButtonText: {
+    color: 'white',
+    fontSize: 14,
+    textAlign: 'center',
   },
   filterButton: {
     height: 48,

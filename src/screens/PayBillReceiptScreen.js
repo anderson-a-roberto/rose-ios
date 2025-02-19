@@ -1,37 +1,58 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Share, StatusBar } from 'react-native';
-import { Text, Button, Divider } from 'react-native-paper';
+import React, { useRef, useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, StatusBar, Alert } from 'react-native';
+import { Button, Text, Divider } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { captureRef } from 'react-native-view-shot';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import ReceiptBase from '../components/receipt/ReceiptBase';
+import MoneyValue from '../components/receipt/MoneyValue';
 
 export default function PayBillReceiptScreen({ route }) {
   const navigation = useNavigation();
   const { paymentData } = route.params;
-
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
-  };
+  const [loading, setLoading] = useState(false);
+  const receiptRef = useRef();
 
   const handleShare = async () => {
     try {
-      const message = `Comprovante de Pagamento\n\n` +
-        `Valor: ${formatCurrency(paymentData.value)}\n` +
-        `Data: ${formatDate(new Date())}\n` +
-        `Para: ${paymentData.assignor}\n` +
-        `Código de Barras: ${paymentData.barCode.digitable}`;
+      setLoading(true);
 
-      await Share.share({
-        message,
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (!isAvailable) {
+        Alert.alert('Erro', 'Compartilhamento não está disponível neste dispositivo');
+        return;
+      }
+
+      const fileName = `comprovante-boleto-${new Date().toISOString().slice(0,10)}.jpg`;
+      
+      const uri = await captureRef(receiptRef, {
+        format: 'jpg',
+        quality: 0.8,
+        result: 'base64'
       });
+
+      const tempUri = FileSystem.cacheDirectory + fileName;
+      await FileSystem.writeAsStringAsync(tempUri, uri, {
+        encoding: FileSystem.EncodingType.Base64
+      });
+
+      await Sharing.shareAsync(tempUri, {
+        mimeType: 'image/jpeg',
+        dialogTitle: 'Compartilhar Comprovante'
+      });
+
+      await FileSystem.deleteAsync(tempUri);
+
     } catch (error) {
-      console.error('Error sharing:', error);
+      console.error('Erro ao compartilhar comprovante:', error);
+      Alert.alert(
+        'Erro',
+        'Não foi possível compartilhar o comprovante. Tente novamente.'
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -42,72 +63,66 @@ export default function PayBillReceiptScreen({ route }) {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
-      {/* Header */}
+      
       <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.navigate('Home')}
-          >
-            <Text style={styles.backText}>‹</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Comprovante</Text>
-          <Text style={styles.subtitle}>Pagamento realizado com sucesso</Text>
-        </View>
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={() => navigation.navigate('Dashboard2')}
+        >
+          <Text style={styles.closeText}>×</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Content */}
-      <View style={styles.content}>
-        {/* Valor */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Valor</Text>
-          <Text style={styles.sectionValue}>{formatCurrency(paymentData.value)}</Text>
-        </View>
+      <View ref={receiptRef} collapsable={false} style={styles.container}>
+        <ReceiptBase
+          transactionId={paymentData.transactionId || '0000000000'}
+          timestamp={new Date()}
+          operationType="Pagamento de Boleto"
+        >
+          {/* Valor */}
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Valor:</Text>
+            <MoneyValue value={-paymentData.value} />
+          </View>
 
-        <Divider style={styles.divider} />
+          <Divider style={styles.divider} />
 
-        {/* Data */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Data</Text>
-          <Text style={styles.sectionValue}>{formatDate(new Date())}</Text>
-        </View>
+          {/* Beneficiário */}
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Beneficiário:</Text>
+            <Text style={styles.value}>{paymentData.assignor}</Text>
+          </View>
 
-        <Divider style={styles.divider} />
+          <Divider style={styles.divider} />
 
-        {/* Para */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Para</Text>
-          <Text style={styles.sectionValue}>{paymentData.assignor}</Text>
-        </View>
-
-        <Divider style={styles.divider} />
-
-        {/* Código de Barras */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Código de Barras</Text>
-          <Text style={styles.sectionValue}>{paymentData.barCode.digitable}</Text>
-        </View>
+          {/* Código de Barras */}
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Código de Barras:</Text>
+            <Text style={styles.value}>{paymentData.barCode.digitable}</Text>
+          </View>
+        </ReceiptBase>
       </View>
 
-      {/* Buttons */}
       <View style={styles.buttonContainer}>
         <Button
           mode="contained"
           onPress={handleShare}
-          style={[styles.button, styles.shareButton]}
+          style={styles.shareButton}
           contentStyle={styles.buttonContent}
-          labelStyle={[styles.buttonLabel, styles.shareButtonLabel]}
+          labelStyle={styles.buttonLabel}
+          loading={loading}
+          disabled={loading}
+          icon="share-variant"
         >
           COMPARTILHAR COMPROVANTE
         </Button>
+
         <Button
           mode="outlined"
           onPress={handleNewPayment}
-          style={[styles.button, styles.newPaymentButton]}
+          style={styles.newPaymentButton}
           contentStyle={styles.buttonContent}
-          labelStyle={[styles.buttonLabel, styles.newPaymentLabel]}
+          labelStyle={[styles.buttonLabel, { color: '#E91E63' }]}
         >
           NOVO PAGAMENTO
         </Button>
@@ -122,87 +137,60 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF'
   },
   header: {
-    backgroundColor: '#FFF',
     paddingHorizontal: 20,
-    paddingBottom: 24,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
     paddingTop: 12,
+    paddingBottom: 8,
   },
-  backButton: {
+  closeButton: {
     padding: 8,
     marginLeft: -8,
   },
-  backText: {
+  closeText: {
     color: '#E91E63',
     fontSize: 32,
     fontWeight: '300',
   },
-  headerContent: {
-    paddingHorizontal: 4,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    opacity: 0.8,
-  },
-  content: {
+  container: {
     flex: 1,
-    paddingHorizontal: 24,
+    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
   },
-  section: {
-    marginVertical: 16,
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
   },
-  sectionTitle: {
+  label: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 8,
   },
-  sectionValue: {
-    fontSize: 16,
+  value: {
+    fontSize: 14,
     color: '#000',
-    fontWeight: '500',
+    flex: 1,
+    textAlign: 'right',
   },
   divider: {
     backgroundColor: '#E0E0E0',
-    height: 1,
   },
   buttonContainer: {
     padding: 20,
     paddingBottom: 32,
   },
-  button: {
-    marginBottom: 12,
-    borderRadius: 8,
-  },
-  buttonContent: {
-    height: 56,
-  },
-  buttonLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
-  },
   shareButton: {
     backgroundColor: '#E91E63',
-  },
-  shareButtonLabel: {
-    color: '#FFFFFF',
+    marginBottom: 12,
   },
   newPaymentButton: {
     borderColor: '#E91E63',
-    borderWidth: 2,
   },
-  newPaymentLabel: {
-    color: '#E91E63',
+  buttonContent: {
+    height: 48,
+  },
+  buttonLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
 });

@@ -50,7 +50,6 @@ const PixKeyItem = ({ keyId, type, value, onCopy, onDelete }) => {
 };
 
 const PixKeysScreen = ({ navigation, route }) => {
-  const [activeTab, setActiveTab] = useState('active');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [pixKeys, setPixKeys] = useState([]);
@@ -208,26 +207,6 @@ const PixKeysScreen = ({ navigation, route }) => {
 
         {/* Content */}
         <View style={styles.contentContainer}>
-          {/* Tabs */}
-          <View style={styles.tabContainer}>
-            <TouchableOpacity
-              style={[styles.tab, activeTab === 'active' && styles.activeTab]}
-              onPress={() => setActiveTab('active')}
-            >
-              <Text style={[styles.tabText, activeTab === 'active' && styles.activeTabText]}>
-                Ativas
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tab, activeTab === 'pending' && styles.activeTab]}
-              onPress={() => setActiveTab('pending')}
-            >
-              <Text style={[styles.tabText, activeTab === 'pending' && styles.activeTabText]}>
-                Pendentes
-              </Text>
-            </TouchableOpacity>
-          </View>
-
           {/* Keys List */}
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             {loading ? (
@@ -334,40 +313,10 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     backgroundColor: '#FFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  activeTab: {
-    borderBottomColor: '#682145',
-  },
-  tabText: {
-    fontSize: 16,
-    color: '#666',
-    fontWeight: '500',
-  },
-  activeTabText: {
-    color: '#682145',
-    fontWeight: 'bold',
   },
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 16,
   },
   messageText: {
     fontSize: 16,
@@ -376,12 +325,10 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   keyItem: {
-    backgroundColor: '#FFF',
-    borderRadius: 8,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
     padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    marginBottom: 16,
   },
   keyContent: {
     flexDirection: 'row',
@@ -392,9 +339,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F5E6ED',
-    alignItems: 'center',
+    backgroundColor: '#FFE5EE',
     justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
   },
   keyInfo: {
@@ -412,39 +359,29 @@ const styles = StyleSheet.create({
   },
   keyActions: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    paddingTop: 12,
+    alignItems: 'center',
   },
   copyButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    padding: 8,
   },
   copyButtonText: {
-    fontSize: 14,
     color: '#682145',
-    marginRight: 8,
-    fontWeight: '500',
+    fontSize: 14,
+    marginRight: 4,
   },
   deleteButton: {
-    backgroundColor: '#E91E63',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 4,
-    marginLeft: 8,
+    padding: 8,
   },
   deleteButtonText: {
-    color: '#FFF',
+    color: '#E91E63',
     fontSize: 14,
-    fontWeight: '500',
   },
   buttonContainer: {
     padding: 20,
-    backgroundColor: '#FFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    paddingBottom: 32,
   },
   button: {
     backgroundColor: '#E91E63',

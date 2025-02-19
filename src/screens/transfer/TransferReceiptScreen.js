@@ -1,104 +1,172 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Share, StatusBar } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, StatusBar, Alert } from 'react-native';
 import { Text, Button, Divider } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-
-const formatCurrency = (value) => {
-  return value.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
-  });
-};
+import { captureRef } from 'react-native-view-shot';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 
 const TransferReceiptScreen = ({ navigation, route }) => {
   const { transferData } = route.params;
+  const [loading, setLoading] = useState(false);
+  const receiptRef = useRef();
 
   const handleShare = async () => {
     try {
-      const message = `Comprovante de Transferência\n\n` +
-        `Valor: ${formatCurrency(transferData.valor)}\n` +
-        `Data: ${new Date().toLocaleDateString('pt-BR')}\n\n` +
-        `Destino:\n` +
-        `Nome: ${transferData.destinatario}\n` +
-        `Conta: ${transferData.conta}\n` +
-        `Status: ${transferData.status === 'PROCESSING' ? 'Em processamento' : 'Concluída'}`;
+      setLoading(true);
 
-      await Share.share({
-        message,
-        title: 'Comprovante de Transferência'
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (!isAvailable) {
+        Alert.alert('Erro', 'Compartilhamento não está disponível neste dispositivo');
+        return;
+      }
+
+      const fileName = `comprovante-transferencia-${new Date().toISOString().slice(0,10)}.jpg`;
+      
+      const uri = await captureRef(receiptRef, {
+        format: 'jpg',
+        quality: 0.8,
+        result: 'base64'
       });
+
+      const tempUri = FileSystem.cacheDirectory + fileName;
+      await FileSystem.writeAsStringAsync(tempUri, uri, {
+        encoding: FileSystem.EncodingType.Base64
+      });
+
+      await Sharing.shareAsync(tempUri, {
+        mimeType: 'image/jpeg',
+        dialogTitle: 'Compartilhar Comprovante'
+      });
+
+      await FileSystem.deleteAsync(tempUri);
+
     } catch (error) {
-      console.error('Erro ao compartilhar:', error);
+      console.error('Erro ao compartilhar comprovante:', error);
+      Alert.alert(
+        'Erro',
+        'Não foi possível compartilhar o comprovante. Tente novamente.'
+      );
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleNewTransfer = () => {
+    navigation.navigate('TransferAmount', { balance: transferData.balance });
   };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
-      {/* Header */}
+      
       <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => navigation.navigate('Dashboard2')}
-          >
-            <Text style={styles.closeText}>×</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Comprovante</Text>
-          <Text style={styles.subtitle}>Transferência realizada</Text>
-        </View>
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={() => navigation.navigate('Dashboard2')}
+        >
+          <Text style={styles.closeText}>×</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Receipt Content */}
-      <View style={styles.content}>
-        <Text style={styles.amount}>{formatCurrency(transferData.valor)}</Text>
+      <View ref={receiptRef} collapsable={false} style={styles.content}>
+        <Text style={styles.title}>Comprovante</Text>
+        <Text style={styles.transactionId}>ID: {transferData.transactionId || '0000000000'}</Text>
+        
+        <Divider style={styles.divider} />
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Status</Text>
-          <Text style={styles.sectionValue}>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Data e Hora:</Text>
+          <Text style={styles.value}>
+            {new Date().toLocaleString('pt-BR')}
+          </Text>
+        </View>
+
+        <Divider style={styles.divider} />
+
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Tipo de Operação:</Text>
+          <Text style={styles.value}>Transferência</Text>
+        </View>
+
+        <Divider style={styles.divider} />
+
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Valor:</Text>
+          <Text style={[styles.value, styles.valueAmount, { color: '#E91E63' }]}>
+            -R$ {transferData.valor.toFixed(2).replace('.', ',')}
+          </Text>
+        </View>
+
+        <Divider style={styles.divider} />
+
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Status:</Text>
+          <Text style={styles.value}>
             {transferData.status === 'PROCESSING' ? 'Em processamento' : 'Concluída'}
           </Text>
         </View>
 
         <Divider style={styles.divider} />
 
-        {/* Destination Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Destino</Text>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Nome</Text>
-            <Text style={styles.infoValue}>{transferData.destinatario}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Conta</Text>
-            <Text style={styles.infoValue}>{transferData.conta}</Text>
-          </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Beneficiário:</Text>
+          <Text style={styles.value}>{transferData.destinatario.nome}</Text>
         </View>
 
-        <Divider style={styles.divider} />
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>CPF/CNPJ:</Text>
+          <Text style={styles.value}>{transferData.destinatario.documento}</Text>
+        </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Data e hora</Text>
-          <Text style={styles.sectionValue}>
-            {new Date(transferData.data).toLocaleString('pt-BR')}
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Banco:</Text>
+          <Text style={styles.value}>{transferData.destinatario.banco}</Text>
+        </View>
+
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Agência:</Text>
+          <Text style={styles.value}>{transferData.destinatario.agencia}</Text>
+        </View>
+
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Conta:</Text>
+          <Text style={styles.value}>{transferData.destinatario.conta}</Text>
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>
+            Este documento é uma representação digital de uma transação realizada em nossa plataforma.
+          </Text>
+          <Text style={styles.footerText}>
+            Validação Digital: {transferData.transactionId || '0000000000'}
           </Text>
         </View>
       </View>
 
-      {/* Share Button */}
       <View style={styles.buttonContainer}>
         <Button
           mode="contained"
           onPress={handleShare}
-          style={styles.button}
+          style={styles.shareButton}
           contentStyle={styles.buttonContent}
           labelStyle={styles.buttonLabel}
+          loading={loading}
+          disabled={loading}
           icon="share-variant"
         >
-          Compartilhar comprovante
+          COMPARTILHAR COMPROVANTE
+        </Button>
+
+        <Button
+          mode="outlined"
+          onPress={handleNewTransfer}
+          style={styles.newTransferButton}
+          contentStyle={styles.buttonContent}
+          labelStyle={[styles.buttonLabel, { color: '#E91E63' }]}
+        >
+          NOVA TRANSFERÊNCIA
         </Button>
       </View>
     </SafeAreaView>
@@ -111,99 +179,87 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF'
   },
   header: {
-    backgroundColor: '#FFF',
     paddingHorizontal: 20,
-    paddingBottom: 24,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
     paddingTop: 12,
+    paddingBottom: 8,
   },
   closeButton: {
     padding: 8,
-    marginRight: -8,
+    marginLeft: -8,
   },
   closeText: {
     color: '#E91E63',
-    fontSize: 40,
+    fontSize: 32,
     fontWeight: '300',
-    lineHeight: 40,
-  },
-  headerContent: {
-    paddingHorizontal: 4,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    opacity: 0.8,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
   },
-  amount: {
-    fontSize: 32,
+  title: {
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#000',
     textAlign: 'center',
-    marginVertical: 32,
-  },
-  section: {
-    marginVertical: 16,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    color: '#666',
     marginBottom: 8,
   },
-  sectionValue: {
-    fontSize: 16,
-    color: '#000',
-  },
-  divider: {
-    backgroundColor: '#E0E0E0',
-    height: 1,
-    marginVertical: 16,
+  transactionId: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginVertical: 4,
+    paddingVertical: 12,
   },
-  infoLabel: {
+  label: {
     fontSize: 14,
     color: '#666',
   },
-  infoValue: {
-    fontSize: 16,
+  value: {
+    fontSize: 14,
     color: '#000',
+    flex: 1,
+    textAlign: 'right',
+  },
+  valueAmount: {
+    fontSize: 16,
     fontWeight: '500',
+  },
+  divider: {
+    backgroundColor: '#E0E0E0',
+  },
+  footer: {
+    marginTop: 32,
+    paddingTop: 16,
+  },
+  footerText: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 8,
   },
   buttonContainer: {
     padding: 20,
     paddingBottom: 32,
   },
-  button: {
+  shareButton: {
     backgroundColor: '#E91E63',
-    borderRadius: 8,
+    marginBottom: 12,
+  },
+  newTransferButton: {
+    borderColor: '#E91E63',
   },
   buttonContent: {
-    height: 56,
+    height: 48,
   },
   buttonLabel: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     letterSpacing: 0.5,
-    color: '#FFF',
   },
 });
 
