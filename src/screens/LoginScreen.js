@@ -10,7 +10,7 @@ import { useOnboarding } from '../contexts/OnboardingContext';
 export default function LoginScreen() {
   const navigation = useNavigation();
   const route = useRoute();
-  const { documentNumber: initialDocument, accountType } = route.params;
+  const { documentNumber: initialDocument, accountType } = route.params || {};
   const { updateOnboardingData } = useOnboarding();
   const [document, setDocument] = useState(initialDocument || '');
   const [loading, setLoading] = useState(false);
@@ -72,7 +72,10 @@ export default function LoginScreen() {
       if (kycData.onboarding_create_status === 'CONFIRMED') {
         navigation.navigate('LoginPassword', { documentNumber: numbers });
       } else if (kycData.documentscopy_status === 'PENDING' && kycData.url_documentscopy) {
-        await Linking.openURL(kycData.url_documentscopy);
+        navigation.navigate('KYC', { 
+          kycUrl: kycData.url_documentscopy, 
+          documentNumber: numbers 
+        });
       } else if (kycData.documentscopy_status === 'PROCESSING') {
         navigation.navigate('OnboardingSuccess');
       } else if (kycData.onboarding_create_status === 'REPROVED') {

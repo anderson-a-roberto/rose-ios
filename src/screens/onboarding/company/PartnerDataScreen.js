@@ -3,7 +3,6 @@ import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Text, TextInput, Button, List, Menu, Divider } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useOnboarding } from '../../../contexts/OnboardingContext';
-import TestDataButton from '../../../components/TestDataButton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const OWNER_TYPES = [
@@ -156,12 +155,6 @@ const PartnerDataScreen = ({ navigation }) => {
           >
             <MaterialCommunityIcons name="chevron-left" size={32} color="#E91E63" />
           </TouchableOpacity>
-          <TestDataButton 
-            section="partners" 
-            onFill={(data) => {
-              data.forEach(partner => addPartner(partner));
-            }}
-          />
         </View>
 
         <View style={styles.headerContent}>
@@ -195,19 +188,25 @@ const PartnerDataScreen = ({ navigation }) => {
 
           <View style={styles.form}>
             {/* Tipo de Sócio */}
+            <Text style={styles.label}>Tipo</Text>
             <Menu
               visible={showTypeMenu}
               onDismiss={() => setShowTypeMenu(false)}
               anchor={
-                <Button 
-                  mode="outlined" 
+                <TouchableOpacity
+                  style={[styles.input, styles.menuButton]}
                   onPress={() => setShowTypeMenu(true)}
-                  style={styles.typeButton}
                 >
-                  {currentPartner.ownerType 
-                    ? OWNER_TYPES.find(t => t.value === currentPartner.ownerType)?.label 
-                    : 'Selecione o tipo de sócio'}
-                </Button>
+                  <Text style={[
+                    styles.menuButtonText,
+                    currentPartner.ownerType && { color: '#000', fontWeight: '600' }
+                  ]}>
+                    {currentPartner.ownerType
+                      ? OWNER_TYPES.find(t => t.value === currentPartner.ownerType)?.label
+                      : 'Selecione o tipo'}
+                  </Text>
+                  <MaterialCommunityIcons name="chevron-down" size={24} color="#666" />
+                </TouchableOpacity>
               }
             >
               {OWNER_TYPES.map((type) => (
@@ -222,134 +221,78 @@ const PartnerDataScreen = ({ navigation }) => {
               ))}
             </Menu>
 
-            {/* Dados Pessoais */}
+            <Text style={styles.label}>Nome Completo</Text>
             <TextInput
-              label="CPF"
+              value={currentPartner.fullName}
+              onChangeText={(text) => setCurrentPartner(prev => ({ ...prev, fullName: text }))}
+              style={[styles.input, currentPartner.fullName && styles.filledInput]}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={currentPartner.fullName ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: currentPartner.fullName ? '600' : '400' } } }}
+            />
+
+            <Text style={styles.label}>CPF</Text>
+            <TextInput
               value={currentPartner.documentNumber}
               onChangeText={(text) => setCurrentPartner(prev => ({ ...prev, documentNumber: formatCPF(text) }))}
-              mode="flat"
-              style={styles.input}
-              contentStyle={styles.inputContent}
-              theme={{
-                colors: {
-                  primary: '#E91E63',
-                  error: '#B00020',
-                  onSurfaceVariant: '#666666',
-                  onSurface: '#000000',
-                },
-              }}
+              style={[styles.input, currentPartner.documentNumber && styles.filledInput]}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={currentPartner.documentNumber ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: currentPartner.documentNumber ? '600' : '400' } } }}
               keyboardType="numeric"
               maxLength={14}
             />
 
+            <Text style={styles.label}>Data de Nascimento</Text>
             <TextInput
-              label="Nome Completo"
-              value={currentPartner.fullName}
-              onChangeText={(value) => setCurrentPartner(prev => ({ ...prev, fullName: value }))}
-              mode="flat"
-              style={styles.input}
-              contentStyle={styles.inputContent}
-              theme={{
-                colors: {
-                  primary: '#E91E63',
-                  error: '#B00020',
-                  onSurfaceVariant: '#666666',
-                  onSurface: '#000000',
-                },
-              }}
-            />
-
-            <TextInput
-              label="Nome Social (opcional)"
-              value={currentPartner.socialName}
-              onChangeText={(value) => setCurrentPartner(prev => ({ ...prev, socialName: value }))}
-              mode="flat"
-              style={styles.input}
-              contentStyle={styles.inputContent}
-              theme={{
-                colors: {
-                  primary: '#E91E63',
-                  error: '#B00020',
-                  onSurfaceVariant: '#666666',
-                  onSurface: '#000000',
-                },
-              }}
-            />
-
-            <TextInput
-              label="Data de Nascimento"
               value={currentPartner.birthDate}
               onChangeText={(text) => setCurrentPartner(prev => ({ ...prev, birthDate: formatDate(text) }))}
-              mode="flat"
-              style={styles.input}
-              contentStyle={styles.inputContent}
-              theme={{
-                colors: {
-                  primary: '#E91E63',
-                  error: '#B00020',
-                  onSurfaceVariant: '#666666',
-                  onSurface: '#000000',
-                },
-              }}
+              style={[styles.input, currentPartner.birthDate && styles.filledInput]}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={currentPartner.birthDate ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: currentPartner.birthDate ? '600' : '400' } } }}
               keyboardType="numeric"
               maxLength={10}
               placeholder="DD/MM/AAAA"
             />
 
+            <Text style={styles.label}>Nome da Mãe</Text>
             <TextInput
-              label="Nome da Mãe"
               value={currentPartner.motherName}
-              onChangeText={(value) => setCurrentPartner(prev => ({ ...prev, motherName: value }))}
-              mode="flat"
-              style={styles.input}
-              contentStyle={styles.inputContent}
-              theme={{
-                colors: {
-                  primary: '#E91E63',
-                  error: '#B00020',
-                  onSurfaceVariant: '#666666',
-                  onSurface: '#000000',
-                },
-              }}
+              onChangeText={(text) => setCurrentPartner(prev => ({ ...prev, motherName: text }))}
+              style={[styles.input, currentPartner.motherName && styles.filledInput]}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={currentPartner.motherName ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: currentPartner.motherName ? '600' : '400' } } }}
             />
 
+            <Text style={styles.label}>E-mail</Text>
             <TextInput
-              label="Email"
               value={currentPartner.email}
-              onChangeText={(value) => setCurrentPartner(prev => ({ ...prev, email: value }))}
-              mode="flat"
-              style={styles.input}
-              contentStyle={styles.inputContent}
-              theme={{
-                colors: {
-                  primary: '#E91E63',
-                  error: '#B00020',
-                  onSurfaceVariant: '#666666',
-                  onSurface: '#000000',
-                },
-              }}
+              onChangeText={(text) => setCurrentPartner(prev => ({ ...prev, email: text }))}
+              style={[styles.input, currentPartner.email && styles.filledInput]}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={currentPartner.email ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: currentPartner.email ? '600' : '400' } } }}
               keyboardType="email-address"
               autoCapitalize="none"
             />
 
+            <Text style={styles.label}>Telefone</Text>
             <TextInput
-              label="Telefone"
               value={currentPartner.phoneNumber}
               onChangeText={(text) => setCurrentPartner(prev => ({ ...prev, phoneNumber: formatPhone(text) }))}
-              mode="flat"
-              style={styles.input}
-              contentStyle={styles.inputContent}
-              theme={{
-                colors: {
-                  primary: '#E91E63',
-                  error: '#B00020',
-                  onSurfaceVariant: '#666666',
-                  onSurface: '#000000',
-                },
-              }}
+              style={[styles.input, currentPartner.phoneNumber && styles.filledInput]}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={currentPartner.phoneNumber ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: currentPartner.phoneNumber ? '600' : '400' } } }}
               keyboardType="numeric"
-              maxLength={14}
-              placeholder="+5511999999999"
             />
 
             {/* PPE */}
@@ -380,144 +323,102 @@ const PartnerDataScreen = ({ navigation }) => {
 
             {showAddressForm && (
               <View style={styles.addressForm}>
+                <Text style={styles.label}>CEP</Text>
                 <TextInput
-                  label="CEP"
                   value={currentPartner.address.postalCode}
                   onChangeText={handleCEPChange}
-                  mode="flat"
-                  style={styles.input}
-                  contentStyle={styles.inputContent}
-                  theme={{
-                    colors: {
-                      primary: '#E91E63',
-                      error: '#B00020',
-                      onSurfaceVariant: '#666666',
-                      onSurface: '#000000',
-                    },
-                  }}
+                  style={[styles.input, currentPartner.address.postalCode && styles.filledInput]}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  textColor={currentPartner.address.postalCode ? '#000' : '#999'}
+                  theme={{ fonts: { regular: { fontWeight: currentPartner.address.postalCode ? '600' : '400' } } }}
                   keyboardType="numeric"
                   maxLength={9}
                 />
 
+                <Text style={styles.label}>Rua</Text>
                 <TextInput
-                  label="Rua"
                   value={currentPartner.address.street}
                   onChangeText={(value) => setCurrentPartner(prev => ({
                     ...prev,
                     address: { ...prev.address, street: value }
                   }))}
-                  mode="flat"
-                  style={styles.input}
-                  contentStyle={styles.inputContent}
-                  theme={{
-                    colors: {
-                      primary: '#E91E63',
-                      error: '#B00020',
-                      onSurfaceVariant: '#666666',
-                      onSurface: '#000000',
-                    },
-                  }}
+                  style={[styles.input, currentPartner.address.street && styles.filledInput]}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  textColor={currentPartner.address.street ? '#000' : '#999'}
+                  theme={{ fonts: { regular: { fontWeight: currentPartner.address.street ? '600' : '400' } } }}
                 />
 
+                <Text style={styles.label}>Número</Text>
                 <TextInput
-                  label="Número"
                   value={currentPartner.address.number}
                   onChangeText={(value) => setCurrentPartner(prev => ({
                     ...prev,
                     address: { ...prev.address, number: value }
                   }))}
-                  mode="flat"
-                  style={styles.input}
-                  contentStyle={styles.inputContent}
-                  theme={{
-                    colors: {
-                      primary: '#E91E63',
-                      error: '#B00020',
-                      onSurfaceVariant: '#666666',
-                      onSurface: '#000000',
-                    },
-                  }}
+                  style={[styles.input, currentPartner.address.number && styles.filledInput]}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  textColor={currentPartner.address.number ? '#000' : '#999'}
+                  theme={{ fonts: { regular: { fontWeight: currentPartner.address.number ? '600' : '400' } } }}
                   keyboardType="numeric"
                 />
 
+                <Text style={styles.label}>Complemento (opcional)</Text>
                 <TextInput
-                  label="Complemento (opcional)"
                   value={currentPartner.address.addressComplement}
                   onChangeText={(value) => setCurrentPartner(prev => ({
                     ...prev,
                     address: { ...prev.address, addressComplement: value }
                   }))}
-                  mode="flat"
-                  style={styles.input}
-                  contentStyle={styles.inputContent}
-                  theme={{
-                    colors: {
-                      primary: '#E91E63',
-                      error: '#B00020',
-                      onSurfaceVariant: '#666666',
-                      onSurface: '#000000',
-                    },
-                  }}
+                  style={[styles.input, currentPartner.address.addressComplement && styles.filledInput]}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  textColor={currentPartner.address.addressComplement ? '#000' : '#999'}
+                  theme={{ fonts: { regular: { fontWeight: currentPartner.address.addressComplement ? '600' : '400' } } }}
                 />
 
+                <Text style={styles.label}>Bairro</Text>
                 <TextInput
-                  label="Bairro"
                   value={currentPartner.address.neighborhood}
                   onChangeText={(value) => setCurrentPartner(prev => ({
                     ...prev,
                     address: { ...prev.address, neighborhood: value }
                   }))}
-                  mode="flat"
-                  style={styles.input}
-                  contentStyle={styles.inputContent}
-                  theme={{
-                    colors: {
-                      primary: '#E91E63',
-                      error: '#B00020',
-                      onSurfaceVariant: '#666666',
-                      onSurface: '#000000',
-                    },
-                  }}
+                  style={[styles.input, currentPartner.address.neighborhood && styles.filledInput]}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  textColor={currentPartner.address.neighborhood ? '#000' : '#999'}
+                  theme={{ fonts: { regular: { fontWeight: currentPartner.address.neighborhood ? '600' : '400' } } }}
                 />
 
+                <Text style={styles.label}>Cidade</Text>
                 <TextInput
-                  label="Cidade"
                   value={currentPartner.address.city}
                   onChangeText={(value) => setCurrentPartner(prev => ({
                     ...prev,
                     address: { ...prev.address, city: value }
                   }))}
-                  mode="flat"
-                  style={styles.input}
-                  contentStyle={styles.inputContent}
-                  theme={{
-                    colors: {
-                      primary: '#E91E63',
-                      error: '#B00020',
-                      onSurfaceVariant: '#666666',
-                      onSurface: '#000000',
-                    },
-                  }}
+                  style={[styles.input, currentPartner.address.city && styles.filledInput]}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  textColor={currentPartner.address.city ? '#000' : '#999'}
+                  theme={{ fonts: { regular: { fontWeight: currentPartner.address.city ? '600' : '400' } } }}
                 />
 
+                <Text style={styles.label}>Estado</Text>
                 <TextInput
-                  label="Estado"
                   value={currentPartner.address.state}
                   onChangeText={(value) => setCurrentPartner(prev => ({
                     ...prev,
                     address: { ...prev.address, state: value }
                   }))}
-                  mode="flat"
-                  style={styles.input}
-                  contentStyle={styles.inputContent}
-                  theme={{
-                    colors: {
-                      primary: '#E91E63',
-                      error: '#B00020',
-                      onSurfaceVariant: '#666666',
-                      onSurface: '#000000',
-                    },
-                  }}
+                  style={[styles.input, currentPartner.address.state && styles.filledInput]}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  textColor={currentPartner.address.state ? '#000' : '#999'}
+                  theme={{ fonts: { regular: { fontWeight: currentPartner.address.state ? '600' : '400' } } }}
                   maxLength={2}
                   autoCapitalize="characters"
                 />
@@ -542,7 +443,7 @@ const PartnerDataScreen = ({ navigation }) => {
             mode="contained"
             onPress={handleNext}
             style={[styles.continueButton, onboardingData.partners.length === 0 && styles.continueButtonDisabled]}
-            labelStyle={styles.continueButtonLabel}
+            labelStyle={[styles.continueButtonLabel, { color: '#FFF' }]}
             disabled={onboardingData.partners.length === 0}
           >
             CONTINUAR
@@ -564,72 +465,83 @@ const styles = StyleSheet.create({
   },
   headerTop: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingTop: 8,
   },
   backButton: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 8,
   },
   headerContent: {
     paddingHorizontal: 24,
+    paddingTop: 16,
     paddingBottom: 24,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 24,
+    fontWeight: 'bold',
     color: '#000',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666666',
-    lineHeight: 24,
+    color: '#666',
   },
   content: {
     flex: 1,
     paddingHorizontal: 24,
   },
   form: {
+    gap: 16,
+    paddingVertical: 16,
+  },
+  label: {
+    fontSize: 13,
+    color: '#666666',
+    marginBottom: 8,
     marginTop: 16,
-    paddingBottom: 24,
   },
   input: {
     backgroundColor: '#FFF',
-    marginBottom: 16,
-  },
-  inputContent: {
-    backgroundColor: '#FFF',
     fontSize: 16,
+    height: 48,
     paddingHorizontal: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
   },
-  typeButton: {
-    marginBottom: 16,
-    borderColor: '#E0E0E0',
+  filledInput: {
+    backgroundColor: '#FFF',
   },
-  pepContainer: {
+  menuButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'space-between',
+    paddingVertical: 12,
   },
-  pepText: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: '#666666',
+  menuButtonText: {
+    fontSize: 16,
+    color: '#999',
   },
-  addressButton: {
-    marginBottom: 16,
-    borderColor: '#E0E0E0',
+  footer: {
+    padding: 24,
+    paddingBottom: 32,
   },
-  addressButtonLabel: {
-    color: '#E91E63',
+  continueButton: {
+    backgroundColor: '#E91E63',
+    paddingVertical: 8,
   },
-  addressForm: {
-    marginTop: 8,
+  continueButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  continueButtonLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  error: {
+    fontSize: 12,
+    color: '#FF0000',
+    marginBottom: 8,
   },
   saveButton: {
     marginTop: 8,
@@ -656,24 +568,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 16,
   },
-  footer: {
-    padding: 16,
-    backgroundColor: '#FFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+  pepContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
   },
-  continueButton: {
-    backgroundColor: '#E91E63',
-    height: 48,
+  pepText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#666666',
   },
-  continueButtonDisabled: {
-    backgroundColor: '#E0E0E0',
+  addressButton: {
+    marginBottom: 16,
+    borderColor: '#E0E0E0',
   },
-  continueButtonLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#FFF',
-    textTransform: 'uppercase',
+  addressButtonLabel: {
+    color: '#E91E63',
+  },
+  addressForm: {
+    marginTop: 8,
   },
 });
 

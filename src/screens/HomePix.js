@@ -30,7 +30,7 @@ const HomePix = ({ route, navigation }) => {
       icon: 'key-variant',
       title: 'Minhas Chaves',
       description: 'Cadastre e gerencie suas chaves ativas e pendentes.',
-      onPress: () => navigation.navigate('PixKeysScreen', { balance }),
+      onPress: () => navigation.navigate('PixKeys', { balance }),
     },
     {
       icon: 'bank-transfer',
@@ -43,6 +43,24 @@ const HomePix = ({ route, navigation }) => {
       title: 'Receber Pix',
       description: 'Compartilhe o QR Code para receber cobrança de terceiros.',
       onPress: () => navigation.navigate('PixReceiveAmount'),
+    },
+    {
+      icon: 'shield-lock',
+      title: 'Meus Limites',
+      description: 'Defina limites personalizados para suas transferências.',
+      onPress: () => navigation.navigate('PixLimits'),
+    },
+    {
+      icon: 'qrcode-scan',
+      title: 'Ler QR Code',
+      description: 'Escaneie um QR Code para fazer um pagamento PIX.',
+      onPress: () => navigation.navigate('PixQrCode'),
+    },
+    {
+      icon: 'content-copy',
+      title: 'Copia e Cola',
+      description: 'Cole um código PIX para fazer uma transferência.',
+      onPress: () => navigation.navigate('PixCopyPaste'),
     },
   ];
 
@@ -97,6 +115,20 @@ const HomePix = ({ route, navigation }) => {
           {menuItems.map((item, index) => (
             <MenuItem key={index} {...item} />
           ))}
+        </View>
+        
+        {/* Seção de Dúvidas */}
+        <View style={styles.helpSection}>
+          <TouchableOpacity 
+            style={styles.helpButton}
+            onPress={() => navigation.navigate('PixInfo')}
+          >
+            <MaterialCommunityIcons name="help-circle-outline" size={24} color="#682145" />
+            <View style={styles.helpTextContainer}>
+              <Text style={styles.helpTitle}>Dúvidas sobre o Pix</Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={24} color="#682145" />
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -203,6 +235,27 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#000',
     lineHeight: 16,
+  },
+  helpSection: {
+    marginTop: 24,
+  },
+  helpButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  helpTextContainer: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  helpTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#682145',
   },
 });
 

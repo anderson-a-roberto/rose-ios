@@ -81,16 +81,52 @@ const initialState = {
 
 export function OnboardingProvider({ children }) {
   const [onboardingData, setOnboardingData] = useState(initialState);
+  console.log('[OnboardingContext] Provedor inicializado');
 
   const updateOnboardingData = (newData) => {
-    setOnboardingData((prevData) => ({
-      ...prevData,
-      ...newData,
-    }));
+    console.log('[OnboardingContext] updateOnboardingData chamado com:', JSON.stringify(newData));
+    
+    // Versão simplificada sem Promise e sem setTimeout
+    setOnboardingData((prevData) => {
+      console.log('[OnboardingContext] Estado anterior:', JSON.stringify(prevData));
+      
+      // Deep clone do estado anterior
+      const updatedData = JSON.parse(JSON.stringify(prevData));
+      
+      // Função recursiva para fazer merge profundo
+      const deepMerge = (target, source) => {
+        Object.keys(source).forEach(key => {
+          const sourceValue = source[key];
+          
+          if (sourceValue && typeof sourceValue === 'object' && !Array.isArray(sourceValue)) {
+            // Se o valor é um objeto (não array), faz merge recursivo
+            target[key] = target[key] || {};
+            deepMerge(target[key], sourceValue);
+          } else {
+            // Se não é objeto ou é array, substitui diretamente
+            target[key] = sourceValue;
+          }
+        });
+        return target;
+      };
+      
+      // Aplica o merge profundo e retorna o resultado
+      const result = deepMerge(updatedData, newData);
+      console.log('[OnboardingContext] Novo estado após merge:', JSON.stringify(result));
+      return result;
+    });
+    
+    // Adiciona um log após a atualização do estado
+    setTimeout(() => {
+      console.log('[OnboardingContext] Estado atual após atualização:', JSON.stringify(onboardingData));
+    }, 0);
   };
 
   const resetOnboardingData = () => {
-    setOnboardingData(initialState);
+    // Só reseta se não estiver em processo de onboarding
+    if (!onboardingData.personalData?.documentNumber) {
+      setOnboardingData(initialState);
+    }
   };
 
   const setTermsAccepted = () => {

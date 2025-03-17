@@ -104,21 +104,21 @@ const PixTransferKeyScreen = ({ navigation, route }) => {
         {/* Content */}
         <View style={styles.content}>
           {/* Key Input */}
+          <Text style={styles.label}>Chave PIX</Text>
           <TextInput
-            mode="outlined"
-            label="Chave PIX"
             value={pixKey}
             onChangeText={(text) => {
               setPixKey(text);
               setError(null);
             }}
-            style={styles.input}
+            style={[styles.input, pixKey && styles.filledInput]}
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            textColor={pixKey ? '#000' : '#999'}
+            theme={{ fonts: { regular: { fontWeight: pixKey ? '600' : '400' } } }}
             placeholder="Digite a chave PIX"
             error={!!error}
             disabled={loading}
-            outlineColor="#E0E0E0"
-            activeOutlineColor="#E91E63"
-            theme={{ colors: { error: '#E91E63' } }}
           />
           {error && <Text style={styles.errorText}>{error}</Text>}
         </View>
@@ -189,32 +189,48 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
   },
+  label: {
+    fontSize: 13,
+    color: '#666666',
+    marginBottom: 8,
+    marginTop: 16,
+  },
   input: {
     backgroundColor: '#FFF',
-    marginTop: 16,
+    fontSize: 16,
+    height: 48,
+    paddingHorizontal: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  filledInput: {
+    backgroundColor: '#FFF',
   },
   errorText: {
     color: '#E91E63',
     fontSize: 14,
     marginTop: 8,
+    marginLeft: 4,
   },
   buttonContainer: {
     padding: 20,
     paddingBottom: 32,
+    backgroundColor: '#FFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
   },
   button: {
     backgroundColor: '#E91E63',
-    borderRadius: 8,
+    height: 48,
   },
   buttonContent: {
-    height: 56,
+    height: 48,
   },
   buttonLabel: {
     fontSize: 16,
     fontWeight: 'bold',
-    letterSpacing: 0.5,
     color: '#FFF',
-  },
+  }
 });
 
 export default PixTransferKeyScreen;

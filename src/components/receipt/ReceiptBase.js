@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
 import { Text, Divider } from 'react-native-paper';
 
 const ReceiptBase = ({ 
@@ -13,6 +13,11 @@ const ReceiptBase = ({
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
+        <Image 
+          source={require('../../assets/images/logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
         <Text style={styles.title}>Comprovante</Text>
         <Text style={styles.transactionId}>ID: {transactionId}</Text>
       </View>
@@ -68,6 +73,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  logo: {
+    width: 120,
+    height: 40,
+    marginBottom: 16,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -102,7 +112,7 @@ const styles = StyleSheet.create({
     marginLeft: 16,
   },
   footer: {
-    marginTop: 24,
+    marginTop: 16,
   },
   footerText: {
     fontSize: 12,
@@ -114,7 +124,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     textAlign: 'center',
-  },
+  }
 });
 
 export default ReceiptBase;

@@ -51,7 +51,10 @@ export default function WelcomeScreen() {
       if (kycData.onboarding_create_status === 'CONFIRMED') {
         navigation.navigate('LoginPassword', { documentNumber });
       } else if (kycData.documentscopy_status === 'PENDING' && kycData.url_documentscopy) {
-        await Linking.openURL(kycData.url_documentscopy);
+        navigation.navigate('KYC', { 
+          kycUrl: kycData.url_documentscopy, 
+          documentNumber 
+        });
       } else if (kycData.documentscopy_status === 'PROCESSING') {
         navigation.navigate('OnboardingSuccess');
       } else if (kycData.onboarding_create_status === 'REPROVED') {

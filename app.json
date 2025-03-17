@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "banco-rose-v2",
-    "slug": "banco-rose-v2",
+    "name": "Banco Rose",
+    "slug": "banco-rose",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,40 +13,44 @@
     },
     "updates": {
       "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/91e98215-8f29-4fa8-bc4a-c0ba9107fa8c"
+      "url": "https://u.expo.dev/022c2307-44ea-4458-8c78-4bb4c1a4be31"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.banco.rose.v2"
+      "bundleIdentifier": "com.banco.rose"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.banco.rose.v2",
+      "package": "com.banco.rose",
       "permissions": [
+        "INTERNET",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
         "INTERNET",
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE"
       ],
-      "versionCode": 1,
+      "versionCode": 2,
       "softwareKeyboardLayoutMode": "pan",
       "allowBackup": true
-    },
-    "extra": {
-      "eas": {
-        "projectId": "91e98215-8f29-4fa8-bc4a-c0ba9107fa8c"
-      }
     },
     "owner": "fernandoluz",
     "sdkVersion": "50.0.0",
     "runtimeVersion": {
       "policy": "sdkVersion"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "022c2307-44ea-4458-8c78-4bb4c1a4be31"
+      }
     }
   }
 }

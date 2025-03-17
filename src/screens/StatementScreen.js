@@ -1,5 +1,13 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  StyleSheet, 
+  TouchableOpacity, 
+  Platform, 
+  ScrollView, 
+  ActivityIndicator,
+  RefreshControl
+} from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
@@ -16,25 +24,41 @@ export default function StatementScreen({ route }) {
   const { userAccount, userTaxId } = useDashboard();
   const { balance } = route.params;
   const [showBalance, setShowBalance] = useState(true);
-  const [startDate, setStartDate] = useState(new Date());
+  const [startDate, setStartDate] = useState(() => {
+    // Data de hoje menos 6 dias (para ter 7 dias no total)
+    const date = new Date();
+    date.setDate(date.getDate() - 6);
+    return date;
+  });
   const [endDate, setEndDate] = useState(new Date());
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [searchDates, setSearchDates] = useState({ dateFrom: null, dateTo: null });
+  const [searchDates, setSearchDates] = useState({
+    dateFrom: (() => {
+      const date = new Date();
+      date.setDate(date.getDate() - 6);
+      return date.toISOString().split('T')[0];
+    })(),
+    dateTo: new Date().toISOString().split('T')[0]
+  });
+  const [refreshing, setRefreshing] = useState(false);
 
   const { 
-    data: transactions = [], 
-    isLoading: loading,
-    error,
-    refetch: refetchTransactions
+    data, 
+    isLoading: loading, 
+    error, 
+    refetch: refetchTransactions 
   } = useTransactionsQuery(
     userAccount, 
     userTaxId,
     searchDates.dateFrom,
     searchDates.dateTo
   );
+
+  // Extrair as transações do objeto data
+  const transactions = data?.data || [];
 
   const onStartDateChange = (event, selectedDate) => {
     setShowStartPicker(Platform.OS === 'ios');
@@ -208,30 +232,53 @@ export default function StatementScreen({ route }) {
       </View>
 
       {/* Lista de Transações */}
-      <ScrollView style={styles.transactionsContainer}>
-        {error ? (
+      <ScrollView 
+        style={styles.transactionsContainer} 
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={() => {
+              setRefreshing(true);
+              refetchTransactions().then(() => setRefreshing(false));
+            }} 
+          />
+        }
+      >
+        {loading ? (
+          <ActivityIndicator size="large" color="#E91E63" style={styles.loader} />
+        ) : error ? (
           <View style={styles.errorContainer}>
             <MaterialCommunityIcons 
-              name="refresh-circle" 
+              name="alert-circle-outline" 
               size={48} 
               color="#E91E63" 
             />
-            <Text style={styles.errorText}>
-              Não foi possível carregar o extrato
+            <Text style={styles.errorTitle}>Erro ao carregar transações</Text>
+            <Text style={styles.errorMessage}>
+              {error.message || "Ocorreu um erro ao buscar suas transações. Tente novamente mais tarde."}
             </Text>
-            <TouchableOpacity
+            <TouchableOpacity 
               style={styles.retryButton}
-              onPress={refetchTransactions}
+              onPress={() => refetchTransactions()}
             >
-              <Text style={styles.retryButtonText}>Tentar Novamente</Text>
+              <Text style={styles.retryButtonText}>Tentar novamente</Text>
             </TouchableOpacity>
           </View>
-        ) : loading ? (
-          <ActivityIndicator size="large" color="#E91E63" style={styles.loader} />
         ) : transactions.length === 0 ? (
-          <Text style={styles.emptyText}>Nenhuma transação encontrada</Text>
+          <View style={styles.emptyContainer}>
+            <MaterialCommunityIcons 
+              name="calendar-blank" 
+              size={48} 
+              color="#E91E63" 
+            />
+            <Text style={styles.emptyText}>
+              Nenhuma transação encontrada no período selecionado
+            </Text>
+          </View>
         ) : (
-          transactions.map((transaction, index) => (
+          transactions
+            .sort((a, b) => new Date(b.createDate) - new Date(a.createDate))
+            .map((transaction, index) => (
             <StatementTableRow
               key={index}
               transaction={transaction}
@@ -399,11 +446,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     margin: 16,
   },
-  errorText: {
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: '600',
     color: '#666',
+    marginBottom: 8,
+  },
+  errorMessage: {
     fontSize: 16,
-    textAlign: 'center',
-    marginTop: 12,
+    color: '#666',
     marginBottom: 16,
   },
   retryButton: {
@@ -420,6 +471,12 @@ const styles = StyleSheet.create({
   },
   loader: {
     marginVertical: 20,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
   emptyText: {
     textAlign: 'center',

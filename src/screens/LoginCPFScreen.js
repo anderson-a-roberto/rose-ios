@@ -56,7 +56,10 @@ const LoginCPFScreen = ({ navigation }) => {
       if (kycData.onboarding_create_status === 'CONFIRMED') {
         navigation.navigate('LoginPassword', { cpf: cleanCPF });
       } else if (kycData.documentscopy_status === 'PENDING' && kycData.url_documentscopy) {
-        await Linking.openURL(kycData.url_documentscopy);
+        navigation.navigate('KYC', { 
+          kycUrl: kycData.url_documentscopy, 
+          documentNumber: cleanCPF 
+        });
       } else if (kycData.documentscopy_status === 'PROCESSING') {
         navigation.navigate('ThankYou');
       } else if (kycData.onboarding_create_status === 'REPROVED') {

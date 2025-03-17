@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import { Text, TextInput, Button, HelperText } from 'react-native-paper';
 import { useOnboarding } from '../../../contexts/OnboardingContext';
-import TestDataButton from '../../../components/TestDataButton';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { supabase } from '../../../config/supabase';
 
@@ -215,11 +214,6 @@ const CompanyPasswordScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <TestDataButton 
-          section="securityData" 
-          onFill={(data) => setFormData(data)}
-        />
-
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
@@ -384,9 +378,8 @@ const styles = StyleSheet.create({
   },
   continueButtonLabel: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: 'bold',
     color: '#FFF',
-    textTransform: 'uppercase',
   },
 });
 

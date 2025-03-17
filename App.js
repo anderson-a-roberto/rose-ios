@@ -11,6 +11,7 @@ import PayBillConfirmScreen from './src/screens/PayBillConfirmScreen';
 import PayBillLoadingScreen from './src/screens/PayBillLoadingScreen';
 import PayBillSuccessScreen from './src/screens/PayBillSuccessScreen';
 import PayBillReceiptScreen from './src/screens/PayBillReceiptScreen';
+import PayBillErrorScreen from './src/screens/PayBillErrorScreen';
 import HomePix from './src/screens/HomePix';
 import PixKeysScreen from './src/screens/PixKeysScreen';
 import RegisterPixKeyScreen from './src/screens/RegisterPixKeyScreen';
@@ -33,6 +34,7 @@ import CreateChargePersonalDataScreen from './src/screens/charges/CreateChargePe
 import CreateChargeAddressScreen from './src/screens/charges/CreateChargeAddressScreen';
 import CreateChargeConfirmDataScreen from './src/screens/charges/CreateChargeConfirmDataScreen';
 import CreateChargeAmountScreen from './src/screens/charges/CreateChargeAmountScreen';
+import CreateChargeKeyScreen from './src/screens/charges/CreateChargeKeyScreen';
 import CreateChargeFinesScreen from './src/screens/charges/CreateChargeFinesScreen';
 import CreateChargeDueDateScreen from './src/screens/charges/CreateChargeDueDateScreen';
 import CreateChargeSummaryScreen from './src/screens/charges/CreateChargeSummaryScreen';
@@ -54,9 +56,19 @@ import CompanyDataScreen from './src/screens/onboarding/company/CompanyDataScree
 import CompanyAddressScreen from './src/screens/onboarding/company/CompanyAddressScreen';
 import PartnerDataScreen from './src/screens/onboarding/company/PartnerDataScreen';
 import CompanyContactScreen from './src/screens/onboarding/company/CompanyContactScreen';
+import CompanyPasswordScreen from './src/screens/onboarding/company/CompanyPasswordScreen';
 import TermsScreen from './src/screens/onboarding/TermsScreen';
 import ProfileSettingsScreen from './src/screens/ProfileSettingsScreen';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import PixLimitsScreen from './src/screens/pix/PixLimitsScreen';
+import PixQrCodeScanScreen from './src/screens/pix/PixQrCodeScanScreen';
+import PixCopyPasteScreen from './src/screens/pix/PixCopyPasteScreen';
+import PixQrCodePaymentScreen from './src/screens/pix/PixQrCodePaymentScreen';
+import PixQrCodeLoadingScreen from './src/screens/pix/PixQrCodeLoadingScreen';
+import PixQrCodeSuccessScreen from './src/screens/pix/PixQrCodeSuccessScreen';
+import PixQrCodeReceiptScreen from './src/screens/pix/PixQrCodeReceiptScreen';
+import PixInfoScreen from './src/screens/pix/PixInfoScreen';
+import KYCScreen from './src/screens/KYCScreen';
 
 const Stack = createStackNavigator();
 
@@ -162,7 +174,7 @@ const App = () => {
                   />
                   <Stack.Screen
                     name="CompanyPassword"
-                    component={PasswordScreen}
+                    component={CompanyPasswordScreen}
                     options={{ headerShown: false }}
                   />
                   <Stack.Screen
@@ -194,7 +206,7 @@ const App = () => {
                   <Stack.Screen name="Statement" component={StatementScreen} />
                   <Stack.Screen name="Charges" component={ChargesScreen} />
                   <Stack.Screen name="HomePix" component={HomePix} />
-                  <Stack.Screen name="PixKeysScreen" component={PixKeysScreen} />
+                  <Stack.Screen name="PixKeys" component={PixKeysScreen} />
                   <Stack.Screen name="RegisterPixKey" component={RegisterPixKeyScreen} />
                   <Stack.Screen name="PixTransferAmount" component={PixTransferAmountScreen} />
                   <Stack.Screen name="PixTransferKey" component={PixTransferKeyScreen} />
@@ -203,6 +215,15 @@ const App = () => {
                   <Stack.Screen name="PixTransferSuccess" component={PixTransferSuccessScreen} />
                   <Stack.Screen name="PixTransferReceipt" component={PixTransferReceiptScreen} />
                   <Stack.Screen name="PixReceiveAmount" component={PixReceiveAmountScreen} />
+                  <Stack.Screen name="PixLimits" component={PixLimitsScreen} />
+                  <Stack.Screen name="PixQrCode" component={PixQrCodeScanScreen} />
+                  <Stack.Screen name="PixCopyPaste" component={PixCopyPasteScreen} />
+                  <Stack.Screen name="PixQrCodePayment" component={PixQrCodePaymentScreen} />
+                  <Stack.Screen name="PixQrCodeLoading" component={PixQrCodeLoadingScreen} />
+                  <Stack.Screen name="PixQrCodeSuccess" component={PixQrCodeSuccessScreen} />
+                  <Stack.Screen name="PixQrCodeReceipt" component={PixQrCodeReceiptScreen} />
+                  <Stack.Screen name="PixInfo" component={PixInfoScreen} />
+
                   <Stack.Screen
                     name="PixReceiveKey"
                     component={PixReceiveKeyScreenV2}
@@ -211,11 +232,12 @@ const App = () => {
                     }}
                   />
                   <Stack.Screen name="PixReceiveConfirm" component={PixReceiveConfirmScreen} />
-                  <Stack.Screen name="PayBill" component={PayBillScreen} />
-                  <Stack.Screen name="PayBillConfirm" component={PayBillConfirmScreen} />
-                  <Stack.Screen name="PayBillLoading" component={PayBillLoadingScreen} />
-                  <Stack.Screen name="PayBillSuccess" component={PayBillSuccessScreen} />
-                  <Stack.Screen name="PayBillReceipt" component={PayBillReceiptScreen} />
+                  <Stack.Screen name="PayBill" component={PayBillScreen} options={{ headerShown: false }} />
+                  <Stack.Screen name="PayBillConfirm" component={PayBillConfirmScreen} options={{ headerShown: false }} />
+                  <Stack.Screen name="PayBillLoading" component={PayBillLoadingScreen} options={{ headerShown: false }} />
+                  <Stack.Screen name="PayBillSuccess" component={PayBillSuccessScreen} options={{ headerShown: false }} />
+                  <Stack.Screen name="PayBillReceipt" component={PayBillReceiptScreen} options={{ headerShown: false }} />
+                  <Stack.Screen name="PayBillError" component={PayBillErrorScreen} options={{ headerShown: false }} />
                   <Stack.Screen name="TransferAmount" component={TransferAmountScreen} />
                   <Stack.Screen name="TransferAccount" component={TransferAccountScreen} />
                   <Stack.Screen name="TransferSuccess" component={TransferSuccessScreen} />
@@ -224,10 +246,12 @@ const App = () => {
                   <Stack.Screen name="CreateChargeAddress" component={CreateChargeAddressScreen} />
                   <Stack.Screen name="CreateChargeConfirmData" component={CreateChargeConfirmDataScreen} />
                   <Stack.Screen name="CreateChargeAmount" component={CreateChargeAmountScreen} />
+                  <Stack.Screen name="CreateChargeKey" component={CreateChargeKeyScreen} />
                   <Stack.Screen name="CreateChargeFines" component={CreateChargeFinesScreen} />
                   <Stack.Screen name="CreateChargeDueDate" component={CreateChargeDueDateScreen} />
                   <Stack.Screen name="CreateChargeSummary" component={CreateChargeSummaryScreen} />
                   <Stack.Screen name="CreateChargeSuccess" component={CreateChargeSuccessScreen} />
+                  <Stack.Screen name="KYC" component={KYCScreen} />
                 </Stack.Navigator>
               </OnboardingProvider>
             </ChargeProvider>

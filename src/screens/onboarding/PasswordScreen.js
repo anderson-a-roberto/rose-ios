@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator, Platform, KeyboardAvoidingView } from 'react-native';
 import { Text, TextInput, Button, HelperText } from 'react-native-paper';
 import { useOnboarding } from '../../contexts/OnboardingContext';
-import TestDataButton from '../../components/TestDataButton';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { supabase } from '../../config/supabase';
 
@@ -51,28 +50,23 @@ const PasswordScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <TestDataButton 
-          section="securityData" 
-          onFill={(data) => setFormData(data)}
-        />
-
+      <KeyboardAvoidingView 
+        style={styles.container} 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+      >
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <MaterialCommunityIcons name="chevron-left" size={32} color="#E91E63" />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Senha do App</Text>
-            <Text style={styles.subtitle}>
-              Nesta etapa, você vai precisar cadastrar uma senha de acesso ao app
-            </Text>
-          </View>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backText}>‹</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Senha do App</Text>
+          <Text style={styles.subtitle}>
+            Nesta etapa, você vai precisar cadastrar uma senha de acesso ao app
+          </Text>
         </View>
 
         {/* Content */}
@@ -149,7 +143,7 @@ const PasswordScreen = ({ navigation }) => {
             {loading ? 'SALVANDO...' : 'CONTINUAR'}
           </Button>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -162,25 +156,22 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFF',
+    minHeight: '100%',
   },
   header: {
+    paddingTop: Platform.OS === 'ios' ? 8 : 16,
     paddingBottom: 24,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
     paddingHorizontal: 16,
-    paddingTop: 8,
   },
   backButton: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginBottom: 16,
   },
-  headerContent: {
-    paddingHorizontal: 24,
+  backText: {
+    fontSize: 32,
+    color: '#E91E63',
   },
   headerTitle: {
     fontSize: 20,
@@ -214,16 +205,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
+    ...Platform.select({
+      android: {
+        elevation: 8,
+      },
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+    }),
   },
   continueButton: {
     backgroundColor: '#E91E63',
+    borderRadius: 4,
+    paddingVertical: 8,
     height: 48,
+    justifyContent: 'center',
   },
   continueButtonLabel: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: 'bold',
     color: '#FFF',
-    textTransform: 'uppercase',
   },
 });
 

@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { Text, TextInput, Button } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useOnboarding } from '../../../contexts/OnboardingContext';
-import TestDataButton from '../../../components/TestDataButton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const formatCEP = (text) => {
@@ -25,17 +24,47 @@ const CompanyAddressScreen = ({ navigation }) => {
     state: companyAddress?.state || '',
   });
 
+  const [loading, setLoading] = useState(false);
+
   const handleChange = (field, value) => {
     let formattedValue = value;
     
     if (field === 'postalCode') {
       formattedValue = formatCEP(value);
+      if (value.replace(/\D/g, '').length === 8) {
+        fetchAddress(value);
+      }
     }
     
     setFormData(prev => ({
       ...prev,
       [field]: formattedValue
     }));
+  };
+
+  const fetchAddress = async (cep) => {
+    setLoading(true);
+    try {
+      const cleanCep = cep.replace(/\D/g, '');
+      if (cleanCep.length === 8) {
+        const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+        const data = await response.json();
+        
+        if (!data.erro) {
+          setFormData(prev => ({
+            ...prev,
+            street: data.logradouro || prev.street,
+            neighborhood: data.bairro || prev.neighborhood,
+            city: data.localidade || prev.city,
+            state: data.uf || prev.state
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao buscar CEP:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleNext = () => {
@@ -48,152 +77,122 @@ const CompanyAddressScreen = ({ navigation }) => {
     navigation.navigate('CompanyContact');
   };
 
+  const isFormValid = () => {
+    return (
+      formData.postalCode &&
+      formData.street &&
+      formData.number &&
+      formData.neighborhood &&
+      formData.city &&
+      formData.state
+    );
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.headerTop}>
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <MaterialCommunityIcons name="chevron-left" size={32} color="#E91E63" style={{ marginTop: -4 }} />
+            <MaterialCommunityIcons name="chevron-left" size={32} color="#E91E63" />
           </TouchableOpacity>
-          <TestDataButton 
-            section="companyAddress" 
-            onFill={(data) => setFormData(data)}
-          />
         </View>
 
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>Endereço da empresa</Text>
-          <Text style={styles.headerSubtitle}>
+          <Text style={styles.subtitle}>
             Informe o endereço da sede da sua empresa
           </Text>
         </View>
 
         {/* Form */}
         <View style={styles.form}>
+          <Text style={styles.label}>CEP</Text>
           <TextInput
-            label="CEP"
             value={formData.postalCode}
             onChangeText={(value) => handleChange('postalCode', value)}
-            mode="flat"
-            style={styles.input}
-            contentStyle={styles.inputContent}
-            theme={{
-              colors: {
-                primary: '#E91E63',
-                error: '#B00020',
-                onSurfaceVariant: '#666666',
-                onSurface: '#000000',
-              },
-            }}
+            style={[styles.input, formData.postalCode && styles.filledInput]}
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            textColor={formData.postalCode ? '#000' : '#999'}
+            theme={{ fonts: { regular: { fontWeight: formData.postalCode ? '600' : '400' } } }}
             keyboardType="numeric"
             maxLength={9}
           />
 
+          <Text style={styles.label}>Rua/Avenida</Text>
           <TextInput
-            label="Rua/Avenida"
             value={formData.street}
             onChangeText={(value) => handleChange('street', value)}
-            mode="flat"
-            style={styles.input}
-            contentStyle={styles.inputContent}
-            theme={{
-              colors: {
-                primary: '#E91E63',
-                error: '#B00020',
-                onSurfaceVariant: '#666666',
-                onSurface: '#000000',
-              },
-            }}
+            style={[styles.input, formData.street && styles.filledInput]}
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            textColor={formData.street ? '#000' : '#999'}
+            theme={{ fonts: { regular: { fontWeight: formData.street ? '600' : '400' } } }}
+            disabled={loading}
+            right={loading ? <TextInput.Icon icon={() => <ActivityIndicator color="#E91E63" />} /> : null}
           />
 
+          <Text style={styles.label}>Número</Text>
           <TextInput
-            label="Número"
             value={formData.number}
             onChangeText={(value) => handleChange('number', value)}
-            mode="flat"
-            style={styles.input}
-            contentStyle={styles.inputContent}
-            theme={{
-              colors: {
-                primary: '#E91E63',
-                error: '#B00020',
-                onSurfaceVariant: '#666666',
-                onSurface: '#000000',
-              },
-            }}
+            style={[styles.input, formData.number && styles.filledInput]}
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            textColor={formData.number ? '#000' : '#999'}
+            theme={{ fonts: { regular: { fontWeight: formData.number ? '600' : '400' } } }}
             keyboardType="numeric"
           />
 
+          <Text style={styles.label}>Complemento (opcional)</Text>
           <TextInput
-            label="Complemento (opcional)"
             value={formData.complement}
             onChangeText={(value) => handleChange('complement', value)}
-            mode="flat"
-            style={styles.input}
-            contentStyle={styles.inputContent}
-            theme={{
-              colors: {
-                primary: '#E91E63',
-                error: '#B00020',
-                onSurfaceVariant: '#666666',
-                onSurface: '#000000',
-              },
-            }}
+            style={[styles.input, formData.complement && styles.filledInput]}
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            textColor={formData.complement ? '#000' : '#999'}
+            theme={{ fonts: { regular: { fontWeight: formData.complement ? '600' : '400' } } }}
           />
 
+          <Text style={styles.label}>Bairro</Text>
           <TextInput
-            label="Bairro"
             value={formData.neighborhood}
             onChangeText={(value) => handleChange('neighborhood', value)}
-            mode="flat"
-            style={styles.input}
-            contentStyle={styles.inputContent}
-            theme={{
-              colors: {
-                primary: '#E91E63',
-                error: '#B00020',
-                onSurfaceVariant: '#666666',
-                onSurface: '#000000',
-              },
-            }}
+            style={[styles.input, formData.neighborhood && styles.filledInput]}
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            textColor={formData.neighborhood ? '#000' : '#999'}
+            theme={{ fonts: { regular: { fontWeight: formData.neighborhood ? '600' : '400' } } }}
+            disabled={loading}
           />
 
+          <Text style={styles.label}>Cidade</Text>
           <TextInput
-            label="Cidade"
             value={formData.city}
             onChangeText={(value) => handleChange('city', value)}
-            mode="flat"
-            style={styles.input}
-            contentStyle={styles.inputContent}
-            theme={{
-              colors: {
-                primary: '#E91E63',
-                error: '#B00020',
-                onSurfaceVariant: '#666666',
-                onSurface: '#000000',
-              },
-            }}
+            style={[styles.input, formData.city && styles.filledInput]}
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            textColor={formData.city ? '#000' : '#999'}
+            theme={{ fonts: { regular: { fontWeight: formData.city ? '600' : '400' } } }}
+            disabled={loading}
           />
 
+          <Text style={styles.label}>Estado</Text>
           <TextInput
-            label="Estado"
             value={formData.state}
             onChangeText={(value) => handleChange('state', value)}
-            mode="flat"
-            style={styles.input}
-            contentStyle={styles.inputContent}
-            theme={{
-              colors: {
-                primary: '#E91E63',
-                error: '#B00020',
-                onSurfaceVariant: '#666666',
-                onSurface: '#000000',
-              },
-            }}
+            style={[styles.input, formData.state && styles.filledInput]}
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            textColor={formData.state ? '#000' : '#999'}
+            theme={{ fonts: { regular: { fontWeight: formData.state ? '600' : '400' } } }}
+            disabled={loading}
           />
         </View>
       </ScrollView>
@@ -203,10 +202,12 @@ const CompanyAddressScreen = ({ navigation }) => {
         <Button
           mode="contained"
           onPress={handleNext}
-          style={styles.continueButton}
+          style={[styles.continueButton, !isFormValid() && styles.continueButtonDisabled]}
           labelStyle={styles.continueButtonLabel}
+          loading={loading}
+          disabled={loading || !isFormValid()}
         >
-          CONTINUAR
+          {loading ? 'SALVANDO...' : 'CONTINUAR'}
         </Button>
       </View>
     </SafeAreaView>
@@ -218,9 +219,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF',
   },
-  container: {
+  content: {
     flex: 1,
-    backgroundColor: '#FFF',
+    paddingHorizontal: 24,
   },
   headerTop: {
     flexDirection: 'row',
@@ -230,52 +231,58 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   backButton: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 8,
   },
   headerContent: {
     paddingHorizontal: 24,
+    paddingTop: 16,
     paddingBottom: 24,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 24,
+    fontWeight: 'bold',
     color: '#000',
     marginBottom: 8,
   },
-  headerSubtitle: {
+  subtitle: {
     fontSize: 16,
-    lineHeight: 24,
-    color: '#666666',
+    color: '#666',
   },
   form: {
-    paddingHorizontal: 24,
+    gap: 16,
+    paddingVertical: 16,
+  },
+  label: {
+    fontSize: 13,
+    color: '#666666',
+    marginBottom: 8,
+    marginTop: 16,
   },
   input: {
-    marginBottom: 16,
-    backgroundColor: 'transparent',
-  },
-  inputContent: {
-    fontFamily: 'Roboto',
+    backgroundColor: '#FFF',
     fontSize: 16,
-    backgroundColor: 'transparent',
+    height: 48,
     paddingHorizontal: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  filledInput: {
+    backgroundColor: '#FFF',
   },
   footer: {
     padding: 24,
-    backgroundColor: '#FFF',
+    paddingBottom: 32,
   },
   continueButton: {
-    height: 48,
-    justifyContent: 'center',
     backgroundColor: '#E91E63',
-    borderRadius: 4,
+    paddingVertical: 8,
+  },
+  continueButtonDisabled: {
+    backgroundColor: '#ccc',
   },
   continueButtonLabel: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: 'bold',
     color: '#FFF',
   },
 });

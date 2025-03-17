@@ -8,7 +8,7 @@ const SuccessScreen = ({ navigation }) => {
 
   const handleGoToHome = () => {
     resetOnboardingData();
-    navigation.replace('Login');
+    navigation.replace('Welcome');
   };
 
   return (

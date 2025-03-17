@@ -1,5 +1,5 @@
 export const TERMS_TEXT = {
-  INTRODUCTION: `Agradecemos por usar nossos produtos e serviços da Bank ("Serviços"). Os Serviços serão oferecidos pela ROSE SOLUÇÕES FINANCEIRAS LTDA, Avenida Paulista, 1636, Conj 4, Pavlh 15, Cond Paulista Corporate, Bela Vista, São Paulo - SP, inscrita no CNPJ/MF sob nº 34.949.000/0001-13 ("Banco Rose") e prestados pela MULTIPLICAR BANK S.A, a qual tem como sede na R Funchal, Número 411, CONJ 51, CNPJ 04.341.841-000, São Paulo - SP, devidamente inscrita no CNPJ/MF sob n. 44.391.784/0001-09 e, eventualmente, em conjunto com Instituições/Parceiras.`,
+  INTRODUCTION: `Agradecemos por usar nossos produtos e serviços da Bank ("Serviços"). Os Serviços serão oferecidos pela ROSE SOLUÇÕES FINANCEIRAS LTDA, Avenida Paulista, 1636, Conj 4, Pavlh 15, Cond Paulista Corporate, Bela Vista, São Paulo - SP, inscrita no CNPJ/MF sob nº 34.949.000/0001-13 ("Banco Rose") e prestados pela Hub 360, , eventualmente, em conjunto com Instituições/Parceiras.`,
 
   SERVICES: [
     {
@@ -38,7 +38,7 @@ export const VERSION_HISTORY = [
   },
   {
     version: "V2",
-    description: "Atualização do nome da MULTIPLICAR",
+    description: "Atualização",
     date: "30/07/2024"
   }
 ];

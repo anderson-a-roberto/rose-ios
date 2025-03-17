@@ -53,31 +53,93 @@ const formatDate = (dateString) => {
   });
 };
 
-const TransactionItem = ({ date, description, value, isPositive, movementType, onPress }) => (
-  <TouchableOpacity style={styles.transactionItem} onPress={onPress}>
-    <Text style={[styles.transactionType, { color: isPositive ? '#4CAF50' : '#F44336' }]}>
-      {isPositive ? '+' : '-'}
-    </Text>
-    
-    <View style={styles.transactionContent}>
-      <Text style={styles.transactionTitle}>{description}</Text>
-      <Text style={styles.transactionSubtitle}>
-        {formatValue(value, isPositive ? 'CREDIT' : 'DEBIT')} | Usuário
-      </Text>
-      <Text style={styles.transactionDate}>{formatDate(date)}</Text>
-    </View>
-  </TouchableOpacity>
-);
+// Função para extrair o nome do destinatário/remetente a partir do clientCode ou description
+const getRecipientName = (clientCode, description, movementType) => {
+  // Para pagamentos de contas, podemos tentar extrair o nome do beneficiário
+  if (movementType === 'BILLPAYMENT' && description) {
+    return description;
+  }
+  
+  // Para outros tipos de transação, não exibimos o nome do destinatário
+  // já que não temos essa informação de forma confiável
+  return '';
+};
+
+const TransactionItem = ({ date, description, value, isPositive, movementType, onPress, clientCode }) => {
+  // Determinar o tipo de transação e o título correspondente
+  let title = '';
+  let subtitle = '';
+  let transactionType = '';
+  
+  if (movementType === 'PIXPAYMENTOUT') {
+    title = 'Transferência enviada';
+    subtitle = getRecipientName(clientCode, description, movementType);
+    transactionType = 'PIX';
+  } else if (movementType === 'PIXPAYMENTIN') {
+    title = 'Transferência recebida';
+    subtitle = getRecipientName(clientCode, description, movementType);
+    transactionType = 'PIX';
+  } else if (movementType === 'BILLPAYMENT') {
+    title = 'Pagamento efetuado';
+    subtitle = getRecipientName(clientCode, description, movementType);
+    transactionType = '';
+  } else if (movementType === 'TEFTRANSFEROUT') {
+    title = 'Transferência enviada';
+    subtitle = getRecipientName(clientCode, description, movementType);
+    transactionType = 'Transferência';
+  } else if (movementType === 'TEFTRANSFERIN') {
+    title = 'Transferência recebida';
+    subtitle = getRecipientName(clientCode, description, movementType);
+    transactionType = 'Transferência';
+  } else if (movementType === 'PIXREVERSALOUT') {
+    title = 'Estorno enviado';
+    subtitle = getRecipientName(clientCode, description, movementType);
+    transactionType = 'PIX';
+  } else if (movementType === 'ENTRYCREDIT') {
+    title = 'Crédito recebido';
+    subtitle = getRecipientName(clientCode, description, movementType);
+    transactionType = '';
+  } else {
+    title = description || 'Transação';
+    subtitle = getRecipientName(clientCode, description, movementType);
+    transactionType = '';
+  }
+
+  return (
+    <TouchableOpacity style={styles.transactionItem} onPress={onPress}>
+      <View style={[styles.transactionTypeContainer, { backgroundColor: isPositive ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)' }]}>
+        <MaterialCommunityIcons 
+          name={isPositive ? "arrow-down" : "arrow-up"} 
+          size={24} 
+          color={isPositive ? '#4CAF50' : '#F44336'} 
+        />
+      </View>
+      
+      <View style={styles.transactionContent}>
+        <Text style={styles.transactionTitle}>{title}</Text>
+        {subtitle ? <Text style={styles.transactionSubtitle}>{subtitle}</Text> : null}
+        <View style={styles.transactionDetails}>
+          <Text style={styles.transactionValue}>R$ {value.toFixed(2).replace('.', ',')}</Text>
+          {transactionType ? <Text style={styles.transactionMethod}>{transactionType}</Text> : null}
+        </View>
+        <Text style={styles.transactionDate}>{formatDate(date)}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+};
 
 export default function Dashboard2Screen({ navigation }) {
   const { userAccount, userTaxId } = useDashboard();
   const { data: balance, isLoading: balanceLoading, error: balanceError } = useBalanceQuery();
   const { 
-    data: transactions = [], 
+    data, 
     isLoading: transactionsLoading,
     error: transactionsError,
     refetch: refetchTransactions
   } = useTransactionsQuery(userAccount, userTaxId);
+  
+  // Extrair as transações do objeto data
+  const transactions = data?.data || [];
 
   const [showBalance, setShowBalance] = useState(true);
   const [showStatement, setShowStatement] = useState(false);
@@ -95,6 +157,9 @@ export default function Dashboard2Screen({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const menuItems = [
     { id: 'pix', icon: 'bank-transfer', label: 'Pix', onPress: () => navigation.navigate('HomePix', { balance }) },
@@ -260,14 +325,19 @@ export default function Dashboard2Screen({ navigation }) {
   const handleLogout = async () => {
     try {
       setLoading(true);
+      setError(null);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      
+      // Resetar a navegação completamente e ir para Welcome
       navigation.reset({
         index: 0,
         routes: [{ name: 'Welcome' }],
       });
     } catch (err) {
+      console.error('Erro ao fazer logout:', err);
       setError('Erro ao fazer logout. Tente novamente.');
+      setMenuVisible(false); // Fechar o menu em caso de erro
     } finally {
       setLoading(false);
     }
@@ -313,6 +383,7 @@ export default function Dashboard2Screen({ navigation }) {
               }}
               title="Sair"
               leadingIcon="logout"
+              disabled={loading}
             />
           </Menu>
           <View style={styles.userDetails}>
@@ -384,44 +455,81 @@ export default function Dashboard2Screen({ navigation }) {
 
       {/* Transactions Section */}
       <View style={styles.transactionsContainer}>
-        <Text style={styles.transactionsTitle}>Últimas Transações</Text>
+        <View style={styles.transactionsHeader}>
+          <Text style={styles.transactionsTitle}>Últimas Transações</Text>
+          <TouchableOpacity 
+            style={styles.refreshButton}
+            onPress={() => {
+              setRefreshing(true);
+              refetchTransactions().finally(() => {
+                setTimeout(() => setRefreshing(false), 500);
+              });
+            }}
+          >
+            {refreshing ? (
+              <ActivityIndicator 
+                size="small" 
+                color="#682145" 
+                style={styles.refreshLoader} 
+              />
+            ) : (
+              <MaterialCommunityIcons 
+                name="refresh" 
+                size={20} 
+                color="#682145" 
+                style={styles.refreshIcon} 
+              />
+            )}
+          </TouchableOpacity>
+        </View>
         {transactionsError ? (
           <View style={styles.errorContainer}>
             <MaterialCommunityIcons 
-              name="refresh-circle" 
+              name="alert-circle-outline" 
               size={48} 
-              color="#E91E63" 
+              color="#682145" 
             />
-            <Text style={styles.errorText}>
-              Não foi possível carregar o extrato
+            <Text style={styles.errorTitle}>Erro ao carregar transações</Text>
+            <Text style={styles.errorMessage}>
+              {transactionsError.message || "Ocorreu um erro ao buscar suas transações. Tente novamente mais tarde."}
             </Text>
-            <TouchableOpacity
+            <TouchableOpacity 
               style={styles.retryButton}
-              onPress={() => {
-                refetchTransactions();
-              }}
+              onPress={() => refetchTransactions()}
             >
-              <Text style={styles.retryButtonText}>Tentar Novamente</Text>
+              <Text style={styles.retryButtonText}>Tentar novamente</Text>
             </TouchableOpacity>
           </View>
         ) : transactionsLoading ? (
-          <ActivityIndicator size="large" color="#E91E63" style={styles.loader} />
+          <ActivityIndicator size="large" color="#682145" style={styles.loader} />
         ) : transactions.length === 0 ? (
-          <Text style={styles.emptyText}>Nenhuma transação encontrada</Text>
+          <View style={styles.emptyContainer}>
+            <MaterialCommunityIcons 
+              name="calendar-blank" 
+              size={48} 
+              color="#682145" 
+            />
+            <Text style={styles.emptyText}>
+              Nenhuma transação encontrada nos últimos 7 dias
+            </Text>
+          </View>
         ) : (
           <FlatList
-            data={transactions.slice(0, 5)}
+            data={transactions
+              .sort((a, b) => new Date(b.createDate) - new Date(a.createDate))
+              .slice(0, 5)}
             renderItem={({ item }) => (
               <TransactionItem
                 date={item.createDate}
                 description={item.description}
                 value={item.amount}
-                isPositive={item.movementType === 'CREDIT'}
+                isPositive={item.balanceType === 'CREDIT'}
                 movementType={item.movementType}
                 onPress={() => handleTransactionPress(item)}
+                clientCode={item.clientCode}
               />
             )}
-            keyExtractor={(item, index) => index.toString()}
+            keyExtractor={(item) => item.id}
             style={styles.transactionsList}
           />
         )}
@@ -609,11 +717,30 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
+  transactionsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   transactionsTitle: {
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 16,
     color: '#333333',
+  },
+  refreshButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(105, 33, 69, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  refreshLoader: {
+    marginLeft: 8,
+  },
+  refreshIcon: {
+    marginRight: 8,
   },
   transactionItem: {
     flexDirection: 'row',
@@ -623,20 +750,24 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F5F5F5',
     height: 84,
   },
-  transactionType: {
-    width: 24,
-    height: 24,
+  transactionTypeContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  transactionTypeSymbol: {
     fontSize: 18,
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginRight: 16,
   },
   transactionContent: {
     flex: 1,
   },
   transactionTitle: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: 'bold',
     color: '#000000',
     marginBottom: 4,
   },
@@ -644,6 +775,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666666',
     marginBottom: 4,
+  },
+  transactionDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  transactionValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333333',
+    marginRight: 8,
+  },
+  transactionMethod: {
+    fontSize: 12,
+    color: '#999999',
+    backgroundColor: '#F5F5F5',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
   transactionDate: {
     fontSize: 12,
@@ -657,27 +808,36 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     margin: 16,
   },
-  errorText: {
-    color: '#666',
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 12,
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 8,
+  },
+  errorMessage: {
+    fontSize: 14,
+    color: '#666666',
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#E91E63',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-    elevation: 2,
+    backgroundColor: '#682145',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 4,
+    marginTop: 8,
   },
   retryButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '500',
   },
   loader: {
     marginVertical: 20,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
   },
   emptyText: {
     textAlign: 'center',

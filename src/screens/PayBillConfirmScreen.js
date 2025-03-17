@@ -3,6 +3,9 @@ import { View, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
 import { Text, Button, Divider } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import 'react-native-get-random-values';
+import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '../config/supabase'; // Import supabase instance
 
 export default function PayBillConfirmScreen({ route }) {
   const navigation = useNavigation();
@@ -24,18 +27,47 @@ export default function PayBillConfirmScreen({ route }) {
       // Navega para tela de loading
       navigation.navigate('PayBillLoading');
 
-      // TODO: Implementar chamada para API de pagamento
-      // Simula tempo de processamento
-      setTimeout(() => {
+      // Gera um UUID único para a transação
+      const clientRequestId = uuidv4();
+
+      // Chama a edge function para realizar o pagamento
+      const { data: paymentData, error: paymentError } = await supabase.functions.invoke('bill-payment', {
+        body: {
+          barCodeInfo: {
+            digitable: billData.barCode.digitable
+          },
+          clientRequestId,
+          amount: billData.value,
+          account: "300550670149", // conta do usuário
+          transactionIdAuthorize: billData.transactionId
+        }
+      });
+
+      if (paymentError) throw paymentError;
+
+      // Verifica se o status é PROCESSING (caso de sucesso da Celcoin)
+      if (paymentData.status === "PROCESSING") {
         // Navega para tela de sucesso com os dados do pagamento
         navigation.replace('PayBillSuccess', {
-          paymentData: billData
+          paymentData: {
+            ...billData,
+            ...paymentData.body,
+            assignor: billData.assignor,
+            barCode: billData.barCode,
+            value: billData.value,
+            status: paymentData.status,
+            transactionId: paymentData.body.transactionIdAuthorize
+          }
         });
-      }, 2000);
+      } else {
+        throw new Error(paymentData.message || 'Erro ao processar pagamento');
+      }
 
     } catch (error) {
       console.error('Erro ao processar pagamento:', error);
-      // TODO: Tratar erro
+      navigation.replace('PayBillError', { 
+        error: error.message || 'Não foi possível processar o pagamento. Tente novamente.'
+      });
     }
   };
 

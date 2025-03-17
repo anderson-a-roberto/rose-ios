@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, Platform, KeyboardAvoidingView } from 'react-native';
 import { Text, TextInput, Button } from 'react-native-paper';
 import { useOnboarding } from '../../contexts/OnboardingContext';
-import TestDataButton from '../../components/TestDataButton';
 
 const formatPhone = (text) => {
   const numbers = text.replace(/\D/g, '');
@@ -40,29 +39,23 @@ const PhoneScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <TestDataButton 
-          section="contactData" 
-          onFill={(data) => setPhoneNumber(formatPhone(data.phoneNumber))}
-        />
-
+      <KeyboardAvoidingView 
+        style={styles.container} 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+      >
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <Text style={styles.backText}>‹</Text>
-            </TouchableOpacity>
-            <View style={{ width: 24 }} />
-          </View>
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Celular</Text>
-            <Text style={styles.subtitle}>
-              Informe o número do seu celular
-            </Text>
-          </View>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backText}>‹</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Celular</Text>
+          <Text style={styles.subtitle}>
+            Informe o número do seu celular
+          </Text>
         </View>
 
         {/* Content */}
@@ -100,7 +93,7 @@ const PhoneScreen = ({ navigation }) => {
             CONTINUAR
           </Button>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -112,32 +105,23 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+    backgroundColor: '#FFF',
+    minHeight: '100%',
   },
   header: {
-    paddingTop: 8,
+    paddingTop: Platform.OS === 'ios' ? 8 : 16,
     paddingBottom: 24,
     backgroundColor: '#FFF',
-  },
-  headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
     paddingHorizontal: 16,
-    marginBottom: 24,
-  },
-  headerContent: {
-    paddingHorizontal: 24,
   },
   backButton: {
-    width: 24,
-    height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginBottom: 16,
   },
   backText: {
     fontSize: 32,
     color: '#E91E63',
-    marginTop: -4,
   },
   headerTitle: {
     fontSize: 20,
@@ -170,17 +154,31 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 24,
     backgroundColor: '#FFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    ...Platform.select({
+      android: {
+        elevation: 8,
+      },
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+    }),
   },
   continueButton: {
     borderRadius: 4,
     backgroundColor: '#E91E63',
+    paddingVertical: 8,
     height: 48,
+    justifyContent: 'center',
   },
   continueButtonLabel: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#FFFFFF',
-    textTransform: 'uppercase',
+    fontWeight: 'bold',
+    color: '#FFF',
   },
 });
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Linking, StatusBar } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Linking, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text, TextInput } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { supabase } from '../config/supabase';
 
@@ -110,83 +111,92 @@ const LoginPasswordScreen = ({ route, navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#000000" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Content */}
-      <View style={styles.content}>
-        <Text style={styles.title}>Digite sua senha</Text>
-        <Text style={styles.subtitle}>Para acessar sua conta, digite sua senha</Text>
-
-        <View style={styles.form}>
-          <TextInput
-            mode="flat"
-            label="Senha"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
-            error={!!error}
-            style={styles.input}
-            contentStyle={styles.inputContent}
-            theme={{
-              colors: {
-                primary: '#E91E63',
-                error: '#B00020',
-                onSurfaceVariant: '#666666',
-                onSurface: '#000000',
-              },
-            }}
-            right={
-              <TextInput.Icon
-                icon={showPassword ? 'eye-off' : 'eye'}
-                onPress={() => setShowPassword(!showPassword)}
-                color="#666666"
-              />
-            }
-          />
-          
-          {error ? (
-            <Text style={styles.errorText}>{error}</Text>
-          ) : null}
-
-          <TouchableOpacity 
-            style={styles.forgotPassword}
-            onPress={() => {/* TODO: Implementar recuperação de senha */}}
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
           >
-            <Text style={styles.forgotPasswordText}>
-              Esqueceu sua senha?
+            <MaterialCommunityIcons name="arrow-left" size={24} color="#000000" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Content */}
+        <View style={styles.content}>
+          <Text style={styles.title}>Digite sua senha</Text>
+          <Text style={styles.subtitle}>Para acessar sua conta, digite sua senha</Text>
+
+          <View style={styles.form}>
+            <TextInput
+              mode="flat"
+              label="Senha"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              error={!!error}
+              style={styles.input}
+              contentStyle={styles.inputContent}
+              theme={{
+                colors: {
+                  primary: '#E91E63',
+                  error: '#B00020',
+                  onSurfaceVariant: '#666666',
+                  onSurface: '#000000',
+                },
+              }}
+              right={
+                <TextInput.Icon
+                  icon={showPassword ? 'eye-off' : 'eye'}
+                  onPress={() => setShowPassword(!showPassword)}
+                  color="#666666"
+                />
+              }
+              autoFocus
+            />
+            
+            {error ? (
+              <Text style={styles.errorText}>{error}</Text>
+            ) : null}
+
+            <TouchableOpacity 
+              style={styles.forgotPassword}
+              onPress={() => {/* TODO: Implementar recuperação de senha */}}
+            >
+              <Text style={styles.forgotPasswordText}>
+                Esqueceu sua senha?
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Footer - Now part of the scrollable content */}
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={[styles.button, (!password || loading) && styles.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={!password || loading}
+          >
+            <Text style={styles.buttonText}>
+              {loading ? 'ENTRANDO...' : 'ENTRAR'}
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
-
-      {/* Footer */}
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleLogin}
-          disabled={!password || loading}
-        >
-          <Text style={styles.buttonText}>
-            {loading ? 'ENTRANDO...' : 'ENTRAR'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
@@ -247,6 +257,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: 24,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 16, // Ajuste para diferentes plataformas
     borderTopWidth: 1,
     borderTopColor: '#F5F5F5',
   },

@@ -20,11 +20,12 @@ import PayBillReceiptScreen from '../screens/PayBillReceiptScreen';
 import WelcomeScreen from '../screens/WelcomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import PasswordScreen from '../screens/PasswordScreen';
+import HomePix from '../screens/HomePix';
 
 // Onboarding Screens
 import OnboardingTermsScreen from '../screens/onboarding/TermsScreen';
 import OnboardingPersonalDataScreen from '../screens/onboarding/PersonalDataScreen';
-import PepInfoScreen from '../screens/onboarding/PepInfoScreen';
+// Removendo a importação da tela PEP, pois agora é um modal
 import AddressScreen from '../screens/onboarding/AddressScreen';
 import PhoneScreen from '../screens/onboarding/PhoneScreen';
 import EmailScreen from '../screens/onboarding/EmailScreen';
@@ -35,6 +36,11 @@ import CompanyAddressScreen from '../screens/onboarding/company/CompanyAddressSc
 import PartnerDataScreen from '../screens/onboarding/company/PartnerDataScreen';
 import CompanyContactScreen from '../screens/onboarding/company/CompanyContactScreen';
 import CompanyPasswordScreen from '../screens/onboarding/company/CompanyPasswordScreen';
+
+// Novas telas PIX
+import PixLimitsScreen from '../screens/PixLimitsScreen';
+import PixQrCodeScanScreen from '../screens/PixQrCodeScanScreen';
+import PixCopyPasteScreen from '../screens/PixCopyPasteScreen';
 
 const Stack = createStackNavigator();
 
@@ -63,7 +69,7 @@ const linking = {
       // Onboarding routes
       OnboardingTerms: 'onboarding/terms',
       OnboardingPersonalData: 'onboarding/personal-data',
-      OnboardingPepInfo: 'onboarding/pep-info',
+      // Removendo a rota PEP, pois agora é um modal
       OnboardingAddress: 'onboarding/address',
       OnboardingPhone: 'onboarding/phone',
       OnboardingEmail: 'onboarding/email',
@@ -74,6 +80,10 @@ const linking = {
       PartnerData: 'onboarding/partner-data',
       CompanyContact: 'onboarding/company-contact',
       CompanyPassword: 'onboarding/company-password',
+      // Novas rotas PIX
+      PixLimits: 'pix-limits',
+      PixQrCode: 'pix-qr-scan',
+      PixCopyPaste: 'pix-copy-paste',
     },
   },
 };
@@ -106,11 +116,12 @@ const AppNavigator = () => {
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Password" component={PasswordScreen} />
+        <Stack.Screen name="HomePix" component={HomePix} />
 
         {/* Onboarding Screens */}
         <Stack.Screen name="OnboardingTerms" component={OnboardingTermsScreen} />
         <Stack.Screen name="OnboardingPersonalData" component={OnboardingPersonalDataScreen} />
-        <Stack.Screen name="OnboardingPepInfo" component={PepInfoScreen} />
+        {/* Removendo a tela PEP, pois agora é um modal */}
         <Stack.Screen name="OnboardingAddress" component={AddressScreen} />
         <Stack.Screen name="OnboardingPhone" component={PhoneScreen} />
         <Stack.Screen name="OnboardingEmail" component={EmailScreen} />
@@ -121,6 +132,11 @@ const AppNavigator = () => {
         <Stack.Screen name="PartnerData" component={PartnerDataScreen} />
         <Stack.Screen name="CompanyContact" component={CompanyContactScreen} />
         <Stack.Screen name="CompanyPassword" component={CompanyPasswordScreen} />
+
+        {/* Novas telas PIX */}
+        <Stack.Screen name="PixLimits" component={PixLimitsScreen} />
+        <Stack.Screen name="PixQrCode" component={PixQrCodeScanScreen} />
+        <Stack.Screen name="PixCopyPaste" component={PixCopyPasteScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

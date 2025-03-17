@@ -1,20 +1,69 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, Alert } from 'react-native';
 import { Text, Button, RadioButton } from 'react-native-paper';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 
-const PepInfoScreen = ({ navigation }) => {
+const PepInfoScreen = ({ navigation, route }) => {
+  console.log('[PepInfoScreen] Inicializando tela PEP');
   const { onboardingData, updateOnboardingData } = useOnboarding();
-  const [checked, setChecked] = React.useState(onboardingData.personalData.isPep ? 'yes' : 'no');
+  const [checked, setChecked] = useState('no'); // Default: não é PEP
+  const [clickCount, setClickCount] = useState(0);
+  const [isNavigating, setIsNavigating] = useState(false);
+  
+  useEffect(() => {
+    console.log('[PepInfoScreen] Estado inicial do onboardingData:', JSON.stringify(onboardingData));
+  }, []);
 
+  // Solução para o problema do primeiro clique
   const handleNext = () => {
-    updateOnboardingData({
-      personalData: {
-        ...onboardingData.personalData,
-        isPep: checked === 'yes'
-      }
-    });
-    navigation.navigate('OnboardingAddress');
+    // Evita múltiplos cliques
+    if (isNavigating) {
+      console.log('[PepInfoScreen] Navegação já em andamento, ignorando clique');
+      return;
+    }
+    
+    try {
+      setIsNavigating(true);
+      
+      // Incrementa o contador de cliques
+      const newClickCount = clickCount + 1;
+      setClickCount(newClickCount);
+      
+      console.log(`[PepInfoScreen] Botão CONTINUAR clicado (clique #${newClickCount})`);
+      console.log('[PepInfoScreen] Valor de PEP selecionado:', checked);
+      
+      // Atualiza o contexto primeiro
+      const isPep = checked === 'yes';
+      console.log('[PepInfoScreen] Atualizando contexto com isPoliticallyExposedPerson:', isPep);
+      
+      // Atualiza o estado local primeiro, depois navega
+      updateOnboardingData({
+        pepInfo: {
+          isPoliticallyExposedPerson: isPep
+        }
+      });
+      
+      // Pequeno delay para garantir que o estado foi atualizado
+      setTimeout(() => {
+        console.log('[PepInfoScreen] Navegando para OnboardingAddress com params:', { isPep });
+        
+        // Navega com os parâmetros
+        navigation.navigate('OnboardingAddress', {
+          isPep,
+          clickCount: newClickCount,
+          timestamp: new Date().getTime() // Adiciona timestamp para garantir que a navegação é única
+        });
+      }, 100);
+      
+    } catch (error) {
+      console.error('[PepInfoScreen] Erro ao processar:', error);
+      Alert.alert(
+        "Erro",
+        "Ocorreu um erro ao salvar os dados. Tente novamente.",
+        [{ text: "OK" }]
+      );
+      setIsNavigating(false);
+    }
   };
 
   return (
@@ -26,6 +75,7 @@ const PepInfoScreen = ({ navigation }) => {
             <TouchableOpacity
               style={styles.backButton}
               onPress={() => navigation.goBack()}
+              disabled={isNavigating}
             >
               <Text style={styles.backText}>‹</Text>
             </TouchableOpacity>
@@ -52,12 +102,14 @@ const PepInfoScreen = ({ navigation }) => {
               <TouchableOpacity 
                 style={styles.optionRow}
                 onPress={() => setChecked('no')}
+                disabled={isNavigating}
               >
                 <RadioButton
                   value="no"
                   status={checked === 'no' ? 'checked' : 'unchecked'}
                   onPress={() => setChecked('no')}
                   color="#E91E63"
+                  disabled={isNavigating}
                 />
                 <Text style={styles.optionText}>
                   Não sou e não tenho vínculo com pessoa exposta politicamente
@@ -67,12 +119,14 @@ const PepInfoScreen = ({ navigation }) => {
               <TouchableOpacity 
                 style={styles.optionRow}
                 onPress={() => setChecked('yes')}
+                disabled={isNavigating}
               >
                 <RadioButton
                   value="yes"
                   status={checked === 'yes' ? 'checked' : 'unchecked'}
                   onPress={() => setChecked('yes')}
                   color="#E91E63"
+                  disabled={isNavigating}
                 />
                 <Text style={styles.optionText}>
                   Sou pessoa politicamente exposta
@@ -89,6 +143,8 @@ const PepInfoScreen = ({ navigation }) => {
             onPress={handleNext}
             style={styles.continueButton}
             labelStyle={styles.continueButtonLabel}
+            disabled={isNavigating}
+            loading={isNavigating}
           >
             CONTINUAR
           </Button>
@@ -107,89 +163,79 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingTop: 8,
-    paddingBottom: 24,
-    backgroundColor: '#FFF',
+    padding: 16,
   },
   headerTop: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    marginBottom: 24,
-  },
-  headerContent: {
-    paddingHorizontal: 24,
+    alignItems: 'center',
+    marginBottom: 16,
   },
   backButton: {
-    width: 24,
-    height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 8,
   },
   backText: {
-    fontSize: 32,
+    fontSize: 24,
     color: '#E91E63',
-    marginTop: -4,
+  },
+  headerContent: {
+    marginTop: 8,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000',
+    fontSize: 24,
+    fontWeight: 'bold',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666666',
-    lineHeight: 24,
+    color: '#666',
   },
   content: {
     flex: 1,
+    padding: 16,
   },
   form: {
-    paddingHorizontal: 24,
+    marginBottom: 24,
   },
   infoBox: {
     backgroundColor: '#F5F5F5',
-    padding: 16,
     borderRadius: 8,
+    padding: 16,
     marginBottom: 24,
   },
   infoText: {
     fontSize: 14,
-    color: '#666666',
+    color: '#666',
     lineHeight: 20,
   },
   optionsContainer: {
-    marginTop: 8,
+    marginBottom: 24,
   },
   optionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-    paddingVertical: 4,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
   },
   optionText: {
     fontSize: 16,
-    color: '#000000',
     marginLeft: 8,
     flex: 1,
   },
   footer: {
     padding: 16,
-    paddingBottom: 24,
-    backgroundColor: '#FFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
   },
   continueButton: {
-    borderRadius: 4,
     backgroundColor: '#E91E63',
-    height: 48,
+    borderRadius: 8,
+    paddingVertical: 8,
   },
   continueButtonLabel: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#FFFFFF',
-    textTransform: 'uppercase',
+    fontWeight: 'bold',
   },
 });
 

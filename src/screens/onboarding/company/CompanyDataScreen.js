@@ -3,7 +3,6 @@ import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Text, TextInput, Menu, Button } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useOnboarding } from '../../../contexts/OnboardingContext';
-import TestDataButton from '../../../components/TestDataButton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const COMPANY_TYPES = [
@@ -50,9 +49,13 @@ const CompanyDataScreen = ({ navigation }) => {
     return type ? type.label : 'Selecione o tipo de empresa';
   };
 
+  const isFormValid = () => {
+    return formData.documentNumber && formData.businessName && formData.tradingName && formData.companyType;
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.headerTop}>
           <TouchableOpacity
@@ -61,92 +64,65 @@ const CompanyDataScreen = ({ navigation }) => {
           >
             <MaterialCommunityIcons name="chevron-left" size={32} color="#E91E63" style={{ marginTop: -4 }} />
           </TouchableOpacity>
-          <TestDataButton 
-            section="companyData" 
-            onFill={(data) => setFormData(data)}
-          />
         </View>
 
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>Dados da empresa</Text>
-          <Text style={styles.headerSubtitle}>
+          <Text style={styles.subtitle}>
             Preencha os dados da sua empresa para continuar
           </Text>
         </View>
 
         {/* Form */}
         <View style={styles.form}>
+          <Text style={styles.label}>CNPJ</Text>
           <TextInput
-            label="CNPJ"
             value={formData.documentNumber}
             onChangeText={handleDocumentChange}
-            mode="flat"
-            style={styles.input}
-            contentStyle={styles.inputContent}
-            theme={{
-              colors: {
-                primary: '#E91E63',
-                error: '#B00020',
-                onSurfaceVariant: '#666666',
-                onSurface: '#000000',
-              },
-            }}
+            style={[styles.input, formData.documentNumber && styles.filledInput]}
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            textColor={formData.documentNumber ? '#000' : '#999'}
+            theme={{ fonts: { regular: { fontWeight: formData.documentNumber ? '600' : '400' } } }}
             keyboardType="numeric"
           />
 
+          <Text style={styles.label}>Nome Fantasia</Text>
           <TextInput
-            label="Nome Fantasia"
             value={formData.tradingName}
             onChangeText={(text) => setFormData(prev => ({ ...prev, tradingName: text }))}
-            mode="flat"
-            style={styles.input}
-            contentStyle={styles.inputContent}
-            theme={{
-              colors: {
-                primary: '#E91E63',
-                error: '#B00020',
-                onSurfaceVariant: '#666666',
-                onSurface: '#000000',
-              },
-            }}
+            style={[styles.input, formData.tradingName && styles.filledInput]}
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            textColor={formData.tradingName ? '#000' : '#999'}
+            theme={{ fonts: { regular: { fontWeight: formData.tradingName ? '600' : '400' } } }}
           />
 
+          <Text style={styles.label}>Razão Social</Text>
           <TextInput
-            label="Razão Social"
             value={formData.businessName}
             onChangeText={(text) => setFormData(prev => ({ ...prev, businessName: text }))}
-            mode="flat"
-            style={styles.input}
-            contentStyle={styles.inputContent}
-            theme={{
-              colors: {
-                primary: '#E91E63',
-                error: '#B00020',
-                onSurfaceVariant: '#666666',
-                onSurface: '#000000',
-              },
-            }}
+            style={[styles.input, formData.businessName && styles.filledInput]}
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            textColor={formData.businessName ? '#000' : '#999'}
+            theme={{ fonts: { regular: { fontWeight: formData.businessName ? '600' : '400' } } }}
           />
 
+          <Text style={styles.label}>Tipo de Empresa</Text>
           <Menu
             visible={showTypeMenu}
             onDismiss={() => setShowTypeMenu(false)}
             anchor={
               <TouchableOpacity onPress={() => setShowTypeMenu(true)}>
                 <TextInput
-                  label="Tipo de Empresa"
                   value={getCompanyTypeLabel()}
                   mode="flat"
-                  style={styles.input}
-                  contentStyle={styles.inputContent}
-                  theme={{
-                    colors: {
-                      primary: '#E91E63',
-                      error: '#B00020',
-                      onSurfaceVariant: '#666666',
-                      onSurface: '#000000',
-                    },
-                  }}
+                  style={[styles.input, styles.filledInput]}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  textColor={formData.companyType ? '#000' : '#999'}
+                  theme={{ fonts: { regular: { fontWeight: formData.companyType ? '600' : '400' } } }}
                   editable={false}
                   right={
                     <TextInput.Icon 
@@ -177,9 +153,9 @@ const CompanyDataScreen = ({ navigation }) => {
         <Button
           mode="contained"
           onPress={handleNext}
-          style={styles.continueButton}
+          style={[styles.continueButton, !isFormValid() && styles.continueButtonDisabled]}
           labelStyle={styles.continueButtonLabel}
-          disabled={!formData.documentNumber || !formData.businessName || !formData.tradingName || !formData.companyType}
+          disabled={!isFormValid()}
         >
           CONTINUAR
         </Button>
@@ -193,9 +169,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF',
   },
-  container: {
+  content: {
     flex: 1,
-    backgroundColor: '#FFF',
+    paddingHorizontal: 24,
   },
   headerTop: {
     flexDirection: 'row',
@@ -205,52 +181,58 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   backButton: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 8,
   },
   headerContent: {
     paddingHorizontal: 24,
+    paddingTop: 16,
     paddingBottom: 24,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 24,
+    fontWeight: 'bold',
     color: '#000',
     marginBottom: 8,
   },
-  headerSubtitle: {
+  subtitle: {
     fontSize: 16,
-    lineHeight: 24,
-    color: '#666666',
+    color: '#666',
   },
   form: {
-    paddingHorizontal: 24,
+    gap: 16,
+    paddingVertical: 16,
+  },
+  label: {
+    fontSize: 13,
+    color: '#666666',
+    marginBottom: 8,
+    marginTop: 16,
   },
   input: {
-    marginBottom: 16,
-    backgroundColor: 'transparent',
-  },
-  inputContent: {
-    fontFamily: 'Roboto',
+    backgroundColor: '#FFF',
     fontSize: 16,
-    backgroundColor: 'transparent',
+    height: 48,
     paddingHorizontal: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  filledInput: {
+    backgroundColor: '#FFF',
   },
   footer: {
     padding: 24,
-    backgroundColor: '#FFF',
+    paddingBottom: 32,
   },
   continueButton: {
-    height: 48,
-    justifyContent: 'center',
     backgroundColor: '#E91E63',
-    borderRadius: 4,
+    paddingVertical: 8,
+  },
+  continueButtonDisabled: {
+    backgroundColor: '#ccc',
   },
   continueButtonLabel: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: 'bold',
     color: '#FFF',
   },
 });

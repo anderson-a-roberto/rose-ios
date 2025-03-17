@@ -55,6 +55,11 @@ export default function PayBillScreen({ route }) {
     }
   };
 
+  const handleBarCodeChange = (text) => {
+    setBarCode(text);
+    setError(null);
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -94,16 +99,22 @@ export default function PayBillScreen({ route }) {
         <View style={styles.content}>
           <View style={styles.inputContainer}>
             <TextInput
-              value={barCode}
-              onChangeText={(text) => {
-                setBarCode(text);
-                setError(null);
-              }}
               mode="flat"
-              style={styles.input}
-              placeholder="00000000 00000 00000 00000000 0 00000000000000"
-              placeholderTextColor="#666"
+              value={barCode}
+              onChangeText={handleBarCodeChange}
               keyboardType="numeric"
+              style={styles.input}
+              contentStyle={{ color: '#000000', fontSize: 16 }}
+              placeholder="Digite o código de barras"
+              placeholderTextColor="#666"
+              autoFocus={true}
+              theme={{
+                colors: {
+                  text: '#000000',
+                  placeholder: '#666666',
+                  primary: '#E91E63',
+                }
+              }}
               error={!!error}
               disabled={loading}
               underlineColor="transparent"

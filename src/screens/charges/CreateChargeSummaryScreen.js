@@ -29,13 +29,15 @@ const CreateChargeSummaryScreen = ({ navigation }) => {
     const [dia, mes, ano] = chargeData.dataVencimento.split('/');
     const dataVencimento = `${ano}-${mes}-${dia}T23:59:59Z`;
 
+    console.log('Dados da cobrança:', chargeData);
+
     return {
       externalId: `TEST${Date.now()}`,
       merchantCategoryCode: '0000',
       expirationAfterPayment: 30,
       duedate: dataVencimento,
       amount: parseFloat(chargeData.valor.replace(',', '.')),
-      key: userTaxId,
+      key: chargeData.key,  
       fines: {
         penalty: parseFloat(chargeData.multa) / 100,
         interest: parseFloat(chargeData.juros) / 100,

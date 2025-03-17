@@ -150,6 +150,13 @@ const TransferAccountScreen = ({ navigation, route }) => {
               activeUnderlineColor="transparent"
               selectionColor="#E91E63"
               error={!!error}
+              theme={{
+                colors: {
+                  text: '#000000',
+                  placeholder: '#666666',
+                  primary: '#E91E63',
+                }
+              }}
             />
           </View>
 
@@ -246,6 +253,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     paddingHorizontal: 0,
     height: 56,
+    color: '#000000'
   },
   errorText: {
     color: '#B00020',

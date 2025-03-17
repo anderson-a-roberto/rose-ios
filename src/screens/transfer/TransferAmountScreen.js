@@ -76,12 +76,20 @@ const TransferAmountScreen = ({ navigation, route }) => {
               onChangeText={handleAmountChange}
               keyboardType="numeric"
               style={styles.amountInput}
+              contentStyle={{ color: '#000000', fontSize: 32 }}
               placeholder="0,00"
               placeholderTextColor="#666"
               autoFocus={true}
               underlineColor="transparent"
               activeUnderlineColor="transparent"
               selectionColor="#E91E63"
+              theme={{
+                colors: {
+                  text: '#000000',
+                  placeholder: '#666666',
+                  primary: '#E91E63',
+                }
+              }}
             />
           </View>
         </View>

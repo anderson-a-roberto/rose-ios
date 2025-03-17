@@ -1,0 +1,53 @@
+{
+  "name": "banco-rose",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios"
+  },
+  "dependencies": {
+    "@react-native-community/datetimepicker": "8.2.0",
+    "@react-native-masked-view/masked-view": "^0.3.2",
+    "@react-navigation/native": "^7.0.13",
+    "@react-navigation/stack": "^7.0.18",
+    "@supabase/supabase-js": "^2.47.5",
+    "@tanstack/react-query": "^5.66.0",
+    "axios": "^1.7.9",
+    "date-fns": "^2.30.0",
+    "expo": "~52.0.35",
+    "expo-clipboard": "~7.0.1",
+    "expo-file-system": "~18.0.10",
+    "expo-media-library": "~17.0.5",
+    "expo-print": "~14.0.3",
+    "expo-sharing": "~13.0.1",
+    "expo-status-bar": "~2.0.0",
+    "qrcode": "^1.5.4",
+    "qrcode-generator": "^1.4.4",
+    "qrcode-terminal": "^0.12.0",
+    "qrcode.react": "^4.2.0",
+    "react": "18.2.0",
+    "react-native": "0.76.5",
+    "react-native-gesture-handler": "^2.21.2",
+    "react-native-get-random-values": "^1.11.0",
+    "react-native-html-to-pdf": "^0.12.0",
+    "react-native-mask-input": "^1.2.3",
+    "react-native-modal-datetime-picker": "^18.0.0",
+    "react-native-paper": "^5.12.5",
+    "react-native-qrcode-svg": "^6.3.14",
+    "react-native-safe-area-context": "^5.0.0",
+    "react-native-screens": "^4.3.0",
+    "react-native-svg": "^15.11.1",
+    "react-native-view-shot": "^4.0.3",
+    "react-native-webview": "^13.12.5",
+    "uuid": "^11.0.3",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0",
+    "@types/react": "~18.3.12",
+    "typescript": "^5.7.3"
+  },
+  "private": true
+}

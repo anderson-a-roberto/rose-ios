@@ -1,17 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Platform } from 'react-native';
 import { Text, TextInput, Button, Switch } from 'react-native-paper';
 import { useOnboarding } from '../../contexts/OnboardingContext';
-import TestDataButton from '../../components/TestDataButton';
 
 const formatCEP = (text) => {
   const numbers = text.replace(/\D/g, '');
   return numbers.replace(/(\d{5})(\d{3})/, '$1-$2');
 };
 
-const AddressScreen = ({ navigation }) => {
+const AddressScreen = ({ navigation, route }) => {
+  console.log('[AddressScreen] Inicializando tela de Endereço');
+  console.log('[AddressScreen] Parâmetros recebidos:', route.params);
+  
   const { onboardingData, updateOnboardingData } = useOnboarding();
+  console.log('[AddressScreen] Estado inicial do onboardingData:', JSON.stringify(onboardingData));
+  
   const { addressData } = onboardingData;
+
+  // Verifica se recebeu parâmetros da tela anterior
+  React.useEffect(() => {
+    console.log('[AddressScreen] useEffect executado');
+    // Se recebeu o parâmetro isPep da tela anterior, atualiza o contexto
+    if (route.params?.isPep !== undefined) {
+      console.log('[AddressScreen] Recebeu isPep via params:', route.params.isPep);
+      
+      // Não precisamos mais atualizar o contexto aqui, pois isso já foi feito na tela PersonalDataScreen
+      console.log('[AddressScreen] Contexto já atualizado na tela anterior');
+    } else {
+      console.log('[AddressScreen] Não recebeu parâmetro isPep');
+    }
+  }, []);
 
   const [formData, setFormData] = useState({
     postalCode: addressData.postalCode || '',
@@ -29,12 +47,37 @@ const AddressScreen = ({ navigation }) => {
     
     if (field === 'postalCode') {
       formattedValue = formatCEP(value);
+      if (value.replace(/\D/g, '').length === 8) {
+        fetchAddress(value);
+      }
     }
     
     setFormData(prev => ({
       ...prev,
       [field]: formattedValue
     }));
+  };
+
+  const fetchAddress = async (cep) => {
+    try {
+      const cleanCep = cep.replace(/\D/g, '');
+      if (cleanCep.length === 8) {
+        const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+        const data = await response.json();
+        
+        if (!data.erro) {
+          setFormData(prev => ({
+            ...prev,
+            street: data.logradouro || prev.street,
+            neighborhood: data.bairro || prev.neighborhood,
+            city: data.localidade || prev.city,
+            state: data.uf || prev.state
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao buscar CEP:', error);
+    }
   };
 
   const handleNoNumber = () => {
@@ -83,11 +126,6 @@ const AddressScreen = ({ navigation }) => {
             >
               <Text style={styles.backText}>‹</Text>
             </TouchableOpacity>
-            <TestDataButton 
-              section="addressData" 
-              onFill={(data) => setFormData({ ...data, noNumber: false })}
-              style={styles.testButton}
-            />
           </View>
           <View style={styles.headerContent}>
             <Text style={styles.headerTitle}>Meu Endereço</Text>
@@ -123,24 +161,22 @@ const AddressScreen = ({ navigation }) => {
             <TextInput
               value={formData.city}
               onChangeText={(value) => handleChange('city', value)}
-              style={[styles.input, styles.disabledInput]}
-              disabled
+              style={[styles.input, styles.disabledInput, formData.city && styles.filledInput]}
               underlineColor="transparent"
               activeUnderlineColor="transparent"
-              textColor="#999"
-              theme={{ fonts: { regular: { fontWeight: '600' } } }}
+              textColor={formData.city ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: formData.city ? '600' : '400' } } }}
             />
 
             <Text style={styles.label}>Estado</Text>
             <TextInput
               value={formData.state}
               onChangeText={(value) => handleChange('state', value)}
-              style={[styles.input, styles.disabledInput]}
-              disabled
+              style={[styles.input, styles.disabledInput, formData.state && styles.filledInput]}
               underlineColor="transparent"
               activeUnderlineColor="transparent"
-              textColor="#999"
-              theme={{ fonts: { regular: { fontWeight: '600' } } }}
+              textColor={formData.state ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: formData.state ? '600' : '400' } } }}
             />
 
             <Text style={styles.label}>Endereço</Text>
@@ -297,7 +333,8 @@ const styles = StyleSheet.create({
   },
   disabledInput: {
     backgroundColor: '#FFF',
-    borderBottomWidth: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
     opacity: 1,
   },
   switchContainer: {

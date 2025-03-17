@@ -57,7 +57,7 @@ export default function PayBillReceiptScreen({ route }) {
   };
 
   const handleNewPayment = () => {
-    navigation.navigate('PayBill', { balance: paymentData.balance });
+    navigation.navigate('PayBill');
   };
 
   return (
@@ -75,10 +75,20 @@ export default function PayBillReceiptScreen({ route }) {
 
       <View ref={receiptRef} collapsable={false} style={styles.container}>
         <ReceiptBase
-          transactionId={paymentData.transactionId || '0000000000'}
+          transactionId={paymentData.transactionId}
           timestamp={new Date()}
           operationType="Pagamento de Boleto"
         >
+          {/* Status */}
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Status:</Text>
+            <Text style={[styles.value, { color: '#4CAF50' }]}>
+              {paymentData.status === 'PROCESSING' ? 'Em Processamento' : 'Concluído'}
+            </Text>
+          </View>
+
+          <Divider style={styles.divider} />
+
           {/* Valor */}
           <View style={styles.infoRow}>
             <Text style={styles.label}>Valor:</Text>
@@ -100,6 +110,14 @@ export default function PayBillReceiptScreen({ route }) {
             <Text style={styles.label}>Código de Barras:</Text>
             <Text style={styles.value}>{paymentData.barCode.digitable}</Text>
           </View>
+
+          <Divider style={styles.divider} />
+
+          {/* ID da Transação */}
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>ID da Transação:</Text>
+            <Text style={styles.value}>{paymentData.clientRequestId}</Text>
+          </View>
         </ReceiptBase>
       </View>
 
@@ -109,12 +127,12 @@ export default function PayBillReceiptScreen({ route }) {
           onPress={handleShare}
           style={styles.shareButton}
           contentStyle={styles.buttonContent}
-          labelStyle={styles.buttonLabel}
+          labelStyle={[styles.buttonLabel, { color: '#FFFFFF' }]}
           loading={loading}
           disabled={loading}
           icon="share-variant"
         >
-          COMPARTILHAR COMPROVANTE
+          {loading ? 'PROCESSANDO...' : 'COMPARTILHAR COMPROVANTE'}
         </Button>
 
         <Button
@@ -159,20 +177,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 4,
   },
   label: {
     fontSize: 14,
-    color: '#666',
+    color: '#666666',
   },
   value: {
     fontSize: 14,
-    color: '#000',
+    color: '#000000',
+    fontWeight: '500',
     flex: 1,
     textAlign: 'right',
+    marginLeft: 16,
   },
   divider: {
     backgroundColor: '#E0E0E0',
+    marginVertical: 12,
   },
   buttonContainer: {
     padding: 20,
@@ -190,7 +211,7 @@ const styles = StyleSheet.create({
   },
   buttonLabel: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '500',
     letterSpacing: 0.5,
-  },
+  }
 });

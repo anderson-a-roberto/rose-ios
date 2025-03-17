@@ -119,6 +119,15 @@ export default function ProfileSettingsForm({ onBack }) {
             value={form.fullName}
             onChangeText={(text) => setForm(prev => ({ ...prev, fullName: text }))}
             style={[styles.input, form.fullName && styles.filledInput]}
+            contentStyle={{ color: '#000000', fontSize: 16 }}
+            theme={{
+              colors: {
+                text: '#000000',
+                disabled: '#000000',
+                placeholder: '#666666',
+                primary: '#E91E63',
+              }
+            }}
             disabled
           />
 
@@ -127,6 +136,15 @@ export default function ProfileSettingsForm({ onBack }) {
             value={form.socialName}
             onChangeText={(text) => setForm(prev => ({ ...prev, socialName: text }))}
             style={[styles.input, form.socialName && styles.filledInput]}
+            contentStyle={{ color: '#000000', fontSize: 16 }}
+            theme={{
+              colors: {
+                text: '#000000',
+                disabled: '#000000',
+                placeholder: '#666666',
+                primary: '#E91E63',
+              }
+            }}
             disabled
           />
 
@@ -135,6 +153,15 @@ export default function ProfileSettingsForm({ onBack }) {
             value={form.email}
             onChangeText={(text) => setForm(prev => ({ ...prev, email: text }))}
             style={[styles.input, form.email && styles.filledInput]}
+            contentStyle={{ color: '#000000', fontSize: 16 }}
+            theme={{
+              colors: {
+                text: '#000000',
+                disabled: '#000000',
+                placeholder: '#666666',
+                primary: '#E91E63',
+              }
+            }}
             disabled
           />
 
@@ -143,6 +170,15 @@ export default function ProfileSettingsForm({ onBack }) {
             value={form.phoneNumber}
             onChangeText={(text) => setForm(prev => ({ ...prev, phoneNumber: text }))}
             style={[styles.input, form.phoneNumber && styles.filledInput]}
+            contentStyle={{ color: '#000000', fontSize: 16 }}
+            theme={{
+              colors: {
+                text: '#000000',
+                disabled: '#000000',
+                placeholder: '#666666',
+                primary: '#E91E63',
+              }
+            }}
             disabled
           />
 
@@ -151,6 +187,15 @@ export default function ProfileSettingsForm({ onBack }) {
             value={form.birthDate}
             onChangeText={(text) => setForm(prev => ({ ...prev, birthDate: text }))}
             style={[styles.input, form.birthDate && styles.filledInput]}
+            contentStyle={{ color: '#000000', fontSize: 16 }}
+            theme={{
+              colors: {
+                text: '#000000',
+                disabled: '#000000',
+                placeholder: '#666666',
+                primary: '#E91E63',
+              }
+            }}
             disabled
           />
 
@@ -159,6 +204,15 @@ export default function ProfileSettingsForm({ onBack }) {
             value={form.motherName}
             onChangeText={(text) => setForm(prev => ({ ...prev, motherName: text }))}
             style={[styles.input, form.motherName && styles.filledInput]}
+            contentStyle={{ color: '#000000', fontSize: 16 }}
+            theme={{
+              colors: {
+                text: '#000000',
+                disabled: '#000000',
+                placeholder: '#666666',
+                primary: '#E91E63',
+              }
+            }}
             disabled
           />
 
@@ -167,6 +221,15 @@ export default function ProfileSettingsForm({ onBack }) {
             value={form.documentNumber}
             onChangeText={(text) => setForm(prev => ({ ...prev, documentNumber: text }))}
             style={[styles.input, form.documentNumber && styles.filledInput]}
+            contentStyle={{ color: '#000000', fontSize: 16 }}
+            theme={{
+              colors: {
+                text: '#000000',
+                disabled: '#000000',
+                placeholder: '#666666',
+                primary: '#E91E63',
+              }
+            }}
             disabled
           />
 
@@ -178,6 +241,15 @@ export default function ProfileSettingsForm({ onBack }) {
             value={form.addressPostalCode}
             onChangeText={(text) => setForm(prev => ({ ...prev, addressPostalCode: text }))}
             style={[styles.input, form.addressPostalCode && styles.filledInput]}
+            contentStyle={{ color: '#000000', fontSize: 16 }}
+            theme={{
+              colors: {
+                text: '#000000',
+                disabled: '#000000',
+                placeholder: '#666666',
+                primary: '#E91E63',
+              }
+            }}
             disabled
           />
 
@@ -186,6 +258,15 @@ export default function ProfileSettingsForm({ onBack }) {
             value={form.addressStreet}
             onChangeText={(text) => setForm(prev => ({ ...prev, addressStreet: text }))}
             style={[styles.input, form.addressStreet && styles.filledInput]}
+            contentStyle={{ color: '#000000', fontSize: 16 }}
+            theme={{
+              colors: {
+                text: '#000000',
+                disabled: '#000000',
+                placeholder: '#666666',
+                primary: '#E91E63',
+              }
+            }}
             disabled
           />
 
@@ -194,6 +275,15 @@ export default function ProfileSettingsForm({ onBack }) {
             value={form.addressNumber}
             onChangeText={(text) => setForm(prev => ({ ...prev, addressNumber: text }))}
             style={[styles.input, form.addressNumber && styles.filledInput]}
+            contentStyle={{ color: '#000000', fontSize: 16 }}
+            theme={{
+              colors: {
+                text: '#000000',
+                disabled: '#000000',
+                placeholder: '#666666',
+                primary: '#E91E63',
+              }
+            }}
             disabled
           />
 
@@ -202,6 +292,15 @@ export default function ProfileSettingsForm({ onBack }) {
             value={form.addressComplement}
             onChangeText={(text) => setForm(prev => ({ ...prev, addressComplement: text }))}
             style={[styles.input, form.addressComplement && styles.filledInput]}
+            contentStyle={{ color: '#000000', fontSize: 16 }}
+            theme={{
+              colors: {
+                text: '#000000',
+                disabled: '#000000',
+                placeholder: '#666666',
+                primary: '#E91E63',
+              }
+            }}
             disabled
           />
 
@@ -210,6 +309,15 @@ export default function ProfileSettingsForm({ onBack }) {
             value={form.addressNeighborhood}
             onChangeText={(text) => setForm(prev => ({ ...prev, addressNeighborhood: text }))}
             style={[styles.input, form.addressNeighborhood && styles.filledInput]}
+            contentStyle={{ color: '#000000', fontSize: 16 }}
+            theme={{
+              colors: {
+                text: '#000000',
+                disabled: '#000000',
+                placeholder: '#666666',
+                primary: '#E91E63',
+              }
+            }}
             disabled
           />
 
@@ -218,6 +326,15 @@ export default function ProfileSettingsForm({ onBack }) {
             value={form.addressCity}
             onChangeText={(text) => setForm(prev => ({ ...prev, addressCity: text }))}
             style={[styles.input, form.addressCity && styles.filledInput]}
+            contentStyle={{ color: '#000000', fontSize: 16 }}
+            theme={{
+              colors: {
+                text: '#000000',
+                disabled: '#000000',
+                placeholder: '#666666',
+                primary: '#E91E63',
+              }
+            }}
             disabled
           />
 
@@ -226,6 +343,15 @@ export default function ProfileSettingsForm({ onBack }) {
             value={form.addressState}
             onChangeText={(text) => setForm(prev => ({ ...prev, addressState: text }))}
             style={[styles.input, form.addressState && styles.filledInput]}
+            contentStyle={{ color: '#000000', fontSize: 16 }}
+            theme={{
+              colors: {
+                text: '#000000',
+                disabled: '#000000',
+                placeholder: '#666666',
+                primary: '#E91E63',
+              }
+            }}
             disabled
           />
         </View>

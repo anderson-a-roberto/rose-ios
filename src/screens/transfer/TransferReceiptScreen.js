@@ -6,6 +6,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { captureRef } from 'react-native-view-shot';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import ReceiptBase from '../../components/receipt/ReceiptBase';
 
 const TransferReceiptScreen = ({ navigation, route }) => {
   const { transferData } = route.params;
@@ -70,79 +71,56 @@ const TransferReceiptScreen = ({ navigation, route }) => {
         </TouchableOpacity>
       </View>
 
-      <View ref={receiptRef} collapsable={false} style={styles.content}>
-        <Text style={styles.title}>Comprovante</Text>
-        <Text style={styles.transactionId}>ID: {transferData.transactionId || '0000000000'}</Text>
-        
-        <Divider style={styles.divider} />
+      <View ref={receiptRef} collapsable={false} style={styles.container}>
+        <ReceiptBase
+          transactionId={transferData.transactionId || '0000000000'}
+          timestamp={new Date()}
+          operationType="Transferência"
+        >
+          {/* Valor */}
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Valor:</Text>
+            <Text style={[styles.value, { color: '#E91E63' }]}>
+              -R$ {transferData.valor.toFixed(2).replace('.', ',')}
+            </Text>
+          </View>
 
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Data e Hora:</Text>
-          <Text style={styles.value}>
-            {new Date().toLocaleString('pt-BR')}
-          </Text>
-        </View>
+          <Divider style={styles.divider} />
 
-        <Divider style={styles.divider} />
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Status:</Text>
+            <Text style={styles.value}>
+              {transferData.status === 'PROCESSING' ? 'Em processamento' : 'Concluída'}
+            </Text>
+          </View>
 
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Tipo de Operação:</Text>
-          <Text style={styles.value}>Transferência</Text>
-        </View>
+          <Divider style={styles.divider} />
 
-        <Divider style={styles.divider} />
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Valor:</Text>
-          <Text style={[styles.value, styles.valueAmount, { color: '#E91E63' }]}>
-            -R$ {transferData.valor.toFixed(2).replace('.', ',')}
-          </Text>
-        </View>
-
-        <Divider style={styles.divider} />
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Status:</Text>
-          <Text style={styles.value}>
-            {transferData.status === 'PROCESSING' ? 'Em processamento' : 'Concluída'}
-          </Text>
-        </View>
-
-        <Divider style={styles.divider} />
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Beneficiário:</Text>
-          <Text style={styles.value}>{transferData.destinatario.nome}</Text>
-        </View>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>CPF/CNPJ:</Text>
-          <Text style={styles.value}>{transferData.destinatario.documento}</Text>
-        </View>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Banco:</Text>
-          <Text style={styles.value}>{transferData.destinatario.banco}</Text>
-        </View>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Agência:</Text>
-          <Text style={styles.value}>{transferData.destinatario.agencia}</Text>
-        </View>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Conta:</Text>
-          <Text style={styles.value}>{transferData.destinatario.conta}</Text>
-        </View>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Este documento é uma representação digital de uma transação realizada em nossa plataforma.
-          </Text>
-          <Text style={styles.footerText}>
-            Validação Digital: {transferData.transactionId || '0000000000'}
-          </Text>
-        </View>
+          {/* Beneficiário */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Beneficiário</Text>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Nome:</Text>
+              <Text style={styles.value}>{transferData.destinatario.nome}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>CPF/CNPJ:</Text>
+              <Text style={styles.value}>{transferData.destinatario.documento}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Banco:</Text>
+              <Text style={styles.value}>{transferData.destinatario.banco}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Agência:</Text>
+              <Text style={styles.value}>{transferData.destinatario.agencia}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Conta:</Text>
+              <Text style={styles.value}>{transferData.destinatario.conta}</Text>
+            </View>
+          </View>
+        </ReceiptBase>
       </View>
 
       <View style={styles.buttonContainer}>
@@ -192,28 +170,15 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: '300',
   },
-  content: {
+  container: {
     flex: 1,
-    paddingHorizontal: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  transactionId: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 24,
+    backgroundColor: '#FFF'
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 4,
   },
   label: {
     fontSize: 14,
@@ -222,33 +187,34 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 14,
     color: '#000',
+    fontWeight: '500',
     flex: 1,
     textAlign: 'right',
+    marginLeft: 16,
   },
-  valueAmount: {
+  section: {
+    marginVertical: 8,
+  },
+  sectionTitle: {
     fontSize: 16,
-    fontWeight: '500',
+    color: '#000',
+    fontWeight: 'bold',
+    marginBottom: 8,
   },
   divider: {
     backgroundColor: '#E0E0E0',
-  },
-  footer: {
-    marginTop: 32,
-    paddingTop: 16,
-  },
-  footerText: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 8,
+    height: 1,
+    marginVertical: 16,
   },
   buttonContainer: {
-    padding: 20,
-    paddingBottom: 32,
+    padding: 16,
+    backgroundColor: '#FFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
   },
   shareButton: {
     backgroundColor: '#E91E63',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   newTransferButton: {
     borderColor: '#E91E63',
@@ -257,10 +223,10 @@ const styles = StyleSheet.create({
     height: 48,
   },
   buttonLabel: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
-    letterSpacing: 0.5,
-  },
+    color: '#FFF',
+  }
 });
 
 export default TransferReceiptScreen;
