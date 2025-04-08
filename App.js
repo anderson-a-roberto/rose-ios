@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import StatusBarCustom from './src/components/common/StatusBarCustom';
 import LoginScreen from './src/screens/LoginScreen';
 import Dashboard2Screen from './src/screens/Dashboard2Screen';
 import StatementScreen from './src/screens/StatementScreen';
@@ -133,6 +134,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
+        <StatusBarCustom />
         <NavigationContainer>
           <PaperProvider>
             <ChargeProvider>
