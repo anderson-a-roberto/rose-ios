@@ -40,6 +40,13 @@ export default function useCharges(userTaxId, page = 1, limit = 10) {
   };
 
   useEffect(() => {
+    // Se userTaxId for null, não faz nada
+    if (!userTaxId) {
+      setCharges([]);
+      setLoading(false);
+      return;
+    }
+    
     fetchCharges();
   }, [userTaxId, page, limit]);
 

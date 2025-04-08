@@ -6,28 +6,15 @@ import { supabase } from '../config/supabase';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const KEY_TYPES = {
-  EVP: "Chave Aleatória",
-  CPF: "CPF",
-  EMAIL: "Email",
-  PHONE: "Telefone",
-  CNPJ: "CNPJ"
+  EVP: "Chave Aleatória"
 };
 
 const getIconForKeyType = (key) => {
-  switch (key) {
-    case 'EVP':
-      return 'key-variant';
-    case 'PHONE':
-      return 'phone';
-    case 'EMAIL':
-      return 'email';
-    default:
-      return 'key-variant';
-  }
+  return 'key-variant';
 };
 
 const RegisterPixKeyScreen = ({ navigation }) => {
-  const [selectedType, setSelectedType] = useState('');
+  const [selectedType, setSelectedType] = useState('EVP');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -35,11 +22,6 @@ const RegisterPixKeyScreen = ({ navigation }) => {
 
   const handleCreateKey = async () => {
     try {
-      if (!selectedType) {
-        setError('Selecione um tipo de chave');
-        return;
-      }
-
       setLoading(true);
       setError(null);
 
@@ -73,8 +55,8 @@ const RegisterPixKeyScreen = ({ navigation }) => {
         {
           body: {
             account: kycData.account,
-            keyType: selectedType,
-            key: selectedType === 'EVP' ? undefined : profileData.document_number
+            keyType: 'EVP',
+            key: undefined
           }
         }
       );
@@ -83,12 +65,12 @@ const RegisterPixKeyScreen = ({ navigation }) => {
 
       if (registerData.status === 'CONFIRMED') {
         setSuccessData({
-          keyType: KEY_TYPES[selectedType],
+          keyType: KEY_TYPES['EVP'],
           key: registerData.body.key
         });
         setShowSuccessModal(true);
         // Atualizar lista na tela anterior usando navegação direta
-        navigation.navigate('PixKeysScreen', { updatePixKeys: true });
+        navigation.navigate('PixKeys', { updatePixKeys: true });
       } else {
         throw new Error('Erro ao registrar chave PIX');
       }
@@ -107,7 +89,7 @@ const RegisterPixKeyScreen = ({ navigation }) => {
         visible={showSuccessModal}
         onDismiss={() => {
           setShowSuccessModal(false);
-          navigation.navigate('PixKeysScreen', { updatePixKeys: true });
+          navigation.navigate('PixKeys', { updatePixKeys: true });
         }}
         contentContainerStyle={styles.modalContainer}
       >
@@ -126,7 +108,7 @@ const RegisterPixKeyScreen = ({ navigation }) => {
             mode="contained"
             onPress={() => {
               setShowSuccessModal(false);
-              navigation.navigate('PixKeysScreen', { updatePixKeys: true });
+              navigation.navigate('PixKeys', { updatePixKeys: true });
             }}
             style={styles.modalButton}
             contentStyle={styles.buttonContent}
@@ -162,42 +144,35 @@ const RegisterPixKeyScreen = ({ navigation }) => {
         </View>
 
         <ScrollView style={styles.content}>
-          <Text style={styles.sectionTitle}>Selecione a chave desejada</Text>
-          
           {/* Key Type Options */}
           <View style={styles.optionsContainer}>
-            {Object.entries(KEY_TYPES).map(([key, label]) => (
-              <TouchableOpacity
-                key={key}
-                style={[
-                  styles.optionCard,
-                  selectedType === key && styles.optionCardSelected
-                ]}
-                onPress={() => setSelectedType(key)}
-              >
-                <View style={styles.optionContent}>
-                  <MaterialCommunityIcons
-                    name={getIconForKeyType(key)}
-                    size={24}
-                    color="#E91E63"
-                  />
-                  <View style={styles.optionTextContainer}>
-                    <Text style={styles.optionTitle}>{label}</Text>
-                    {key === 'EVP' && (
-                      <Text style={styles.optionSubtitle}>
-                        Chave aleatória gerada automaticamente
-                      </Text>
-                    )}
-                  </View>
-                </View>
-                <RadioButton
-                  value={key}
-                  status={selectedType === key ? 'checked' : 'unchecked'}
-                  onPress={() => setSelectedType(key)}
+            <TouchableOpacity
+              key="EVP"
+              style={[
+                styles.optionCard,
+                styles.optionCardSelected
+              ]}
+              onPress={() => setSelectedType('EVP')}
+            >
+              <View style={styles.optionContent}>
+                <MaterialCommunityIcons
+                  name="key-variant"
+                  size={24}
                   color="#E91E63"
                 />
-              </TouchableOpacity>
-            ))}
+                <View style={styles.optionTextContainer}>
+                  <Text style={styles.optionTitle}>Chave Aleatória</Text>
+                  <Text style={styles.optionSubtitle}>
+                    Chave aleatória gerada automaticamente
+                  </Text>
+                </View>
+              </View>
+              <RadioButton
+                value="EVP"
+                status="checked"
+                color="#E91E63"
+              />
+            </TouchableOpacity>
           </View>
         </ScrollView>
 

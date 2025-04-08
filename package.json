@@ -28,6 +28,7 @@
     "expo-sharing": "~11.10.0",
     "expo-status-bar": "~1.11.1",
     "expo-updates": "~0.24.13",
+    "express": "^4.21.2",
     "qrcode": "^1.5.4",
     "qrcode-generator": "^1.4.4",
     "qrcode-terminal": "^0.12.0",

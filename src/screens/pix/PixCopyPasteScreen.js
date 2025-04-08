@@ -324,7 +324,7 @@ const PixCopyPasteScreen = ({ navigation, route }) => {
           </View>
         </View>
 
-        <ScrollView style={styles.scrollView}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
             {/* Indicador de carregamento dos dados do usuário */}
             {isLoadingUserData && (
@@ -334,66 +334,69 @@ const PixCopyPasteScreen = ({ navigation, route }) => {
               </View>
             )}
 
-            {/* Input do código PIX */}
+            {/* Conteúdo principal */}
             {!isLoadingUserData && (
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Código PIX</Text>
-                <View style={styles.inputRow}>
-                  <TextInput
-                    mode="outlined"
-                    value={pixCode}
-                    onChangeText={setPixCode}
-                    placeholder="Cole o código PIX aqui"
-                    multiline
-                    numberOfLines={4}
-                    style={styles.input}
-                    outlineColor="#ddd"
-                    activeOutlineColor="#E91E63"
-                    theme={{
-                      colors: {
-                        text: '#000000',
-                        placeholder: '#666666',
-                        primary: '#E91E63',
-                      }
-                    }}
-                  />
+              <>
+                <View style={styles.iconContainer}>
+                  <MaterialCommunityIcons name="qrcode" size={64} color="#E91E63" />
                 </View>
-                <View style={styles.buttonRow}>
-                  <Button
-                    mode="outlined"
-                    onPress={handlePasteFromClipboard}
-                    style={styles.pasteButton}
-                    icon="content-paste"
-                    textColor="#E91E63"
-                    buttonColor="#FFF"
-                  >
-                    Colar
-                  </Button>
-                  <Button
-                    mode="contained"
-                    onPress={() => {
-                      console.log('Botão Continuar clicado');
-                      handleProcessPix();
-                    }}
-                    style={styles.processButton}
-                    loading={isProcessing}
-                    disabled={isProcessing || !pixCode.trim()}
-                    buttonColor="#E91E63"
-                    textColor="#FFF"
-                  >
-                    Continuar
-                  </Button>
+                
+                <Text style={styles.description}>
+                  Cole um código PIX para realizar um pagamento de forma rápida e segura.
+                </Text>
+                
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Código PIX</Text>
+                  <View style={styles.inputRow}>
+                    <TextInput
+                      mode="flat"
+                      value={pixCode}
+                      onChangeText={setPixCode}
+                      placeholder="Cole o código PIX aqui"
+                      multiline
+                      numberOfLines={3}
+                      style={styles.input}
+                      underlineColor="#E0E0E0"
+                      activeUnderlineColor="#E91E63"
+                      theme={{
+                        colors: {
+                          text: '#333333',
+                          placeholder: '#999999',
+                          background: '#F8F8F8',
+                          primary: '#E91E63',
+                        }
+                      }}
+                    />
+                  </View>
+                  <View style={styles.buttonRow}>
+                    <Button
+                      mode="outlined"
+                      onPress={handlePasteFromClipboard}
+                      style={styles.pasteButton}
+                      icon="content-paste"
+                      textColor="#E91E63"
+                      buttonColor="#FFF"
+                    >
+                      Colar
+                    </Button>
+                    <Button
+                      mode="contained"
+                      onPress={() => {
+                        console.log('Botão Continuar clicado');
+                        handleProcessPix();
+                      }}
+                      style={styles.processButton}
+                      loading={isProcessing}
+                      disabled={isProcessing || !pixCode.trim()}
+                      buttonColor="#E91E63"
+                      textColor="#FFF"
+                    >
+                      Continuar
+                    </Button>
+                  </View>
                 </View>
-              </View>
+              </>
             )}
-            
-            <View style={styles.iconContainer}>
-              <MaterialCommunityIcons name="qrcode" size={64} color="#E91E63" />
-            </View>
-            
-            <Text style={styles.description}>
-              Cole um código PIX para realizar um pagamento de forma rápida e segura.
-            </Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -434,12 +437,12 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#FFF',
     paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingBottom: 16,
   },
   headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
     paddingTop: 12,
   },
   backButton: {
@@ -465,9 +468,74 @@ const styles = StyleSheet.create({
     color: '#666',
     opacity: 0.8,
   },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingVertical: 16,
+  },
   content: {
     flex: 1,
     paddingHorizontal: 24,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#666',
+  },
+  inputContainer: {
+    marginBottom: 24,
+  },
+  label: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  inputRow: {
+    marginBottom: 16,
+  },
+  input: {
+    backgroundColor: '#F8F8F8',
+    fontSize: 16,
+    minHeight: 100,
+    textAlignVertical: 'top',
+    paddingHorizontal: 0,
+    borderRadius: 4,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+  },
+  pasteButton: {
+    flex: 1,
+    marginRight: 12,
+    borderColor: '#E91E63',
+    borderWidth: 1,
+    borderRadius: 4,
+  },
+  processButton: {
+    flex: 2,
+    borderRadius: 4,
+  },
+  iconContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  description: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 24,
+    paddingHorizontal: 8,
   },
 });
 

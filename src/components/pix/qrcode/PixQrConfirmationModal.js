@@ -308,17 +308,18 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     flex: 1,
-    marginRight: 8,
-    borderColor: '#ddd',
+    marginRight: 12,
+    borderColor: '#E91E63',
+    borderWidth: 1,
+    borderRadius: 4,
   },
   cancelButtonLabel: {
-    color: '#666',
+    color: '#E91E63',
   },
   confirmButton: {
     flex: 1,
-    marginLeft: 8,
     backgroundColor: '#E91E63',
-    borderRadius: 8,
+    borderRadius: 4,
   },
   confirmButtonLabel: {
     color: '#FFF',

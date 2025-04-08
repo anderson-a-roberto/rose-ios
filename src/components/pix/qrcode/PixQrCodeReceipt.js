@@ -76,9 +76,13 @@ const PixQrCodeReceipt = ({ paymentResult, emvData, dictData }) => {
         <View style={styles.row}>
           <Text style={styles.label}>Status:</Text>
           <Text style={[styles.value, styles.status]}>
-            {status === 'COMPLETED' ? 'Concluído' : 
-             status === 'PROCESSING' ? 'Em processamento' : 
-             status === 'FAILED' ? 'Falhou' : status}
+            {status === 'COMPLETED' ? 'CONCLUÍDO' : 
+             status === 'PROCESSING' ? 'EM PROCESSAMENTO' : 
+             status === 'FAILED' ? 'FALHOU' : 
+             status === 'CONFIRMED' ? 'CONFIRMADO' : 
+             status === 'PENDING' ? 'PENDENTE' : 
+             status === 'CANCELLED' ? 'CANCELADO' : 
+             status}
           </Text>
         </View>
       </View>

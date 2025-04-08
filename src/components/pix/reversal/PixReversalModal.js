@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { Modal, Portal, Text, TextInput, Button } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { supabase } from '../../../config/supabase';
 
 const PixReversalModal = ({ visible, onDismiss, endToEndId, amount }) => {
@@ -83,66 +84,71 @@ const PixReversalModal = ({ visible, onDismiss, endToEndId, amount }) => {
         onDismiss={onDismiss}
         contentContainerStyle={styles.modalContainer}
       >
-        <Text style={styles.title}>Devolução de PIX</Text>
-        
-        <View style={styles.form}>
-          {/* Valor */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Valor da Devolução</Text>
-            <View style={styles.valueContainer}>
-              <Text style={styles.currency}>R$</Text>
+        <View style={styles.content}>
+          <Text style={styles.title}>Devolução de PIX</Text>
+          
+          <View style={styles.form}>
+            {/* Valor */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Valor da Devolução</Text>
+              <View style={styles.valueContainer}>
+                <Text style={styles.currency}>R$</Text>
+                <TextInput
+                  mode="flat"
+                  value={value}
+                  onChangeText={handleValueChange}
+                  keyboardType="numeric"
+                  style={styles.valueInput}
+                  maxLength={13}
+                  disabled={loading}
+                />
+              </View>
+              <Text style={styles.helper}>
+                Valor máximo: R$ {amount.toFixed(2).replace('.', ',')}
+              </Text>
+            </View>
+
+            {/* Motivo */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Motivo (opcional)</Text>
               <TextInput
-                mode="flat"
-                value={value}
-                onChangeText={handleValueChange}
-                keyboardType="numeric"
-                style={styles.valueInput}
-                maxLength={13}
+                mode="outlined"
+                value={reason}
+                onChangeText={setReason}
+                placeholder="Digite o motivo da devolução"
+                multiline
+                numberOfLines={3}
+                style={styles.reasonInput}
                 disabled={loading}
+                outlineColor="#E0E0E0"
+                activeOutlineColor="#E91E63"
               />
             </View>
-            <Text style={styles.helper}>
-              Valor máximo: {amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-            </Text>
           </View>
 
-          {/* Motivo */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Motivo (opcional)</Text>
-            <TextInput
+          {/* Botões */}
+          <View style={styles.buttonContainer}>
+            <Button
               mode="outlined"
-              value={reason}
-              onChangeText={setReason}
-              placeholder="Digite o motivo da devolução"
-              multiline
-              numberOfLines={3}
-              style={styles.reasonInput}
+              onPress={onDismiss}
+              style={[styles.button, styles.cancelButton]}
+              textColor="#666666"
               disabled={loading}
-            />
+            >
+              Cancelar
+            </Button>
+            <Button
+              mode="contained"
+              onPress={handleSubmit}
+              style={styles.button}
+              buttonColor="#E91E63"
+              textColor="#FFFFFF"
+              loading={loading}
+              disabled={loading}
+            >
+              Confirmar
+            </Button>
           </View>
-        </View>
-
-        {/* Botões */}
-        <View style={styles.buttonContainer}>
-          <Button
-            mode="outlined"
-            onPress={onDismiss}
-            style={[styles.button, styles.cancelButton]}
-            textColor="#E91E63"
-            disabled={loading}
-          >
-            Cancelar
-          </Button>
-          <Button
-            mode="contained"
-            onPress={handleSubmit}
-            style={styles.button}
-            buttonColor="#E91E63"
-            loading={loading}
-            disabled={loading}
-          >
-            {loading ? 'Processando...' : 'Confirmar Devolução'}
-          </Button>
         </View>
       </Modal>
     </Portal>
@@ -153,15 +159,18 @@ const styles = StyleSheet.create({
   modalContainer: {
     backgroundColor: '#fff',
     margin: 20,
-    borderRadius: 8,
-    padding: 24,
+    borderRadius: 4,
+    padding: 20,
+  },
+  content: {
+    width: '100%',
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 24,
     color: '#000000',
     textAlign: 'center',
+    marginBottom: 20,
   },
   form: {
     marginBottom: 24,
@@ -203,13 +212,15 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 12,
   },
   button: {
     flex: 1,
-    marginHorizontal: 8,
+    borderRadius: 4,
   },
   cancelButton: {
-    borderColor: '#E91E63',
+    borderColor: '#E0E0E0',
+    borderWidth: 1,
   },
 });
 

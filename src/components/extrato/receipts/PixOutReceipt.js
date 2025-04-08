@@ -98,7 +98,15 @@ const PixOutReceipt = ({ transaction, onTransferDetailsLoaded }) => {
       {/* Status */}
       <View style={styles.statusContainer}>
         <Text style={styles.statusLabel}>Status</Text>
-        <Text style={styles.statusValue}>{transferDetails?.status || 'CONFIRMADO'}</Text>
+        <Text style={styles.statusValue}>
+          {transferDetails?.status === 'CONFIRMED' ? 'CONFIRMADO' : 
+           transferDetails?.status === 'COMPLETED' ? 'CONCLUÍDO' : 
+           transferDetails?.status === 'PROCESSING' ? 'EM PROCESSAMENTO' : 
+           transferDetails?.status === 'FAILED' ? 'FALHOU' : 
+           transferDetails?.status === 'PENDING' ? 'PENDENTE' : 
+           transferDetails?.status === 'CANCELLED' ? 'CANCELADO' : 
+           transferDetails?.status || 'CONFIRMADO'}
+        </Text>
       </View>
 
       {/* Valor */}

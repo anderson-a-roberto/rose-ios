@@ -4,7 +4,6 @@ import { Text, Button, ActivityIndicator, Divider } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import QRCodeStaticDialog from '../../components/pix/receive/QRCodeStaticDialog';
-import QRCodeDynamicDialog from '../../components/pix/receive/QRCodeDynamicDialog';
 import { supabase } from '../../config/supabase';
 
 const KEY_TYPES = {
@@ -29,7 +28,6 @@ const PixReceiveConfirmScreen = ({ navigation, route }) => {
   const [profile, setProfile] = useState(null);
   const [qrCodeData, setQrCodeData] = useState(null);
   const [showStaticQR, setShowStaticQR] = useState(false);
-  const [showDynamicQR, setShowDynamicQR] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -101,47 +99,6 @@ const PixReceiveConfirmScreen = ({ navigation, route }) => {
     }
   };
 
-  const handleGenerateDynamicQR = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      if (!profile) {
-        throw new Error('Dados do usuário não encontrados');
-      }
-
-      const payload = {
-        key: selectedKey.key,
-        amount: amount,
-        merchant: {
-          merchantCategoryCode: "5651",
-          name: profile.full_name,
-          city: profile.address_city || "São Paulo",
-          postalCode: profile.address_postal_code || "01000-000"
-        }
-      };
-
-      const { data: response, error: qrError } = await supabase.functions.invoke(
-        'brcode-dynamic',
-        { body: payload }
-      );
-
-      if (qrError) throw qrError;
-
-      if (response.status === 'ERROR') {
-        throw new Error(response.error?.message || 'Erro ao gerar QR Code');
-      }
-
-      setQrCodeData(response);  
-      setShowDynamicQR(true);
-    } catch (err) {
-      console.error('Erro ao gerar QR Code dinâmico:', err);
-      setError('Não foi possível gerar o QR Code');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (loading) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -206,16 +163,6 @@ const PixReceiveConfirmScreen = ({ navigation, route }) => {
           >
             QR CODE ESTÁTICO
           </Button>
-          <Button
-            mode="contained"
-            onPress={handleGenerateDynamicQR}
-            style={[styles.qrButton, styles.qrButtonSecondary]}
-            contentStyle={styles.buttonContent}
-            labelStyle={styles.buttonLabel}
-            icon={() => <MaterialCommunityIcons name="qrcode-scan" size={24} color="#FFF" />}
-          >
-            QR CODE DINÂMICO
-          </Button>
         </View>
       </View>
 
@@ -223,11 +170,6 @@ const PixReceiveConfirmScreen = ({ navigation, route }) => {
       <QRCodeStaticDialog
         visible={showStaticQR}
         onDismiss={() => setShowStaticQR(false)}
-        qrData={qrCodeData}
-      />
-      <QRCodeDynamicDialog
-        visible={showDynamicQR}
-        onDismiss={() => setShowDynamicQR(false)}
         qrData={qrCodeData}
       />
     </SafeAreaView>
@@ -338,9 +280,6 @@ const styles = StyleSheet.create({
   qrButton: {
     backgroundColor: '#E91E63',
     borderRadius: 8,
-  },
-  qrButtonSecondary: {
-    backgroundColor: '#682145',
   },
   buttonContent: {
     height: 56,

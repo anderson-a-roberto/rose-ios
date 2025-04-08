@@ -6,7 +6,7 @@ const STATUS_COLORS = {
   PENDING: '#FFA500',  // Laranja
   PAID: '#4CAF50',     // Verde
   EXPIRED: '#FF0000',  // Vermelho
-  CANCELED: '#9E9E9E', // Cinza
+  CANCELED: '#F44336', // Vermelho (igual ao CANCELADA)
   ERROR: '#FF0000'     // Vermelho
 };
 
@@ -14,7 +14,7 @@ const STATUS_LABELS = {
   PENDING: 'Pendente',
   PAID: 'Pago',
   EXPIRED: 'Expirado',
-  CANCELED: 'Cancelado',
+  CANCELED: 'CANCELADA', // Texto igual ao CANCELADA
   ERROR: 'Erro'
 };
 

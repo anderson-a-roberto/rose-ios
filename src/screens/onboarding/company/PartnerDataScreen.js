@@ -1,455 +1,170 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { Text, TextInput, Button, List, Menu, Divider } from 'react-native-paper';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Platform, FlatList } from 'react-native';
+import { Text, Button, List, Card, Dialog, Portal } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useOnboarding } from '../../../contexts/OnboardingContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import PartnerFormModal from '../../../components/onboarding/company/PartnerFormModal';
 
 const OWNER_TYPES = [
   { label: 'Sócio', value: 'SOCIO' },
   { label: 'Representante Legal', value: 'REPRESENTANTE' },
-  { label: 'Demais Sócios', value: 'DEMAIS_SOCIOS' },
+  { label: 'Demais Sócios', value: 'DEMAIS SOCIOS' },
 ];
 
-const formatCPF = (text) => {
-  const numbers = text.replace(/\D/g, '');
-  return numbers.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-};
-
-const formatPhone = (text) => {
-  const numbers = text.replace(/\D/g, '');
-  return numbers.replace(/^(\d{2})(\d{5})(\d{4})/, '+55$1$2$3');
-};
-
-const formatDate = (text) => {
-  const numbers = text.replace(/\D/g, '');
-  return numbers.replace(/^(\d{2})(\d{2})(\d{4})/, '$1/$2/$3');
-};
-
-const formatCEP = (text) => {
-  const numbers = text.replace(/\D/g, '');
-  return numbers.replace(/^(\d{5})(\d{3})/, '$1-$2');
-};
-
 const PartnerDataScreen = ({ navigation }) => {
-  const { onboardingData, addPartner, updatePartner, removePartner, updateOnboardingData } = useOnboarding();
-  const [showTypeMenu, setShowTypeMenu] = useState(false);
-  const [currentPartner, setCurrentPartner] = useState({
-    ownerType: '',
-    documentNumber: '',
-    fullName: '',
-    socialName: '',
-    birthDate: '',
-    motherName: '',
-    email: '',
-    phoneNumber: '',
-    isPoliticallyExposedPerson: false,
-    address: {
-      postalCode: '',
-      street: '',
-      number: '',
-      addressComplement: '',
-      neighborhood: '',
-      city: '',
-      state: '',
+  const { onboardingData, addPartner, updatePartner, removePartner } = useOnboarding();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingPartner, setEditingPartner] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [partnerToDelete, setPartnerToDelete] = useState(null);
+
+  const handleAddPartner = (partner) => {
+    addPartner(partner);
+    setModalVisible(false);
+  };
+
+  const handleEditPartner = (partner) => {
+    const index = onboardingData.partners.findIndex(p => p.id === partner.id);
+    if (index !== -1) {
+      updatePartner(index, partner);
     }
-  });
-  const [editingIndex, setEditingIndex] = useState(-1);
-  const [showAddressForm, setShowAddressForm] = useState(false);
+    setModalVisible(false);
+    setEditingPartner(null);
+  };
 
-  const handleCEPChange = async (text) => {
-    const formattedCEP = formatCEP(text);
-    setCurrentPartner(prev => ({
-      ...prev,
-      address: { ...prev.address, postalCode: formattedCEP }
-    }));
+  const openEditModal = (partner) => {
+    setEditingPartner(partner);
+    setModalVisible(true);
+  };
 
-    if (text.replace(/\D/g, '').length === 8) {
-      try {
-        const response = await fetch(`https://viacep.com.br/ws/${text.replace(/\D/g, '')}/json/`);
-        const data = await response.json();
+  const confirmDeletePartner = (partner) => {
+    setPartnerToDelete(partner);
+    setShowDeleteConfirm(true);
+  };
 
-        if (!data.erro) {
-          setCurrentPartner(prev => ({
-            ...prev,
-            address: {
-              ...prev.address,
-              street: data.logradouro,
-              neighborhood: data.bairro,
-              city: data.localidade,
-              state: data.uf,
-            }
-          }));
-        }
-      } catch (error) {
-        console.error('Erro ao buscar CEP:', error);
+  const handleDeletePartner = () => {
+    if (partnerToDelete) {
+      const index = onboardingData.partners.findIndex(p => p.id === partnerToDelete.id);
+      if (index !== -1) {
+        removePartner(index);
       }
+      setShowDeleteConfirm(false);
+      setPartnerToDelete(null);
     }
   };
 
-  const isPartnerValid = () => {
-    const requiredMainFields = ['ownerType', 'documentNumber', 'fullName', 'birthDate', 'motherName', 'email', 'phoneNumber'];
-    const requiredAddressFields = ['postalCode', 'street', 'number', 'neighborhood', 'city', 'state'];
-
-    const mainFieldsValid = requiredMainFields.every(field => currentPartner[field]?.trim());
-    const addressFieldsValid = requiredAddressFields.every(field => currentPartner.address[field]?.trim());
-
-    return mainFieldsValid && addressFieldsValid;
-  };
-
-  const handleSavePartner = () => {
-    if (editingIndex >= 0) {
-      updatePartner(editingIndex, currentPartner);
-    } else {
-      addPartner(currentPartner);
-    }
-    
-    // Reset form
-    setCurrentPartner({
-      ownerType: '',
-      documentNumber: '',
-      fullName: '',
-      socialName: '',
-      birthDate: '',
-      motherName: '',
-      email: '',
-      phoneNumber: '',
-      isPoliticallyExposedPerson: false,
-      address: {
-        postalCode: '',
-        street: '',
-        number: '',
-        addressComplement: '',
-        neighborhood: '',
-        city: '',
-        state: '',
-      }
-    });
-    setEditingIndex(-1);
-    setShowAddressForm(false);
-  };
-
-  const handleEditPartner = (index) => {
-    setCurrentPartner(onboardingData.partners[index]);
-    setEditingIndex(index);
-    setShowAddressForm(true);
-  };
-
-  const handleNext = () => {
-    if (onboardingData.partners?.length > 0) {
-      navigation.navigate('CompanyPassword');
-    } else {
-      // Mostrar erro se não houver sócios cadastrados
-      alert('É necessário cadastrar pelo menos um sócio');
-    }
-  };
+  const renderPartnerItem = ({ item }) => (
+    <Card style={styles.partnerCard}>
+      <Card.Content>
+        <View style={styles.partnerHeader}>
+          <View>
+            <Text style={styles.partnerName}>{item.fullName}</Text>
+            <Text style={styles.partnerType}>{OWNER_TYPES.find(t => t.value === item.ownerType)?.label || item.ownerType}</Text>
+          </View>
+          <View style={styles.partnerActions}>
+            <TouchableOpacity onPress={() => openEditModal(item)} style={styles.actionButton}>
+              <MaterialCommunityIcons name="pencil" size={22} color="#FFFFFF" />
+              <Text style={styles.actionButtonText}>Editar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => confirmDeletePartner(item)} style={styles.actionButton}>
+              <MaterialCommunityIcons name="trash-can-outline" size={22} color="#FFFFFF" />
+              <Text style={styles.actionButtonText}>Excluir</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.partnerInfo}>
+          <Text style={styles.partnerInfoText}>CPF: {item.documentNumber}</Text>
+          <Text style={styles.partnerInfoText}>Telefone: {item.phoneNumber}</Text>
+          <Text style={styles.partnerInfoText}>Email: {item.email}</Text>
+          <Text style={styles.partnerInfoText}>Data de Nascimento: {item.birthDate}</Text>
+        </View>
+      </Card.Content>
+    </Card>
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.headerTop}>
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Text style={styles.backButtonText}>‹</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerContent}>
+            <Text style={styles.title}>Dados do sócio</Text>
+            <Text style={styles.subtitle}>Informe os dados do sócio administrador</Text>
+          </View>
+        </View>
+
+        <View style={styles.content}>
+          {onboardingData.partners.length === 0 ? (
+            <View style={styles.emptyState}>
+              <View style={styles.emptyIconContainer}>
+                <MaterialCommunityIcons name="account-group-outline" size={48} color="#CCCCCC" />
+              </View>
+              <Text style={styles.emptyTitle}>Nenhum sócio cadastrado</Text>
+              <Text style={styles.emptySubtitle}>Adicione pelo menos um sócio para continuar</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={onboardingData.partners}
+              renderItem={renderPartnerItem}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.partnersList}
+            />
+          )}
+
           <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            style={styles.addButton}
+            onPress={() => {
+              setEditingPartner(null);
+              setModalVisible(true);
+            }}
           >
-            <MaterialCommunityIcons name="chevron-left" size={32} color="#E91E63" />
+            <MaterialCommunityIcons name="plus" size={20} color="#E91E63" style={styles.addButtonIcon} />
+            <Text style={styles.addButtonText}>Adicionar Sócio</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Dados do sócio</Text>
-          <Text style={styles.subtitle}>
-            Informe os dados do sócio administrador
-          </Text>
-        </View>
-
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Lista de sócios já adicionados */}
-          {onboardingData.partners.map((partner, index) => (
-            <List.Item
-              key={index}
-              title={partner.fullName}
-              description={`${OWNER_TYPES.find(t => t.value === partner.ownerType)?.label} - ${partner.documentNumber}`}
-              left={props => <List.Icon {...props} icon="account" />}
-              right={props => (
-                <View style={styles.partnerActions}>
-                  <TouchableOpacity onPress={() => handleEditPartner(index)}>
-                    <MaterialCommunityIcons name="pencil" size={24} color="#666" />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => removePartner(index)}>
-                    <MaterialCommunityIcons name="delete" size={24} color="#666" />
-                  </TouchableOpacity>
-                </View>
-              )}
-              style={styles.partnerItem}
-            />
-          ))}
-
-          <View style={styles.form}>
-            {/* Tipo de Sócio */}
-            <Text style={styles.label}>Tipo</Text>
-            <Menu
-              visible={showTypeMenu}
-              onDismiss={() => setShowTypeMenu(false)}
-              anchor={
-                <TouchableOpacity
-                  style={[styles.input, styles.menuButton]}
-                  onPress={() => setShowTypeMenu(true)}
-                >
-                  <Text style={[
-                    styles.menuButtonText,
-                    currentPartner.ownerType && { color: '#000', fontWeight: '600' }
-                  ]}>
-                    {currentPartner.ownerType
-                      ? OWNER_TYPES.find(t => t.value === currentPartner.ownerType)?.label
-                      : 'Selecione o tipo'}
-                  </Text>
-                  <MaterialCommunityIcons name="chevron-down" size={24} color="#666" />
-                </TouchableOpacity>
-              }
-            >
-              {OWNER_TYPES.map((type) => (
-                <Menu.Item
-                  key={type.value}
-                  onPress={() => {
-                    setCurrentPartner(prev => ({ ...prev, ownerType: type.value }));
-                    setShowTypeMenu(false);
-                  }}
-                  title={type.label}
-                />
-              ))}
-            </Menu>
-
-            <Text style={styles.label}>Nome Completo</Text>
-            <TextInput
-              value={currentPartner.fullName}
-              onChangeText={(text) => setCurrentPartner(prev => ({ ...prev, fullName: text }))}
-              style={[styles.input, currentPartner.fullName && styles.filledInput]}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={currentPartner.fullName ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: currentPartner.fullName ? '600' : '400' } } }}
-            />
-
-            <Text style={styles.label}>CPF</Text>
-            <TextInput
-              value={currentPartner.documentNumber}
-              onChangeText={(text) => setCurrentPartner(prev => ({ ...prev, documentNumber: formatCPF(text) }))}
-              style={[styles.input, currentPartner.documentNumber && styles.filledInput]}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={currentPartner.documentNumber ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: currentPartner.documentNumber ? '600' : '400' } } }}
-              keyboardType="numeric"
-              maxLength={14}
-            />
-
-            <Text style={styles.label}>Data de Nascimento</Text>
-            <TextInput
-              value={currentPartner.birthDate}
-              onChangeText={(text) => setCurrentPartner(prev => ({ ...prev, birthDate: formatDate(text) }))}
-              style={[styles.input, currentPartner.birthDate && styles.filledInput]}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={currentPartner.birthDate ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: currentPartner.birthDate ? '600' : '400' } } }}
-              keyboardType="numeric"
-              maxLength={10}
-              placeholder="DD/MM/AAAA"
-            />
-
-            <Text style={styles.label}>Nome da Mãe</Text>
-            <TextInput
-              value={currentPartner.motherName}
-              onChangeText={(text) => setCurrentPartner(prev => ({ ...prev, motherName: text }))}
-              style={[styles.input, currentPartner.motherName && styles.filledInput]}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={currentPartner.motherName ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: currentPartner.motherName ? '600' : '400' } } }}
-            />
-
-            <Text style={styles.label}>E-mail</Text>
-            <TextInput
-              value={currentPartner.email}
-              onChangeText={(text) => setCurrentPartner(prev => ({ ...prev, email: text }))}
-              style={[styles.input, currentPartner.email && styles.filledInput]}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={currentPartner.email ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: currentPartner.email ? '600' : '400' } } }}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-
-            <Text style={styles.label}>Telefone</Text>
-            <TextInput
-              value={currentPartner.phoneNumber}
-              onChangeText={(text) => setCurrentPartner(prev => ({ ...prev, phoneNumber: formatPhone(text) }))}
-              style={[styles.input, currentPartner.phoneNumber && styles.filledInput]}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={currentPartner.phoneNumber ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: currentPartner.phoneNumber ? '600' : '400' } } }}
-              keyboardType="numeric"
-            />
-
-            {/* PPE */}
-            <TouchableOpacity
-              style={styles.pepContainer}
-              onPress={() => setCurrentPartner(prev => ({ 
-                ...prev, 
-                isPoliticallyExposedPerson: !prev.isPoliticallyExposedPerson 
-              }))}
-            >
-              <MaterialCommunityIcons
-                name={currentPartner.isPoliticallyExposedPerson ? "checkbox-marked" : "checkbox-blank-outline"}
-                size={24}
-                color="#E91E63"
-              />
-              <Text style={styles.pepText}>Pessoa Politicamente Exposta</Text>
-            </TouchableOpacity>
-
-            {/* Endereço */}
-            <Button
-              mode="outlined"
-              onPress={() => setShowAddressForm(!showAddressForm)}
-              style={styles.addressButton}
-              labelStyle={styles.addressButtonLabel}
-            >
-              {showAddressForm ? 'Ocultar Endereço' : 'Adicionar Endereço'}
-            </Button>
-
-            {showAddressForm && (
-              <View style={styles.addressForm}>
-                <Text style={styles.label}>CEP</Text>
-                <TextInput
-                  value={currentPartner.address.postalCode}
-                  onChangeText={handleCEPChange}
-                  style={[styles.input, currentPartner.address.postalCode && styles.filledInput]}
-                  underlineColor="transparent"
-                  activeUnderlineColor="transparent"
-                  textColor={currentPartner.address.postalCode ? '#000' : '#999'}
-                  theme={{ fonts: { regular: { fontWeight: currentPartner.address.postalCode ? '600' : '400' } } }}
-                  keyboardType="numeric"
-                  maxLength={9}
-                />
-
-                <Text style={styles.label}>Rua</Text>
-                <TextInput
-                  value={currentPartner.address.street}
-                  onChangeText={(value) => setCurrentPartner(prev => ({
-                    ...prev,
-                    address: { ...prev.address, street: value }
-                  }))}
-                  style={[styles.input, currentPartner.address.street && styles.filledInput]}
-                  underlineColor="transparent"
-                  activeUnderlineColor="transparent"
-                  textColor={currentPartner.address.street ? '#000' : '#999'}
-                  theme={{ fonts: { regular: { fontWeight: currentPartner.address.street ? '600' : '400' } } }}
-                />
-
-                <Text style={styles.label}>Número</Text>
-                <TextInput
-                  value={currentPartner.address.number}
-                  onChangeText={(value) => setCurrentPartner(prev => ({
-                    ...prev,
-                    address: { ...prev.address, number: value }
-                  }))}
-                  style={[styles.input, currentPartner.address.number && styles.filledInput]}
-                  underlineColor="transparent"
-                  activeUnderlineColor="transparent"
-                  textColor={currentPartner.address.number ? '#000' : '#999'}
-                  theme={{ fonts: { regular: { fontWeight: currentPartner.address.number ? '600' : '400' } } }}
-                  keyboardType="numeric"
-                />
-
-                <Text style={styles.label}>Complemento (opcional)</Text>
-                <TextInput
-                  value={currentPartner.address.addressComplement}
-                  onChangeText={(value) => setCurrentPartner(prev => ({
-                    ...prev,
-                    address: { ...prev.address, addressComplement: value }
-                  }))}
-                  style={[styles.input, currentPartner.address.addressComplement && styles.filledInput]}
-                  underlineColor="transparent"
-                  activeUnderlineColor="transparent"
-                  textColor={currentPartner.address.addressComplement ? '#000' : '#999'}
-                  theme={{ fonts: { regular: { fontWeight: currentPartner.address.addressComplement ? '600' : '400' } } }}
-                />
-
-                <Text style={styles.label}>Bairro</Text>
-                <TextInput
-                  value={currentPartner.address.neighborhood}
-                  onChangeText={(value) => setCurrentPartner(prev => ({
-                    ...prev,
-                    address: { ...prev.address, neighborhood: value }
-                  }))}
-                  style={[styles.input, currentPartner.address.neighborhood && styles.filledInput]}
-                  underlineColor="transparent"
-                  activeUnderlineColor="transparent"
-                  textColor={currentPartner.address.neighborhood ? '#000' : '#999'}
-                  theme={{ fonts: { regular: { fontWeight: currentPartner.address.neighborhood ? '600' : '400' } } }}
-                />
-
-                <Text style={styles.label}>Cidade</Text>
-                <TextInput
-                  value={currentPartner.address.city}
-                  onChangeText={(value) => setCurrentPartner(prev => ({
-                    ...prev,
-                    address: { ...prev.address, city: value }
-                  }))}
-                  style={[styles.input, currentPartner.address.city && styles.filledInput]}
-                  underlineColor="transparent"
-                  activeUnderlineColor="transparent"
-                  textColor={currentPartner.address.city ? '#000' : '#999'}
-                  theme={{ fonts: { regular: { fontWeight: currentPartner.address.city ? '600' : '400' } } }}
-                />
-
-                <Text style={styles.label}>Estado</Text>
-                <TextInput
-                  value={currentPartner.address.state}
-                  onChangeText={(value) => setCurrentPartner(prev => ({
-                    ...prev,
-                    address: { ...prev.address, state: value }
-                  }))}
-                  style={[styles.input, currentPartner.address.state && styles.filledInput]}
-                  underlineColor="transparent"
-                  activeUnderlineColor="transparent"
-                  textColor={currentPartner.address.state ? '#000' : '#999'}
-                  theme={{ fonts: { regular: { fontWeight: currentPartner.address.state ? '600' : '400' } } }}
-                  maxLength={2}
-                  autoCapitalize="characters"
-                />
-              </View>
-            )}
-
-            <Button
-              mode="contained"
-              onPress={handleSavePartner}
-              style={[styles.saveButton, !isPartnerValid() && styles.saveButtonDisabled]}
-              labelStyle={styles.saveButtonLabel}
-              disabled={!isPartnerValid()}
-            >
-              {editingIndex >= 0 ? 'Atualizar Sócio' : 'Adicionar Sócio'}
-            </Button>
-          </View>
-        </ScrollView>
-
-        {/* Footer */}
         <View style={styles.footer}>
           <Button
             mode="contained"
-            onPress={handleNext}
-            style={[styles.continueButton, onboardingData.partners.length === 0 && styles.continueButtonDisabled]}
-            labelStyle={[styles.continueButtonLabel, { color: '#FFF' }]}
+            style={[styles.continueButton, onboardingData.partners.length === 0 && styles.disabledButton]}
+            labelStyle={styles.continueButtonLabel}
             disabled={onboardingData.partners.length === 0}
+            onPress={() => navigation.navigate('CompanyPassword')}
+            uppercase={false}
           >
-            CONTINUAR
+            Continuar
           </Button>
         </View>
       </View>
+
+      <PartnerFormModal
+        visible={modalVisible}
+        onDismiss={() => {
+          setModalVisible(false);
+          setEditingPartner(null);
+        }}
+        onSave={editingPartner ? handleEditPartner : handleAddPartner}
+        initialData={editingPartner}
+        existingPartners={onboardingData.partners}
+      />
+
+      <Portal>
+        <Dialog visible={showDeleteConfirm} onDismiss={() => setShowDeleteConfirm(false)}>
+          <Dialog.Title>Excluir sócio</Dialog.Title>
+          <Dialog.Content>
+            <Text>Deseja realmente excluir este sócio?</Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setShowDeleteConfirm(false)} color="#666">Cancelar</Button>
+            <Button onPress={handleDeletePartner} color="#E91E63">Excluir</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </SafeAreaView>
   );
 };
@@ -463,130 +178,174 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF',
   },
+  header: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
   headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    paddingTop: Platform.OS === 'ios' ? 8 : 16,
     paddingHorizontal: 16,
-    paddingTop: 8,
+    marginBottom: 24,
   },
   backButton: {
-    padding: 8,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backButtonText: {
+    fontSize: 32,
+    color: '#E91E63',
+    marginTop: -4,
   },
   headerContent: {
     paddingHorizontal: 24,
-    paddingTop: 16,
     paddingBottom: 24,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
+  title: {
+    fontSize: 20,
+    fontWeight: '600',
     marginBottom: 8,
+    color: '#000',
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: '#666666',
+    lineHeight: 24,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
+    padding: 24,
   },
-  form: {
-    gap: 16,
-    paddingVertical: 16,
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 80,
   },
-  label: {
-    fontSize: 13,
-    color: '#666666',
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#212121',
     marginBottom: 8,
-    marginTop: 16,
   },
-  input: {
-    backgroundColor: '#FFF',
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#666666',
+    textAlign: 'center',
+  },
+  partnersList: {
+    paddingBottom: 16,
+  },
+  partnerCard: {
+    marginBottom: 16,
+    elevation: 2,
+    borderRadius: 8,
+    backgroundColor: '#682145',
+  },
+  partnerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  partnerName: {
     fontSize: 16,
-    height: 48,
-    paddingHorizontal: 0,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
-  filledInput: {
-    backgroundColor: '#FFF',
+  partnerType: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    opacity: 0.8,
   },
-  menuButton: {
+  partnerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
   },
-  menuButtonText: {
+  actionButton: {
+    marginLeft: 8,
+    flexDirection: 'row',
+    backgroundColor: '#e92176',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  actionButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 4,
+  },
+  partnerInfo: {
+    marginTop: 8,
+  },
+  partnerInfoText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E91E63',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 16,
+    height: 48,
+  },
+  addButtonIcon: {
+    marginRight: 8,
+  },
+  addButtonText: {
+    color: '#E91E63',
     fontSize: 16,
-    color: '#999',
+    fontWeight: '500',
   },
   footer: {
-    padding: 24,
-    paddingBottom: 32,
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    backgroundColor: '#FFF',
+    ...Platform.select({
+      android: {
+        elevation: 8,
+      },
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+    }),
   },
   continueButton: {
     backgroundColor: '#E91E63',
-    paddingVertical: 8,
-  },
-  continueButtonDisabled: {
-    backgroundColor: '#ccc',
+    borderRadius: 8,
+    height: 48,
+    justifyContent: 'center',
   },
   continueButtonLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  error: {
-    fontSize: 12,
-    color: '#FF0000',
-    marginBottom: 8,
-  },
-  saveButton: {
-    marginTop: 8,
-    marginBottom: 24,
-    backgroundColor: '#E91E63',
-    height: 48,
-  },
-  saveButtonDisabled: {
-    backgroundColor: '#E0E0E0',
-  },
-  saveButtonLabel: {
     fontSize: 16,
     fontWeight: '500',
     color: '#FFF',
     textTransform: 'uppercase',
   },
-  partnerItem: {
-    backgroundColor: '#F5F5F5',
-    marginBottom: 8,
-    borderRadius: 8,
-  },
-  partnerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  pepContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  pepText: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: '#666666',
-  },
-  addressButton: {
-    marginBottom: 16,
-    borderColor: '#E0E0E0',
-  },
-  addressButtonLabel: {
-    color: '#E91E63',
-  },
-  addressForm: {
-    marginTop: 8,
+  disabledButton: {
+    backgroundColor: '#E0E0E0',
   },
 });
 

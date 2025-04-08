@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
   modalContainer: {
     backgroundColor: '#fff',
     margin: 20,
-    borderRadius: 8,
+    borderRadius: 4,
     maxHeight: '80%',
   },
   scrollView: {
@@ -271,14 +271,16 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 8,
+    borderRadius: 4,
   },
   closeButton: {
     borderColor: '#E91E63',
+    borderWidth: 1,
   },
   confirmModal: {
     backgroundColor: '#fff',
     margin: 20,
-    borderRadius: 8,
+    borderRadius: 4,
     padding: 24,
   },
   confirmContent: {
@@ -304,12 +306,11 @@ const styles = StyleSheet.create({
   confirmButton: {
     flex: 1,
     marginHorizontal: 8,
+    borderRadius: 4,
   },
   cancelButton: {
     borderColor: '#E91E63',
-  },
-  closeButton: {
-    borderColor: '#E91E63',
+    borderWidth: 1,
   },
 });
 

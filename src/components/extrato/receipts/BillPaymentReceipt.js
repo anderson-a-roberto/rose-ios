@@ -211,6 +211,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#000000',
     marginBottom: 8,
+    textAlign: 'center',
   },
   date: {
     fontSize: 14,
@@ -234,7 +235,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     padding: 16,
     backgroundColor: '#F5F5F5',
-    borderRadius: 8,
+    borderRadius: 4,
   },
   amountLabel: {
     fontSize: 14,

@@ -69,16 +69,18 @@ const PepInfoModal = ({ visible, onDismiss, onConfirm, initialValue = false }) =
             onPress={onDismiss}
             style={styles.cancelButton}
             labelStyle={styles.cancelButtonLabel}
+            uppercase={false}
           >
-            CANCELAR
+            Cancelar
           </Button>
           <Button
             mode="contained"
             onPress={handleConfirm}
             style={styles.confirmButton}
             labelStyle={styles.confirmButtonLabel}
+            uppercase={false}
           >
-            CONFIRMAR
+            Confirmar
           </Button>
         </View>
       </Modal>
@@ -93,23 +95,28 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     display: 'flex',
     flexDirection: 'column',
+    maxWidth: 480,
+    alignSelf: 'center',
+    width: '90%',
   },
   header: {
-    padding: 16,
+    padding: 24,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: '#F5F5F5',
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '600',
     marginBottom: 8,
+    color: '#000',
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: '#666666',
+    lineHeight: 24,
   },
   content: {
-    padding: 16,
+    padding: 24,
   },
   infoBox: {
     backgroundColor: '#F5F5F5',
@@ -119,7 +126,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 14,
-    color: '#666',
+    color: '#666666',
     lineHeight: 20,
   },
   optionsContainer: {
@@ -136,11 +143,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 8,
     flex: 1,
+    color: '#212121',
   },
   footer: {
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: '#F5F5F5',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
@@ -148,19 +156,28 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 8,
     borderColor: '#E91E63',
-    borderRadius: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    height: 48,
+    justifyContent: 'center',
   },
   cancelButtonLabel: {
     color: '#E91E63',
+    fontSize: 16,
+    fontWeight: '500',
   },
   confirmButton: {
     flex: 1,
     marginLeft: 8,
     backgroundColor: '#E91E63',
-    borderRadius: 4,
+    borderRadius: 8,
+    height: 48,
+    justifyContent: 'center',
   },
   confirmButtonLabel: {
     color: 'white',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
 

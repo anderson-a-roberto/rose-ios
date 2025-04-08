@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Image, SafeAreaView } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image, SafeAreaView, Platform } from 'react-native';
 import { Text, Checkbox, Button } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { useOnboarding } from '../../contexts/OnboardingContext';
@@ -25,25 +25,32 @@ export default function TermsScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Camada 1: Header Fixo */}
+        {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backText}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>TERMOS E CONDIÇÕES</Text>
-          <View style={styles.backButton} />
+          <View style={styles.headerTop}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.backText}>‹</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Termos e Condições</Text>
+            <Text style={styles.subtitle}>
+              Leia com atenção os termos e condições
+            </Text>
+          </View>
         </View>
 
-        {/* Camada 2: Viewport Fixo com Conteúdo Rolável */}
+        {/* Content */}
         <View style={styles.viewportContainer}>
           <View style={styles.viewport}>
             <ScrollView 
               style={styles.scrollView}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.scrollContent}
+              bounces={false}
             >
               <View style={styles.termsBox}>
                 <Image 
@@ -82,16 +89,16 @@ export default function TermsScreen() {
           </View>
         </View>
 
-        {/* Camada 3: Footer Fixo */}
+        {/* Footer */}
         <View style={styles.footer}>
           <View style={styles.checkboxContainer}>
             <Checkbox
               status={accepted ? 'checked' : 'unchecked'}
               onPress={() => setAccepted(!accepted)}
-              color="#682145"
+              color="#E91E63"
             />
             <Text style={styles.checkboxLabel}>
-              LI E CONCORDO COM OS TERMOS E CONDIÇÕES
+              Li e concordo com os termos e condições
             </Text>
           </View>
 
@@ -99,8 +106,8 @@ export default function TermsScreen() {
             mode="contained"
             onPress={handleAcceptTerms}
             disabled={!accepted}
-            style={[styles.button, !accepted && styles.buttonDisabled]}
-            labelStyle={styles.buttonLabel}
+            style={[styles.continueButton, !accepted && styles.buttonDisabled]}
+            labelStyle={styles.continueButtonLabel}
           >
             CONTINUAR
           </Button>
@@ -118,34 +125,46 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFF',
+    minHeight: '100%',
   },
   header: {
-    height: 56,
+    paddingTop: Platform.OS === 'ios' ? 8 : 16,
+    paddingBottom: 24,
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    backgroundColor: '#FFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-    zIndex: 2,
+    marginBottom: 24,
+  },
+  headerContent: {
+    paddingHorizontal: 24,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 24,
+    height: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },
   backText: {
-    fontSize: 24,
-    color: '#000',
+    fontSize: 32,
+    color: '#E91E63',
+    marginTop: -4,
   },
   headerTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '600',
     color: '#000',
-    flex: 1,
-    textAlign: 'center',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666666',
+    lineHeight: 24,
   },
   viewportContainer: {
     flex: 1,
@@ -166,23 +185,24 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 24,
+    paddingBottom: Platform.OS === 'android' ? 32 : 24,
   },
   termsBox: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#F5F5F5',
     padding: 16,
-    borderRadius: 4,
+    borderRadius: 8,
   },
   logo: {
     width: 120,
     height: 30,
     alignSelf: 'center',
     marginBottom: 24,
-    tintColor: '#682145',
+    tintColor: '#E91E63',
   },
   mainTitle: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#000',
     textAlign: 'center',
     marginBottom: 24,
@@ -193,7 +213,7 @@ const styles = StyleSheet.create({
   },
   serviceTitle: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#000',
     marginBottom: 4,
   },
@@ -202,7 +222,7 @@ const styles = StyleSheet.create({
   },
   clauseTitle: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#000',
     marginTop: 16,
     marginBottom: 8,
@@ -214,11 +234,21 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   footer: {
-    backgroundColor: '#FFF',
     padding: 16,
+    backgroundColor: '#FFF',
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    zIndex: 2,
+    borderTopColor: '#F5F5F5',
+    ...Platform.select({
+      android: {
+        elevation: 8,
+      },
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+    }),
   },
   checkboxContainer: {
     flexDirection: 'row',
@@ -228,21 +258,23 @@ const styles = StyleSheet.create({
   checkboxLabel: {
     marginLeft: 8,
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '500',
     color: '#000',
     flex: 1,
   },
-  button: {
-    backgroundColor: '#E91E63',
-    borderRadius: 4,
+  continueButton: {
     height: 48,
+    justifyContent: 'center',
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
   },
   buttonDisabled: {
-    backgroundColor: '#9E9E9E',
+    backgroundColor: '#E0E0E0',
   },
-  buttonLabel: {
+  continueButtonLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '500',
     color: '#FFF',
+    textTransform: 'uppercase',
   },
 });

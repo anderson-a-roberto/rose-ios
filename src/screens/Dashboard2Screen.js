@@ -388,7 +388,7 @@ export default function Dashboard2Screen({ navigation }) {
           </Menu>
           <View style={styles.userDetails}>
             <Text style={styles.userName}>OLÁ, {userName.toUpperCase()}</Text>
-            <Text style={styles.accountInfo}>Agência: {userAccount?.substring(0, 4) || '----'} | Conta: {userAccount?.substring(4) || '----'}</Text>
+            <Text style={styles.accountInfo}>Agência: 0001 | Conta: {userAccount || '----'}</Text>
           </View>
         </View>
         <Image 
@@ -426,7 +426,7 @@ export default function Dashboard2Screen({ navigation }) {
           </View>
           <TouchableOpacity 
             style={styles.addBalanceButton}
-            onPress={() => navigation.navigate('PixKeysScreen')}
+            onPress={() => navigation.navigate('PixReceiveAmount')}
           >
             <Text style={styles.addBalanceText}>+ ADICIONAR SALDO</Text>
           </TouchableOpacity>

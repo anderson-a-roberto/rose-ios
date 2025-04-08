@@ -80,10 +80,6 @@ const PixReceiveAmountScreen = ({ navigation }) => {
               }}
             />
           </View>
-
-          <Text style={styles.disclaimer}>
-            Caso você não especifique o valor, o preenchimento do campo será feito pelo pagador.
-          </Text>
         </View>
 
         {/* Continue Button */}
@@ -172,12 +168,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     color: '#000',
     height: 56,
-  },
-  disclaimer: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    paddingHorizontal: 32,
   },
   buttonContainer: {
     padding: 20,

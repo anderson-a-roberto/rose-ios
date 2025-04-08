@@ -96,6 +96,7 @@ const PixQrReceiptModal = ({ visible, onClose, paymentResult, emvData, dictData 
               icon="share-variant"
               textColor="#E91E63"
               buttonColor="#FFF"
+              contentStyle={styles.buttonContent}
               uppercase={false}
             >
               Compartilhar
@@ -107,6 +108,7 @@ const PixQrReceiptModal = ({ visible, onClose, paymentResult, emvData, dictData 
               style={styles.closeReceiptButton}
               textColor="#FFF"
               buttonColor="#E91E63"
+              contentStyle={styles.buttonContent}
               uppercase={false}
             >
               Concluir
@@ -173,15 +175,19 @@ const styles = StyleSheet.create({
   },
   shareButton: {
     flex: 1,
-    marginRight: 8,
+    marginRight: 12,
     borderColor: '#E91E63',
-    borderRadius: 8,
+    borderWidth: 1,
+    borderRadius: 4,
   },
   closeReceiptButton: {
     flex: 1,
-    marginLeft: 8,
     backgroundColor: '#E91E63',
-    borderRadius: 8,
+    borderRadius: 4,
+  },
+  buttonContent: {
+    height: 48,
+    paddingVertical: 8,
   },
 });
 

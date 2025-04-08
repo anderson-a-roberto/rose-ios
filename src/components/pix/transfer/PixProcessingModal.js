@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 20,
     margin: 20,
-    borderRadius: 10,
+    borderRadius: 4,
   },
   content: {
     alignItems: 'center',
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   messageContainer: {
     backgroundColor: '#FFF9E6',
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 4,
     marginBottom: 24,
     width: '100%',
   },
@@ -103,6 +103,7 @@ const styles = StyleSheet.create({
   },
   button: {
     width: '100%',
+    borderRadius: 4,
   },
 });
 

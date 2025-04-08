@@ -3,6 +3,8 @@ import { View, StyleSheet, TouchableOpacity, ActivityIndicator, SafeAreaView, Sc
 import { Text, TextInput, Button, HelperText } from 'react-native-paper';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { supabase } from '../../config/supabase';
+import { getReadableError } from '../../utils/errorHandler';
+import CustomAlert from '../../components/common/CustomAlert';
 
 // Funções de formatação
 const formatCPF = (cpf) => cpf.replace(/\D/g, '');
@@ -29,6 +31,9 @@ const EmailScreen = ({ navigation }) => {
   const [email, setEmail] = useState(onboardingData.contactData.email || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorType, setErrorType] = useState('generic'); // 'validation', 'celcoin', 'auth', 'generic'
+  const [errorDetails, setErrorDetails] = useState(null);
 
   // Verifica se tem os dados necessários ao carregar a tela
   React.useEffect(() => {
@@ -55,42 +60,90 @@ const EmailScreen = ({ navigation }) => {
       const { personalData, contactData, addressData } = onboardingData;
       
       if (!personalData?.fullName?.trim()) {
-        throw new Error('Nome completo é obrigatório');
+        setError('Nome completo é obrigatório');
+        setErrorType('validation');
+        setShowErrorModal(true);
+        setLoading(false);
+        return;
       }
       if (!personalData?.documentNumber?.trim()) {
-        throw new Error('CPF é obrigatório');
+        setError('CPF é obrigatório');
+        setErrorType('validation');
+        setShowErrorModal(true);
+        setLoading(false);
+        return;
       }
       if (!personalData?.birthDate?.trim()) {
-        throw new Error('Data de nascimento é obrigatória');
+        setError('Data de nascimento é obrigatória');
+        setErrorType('validation');
+        setShowErrorModal(true);
+        setLoading(false);
+        return;
       }
       if (!personalData?.motherName?.trim()) {
-        throw new Error('Nome da mãe é obrigatório');
+        setError('Nome da mãe é obrigatório');
+        setErrorType('validation');
+        setShowErrorModal(true);
+        setLoading(false);
+        return;
       }
       if (!contactData?.phoneNumber?.trim()) {
-        throw new Error('Telefone é obrigatório');
+        setError('Telefone é obrigatório');
+        setErrorType('validation');
+        setShowErrorModal(true);
+        setLoading(false);
+        return;
       }
       if (!email?.trim()) {
-        throw new Error('Email é obrigatório');
+        setError('Email é obrigatório');
+        setErrorType('validation');
+        setShowErrorModal(true);
+        setLoading(false);
+        return;
       }
 
       // Garante que todos os dados do endereço estão presentes
       if (!addressData?.postalCode?.trim()) {
-        throw new Error('CEP é obrigatório');
+        setError('CEP é obrigatório');
+        setErrorType('validation');
+        setShowErrorModal(true);
+        setLoading(false);
+        return;
       }
       if (!addressData?.street?.trim()) {
-        throw new Error('Rua é obrigatória');
+        setError('Rua é obrigatória');
+        setErrorType('validation');
+        setShowErrorModal(true);
+        setLoading(false);
+        return;
       }
       if (!addressData?.number?.trim()) {
-        throw new Error('Número é obrigatório');
+        setError('Número é obrigatório');
+        setErrorType('validation');
+        setShowErrorModal(true);
+        setLoading(false);
+        return;
       }
       if (!addressData?.neighborhood?.trim()) {
-        throw new Error('Bairro é obrigatório');
+        setError('Bairro é obrigatório');
+        setErrorType('validation');
+        setShowErrorModal(true);
+        setLoading(false);
+        return;
       }
       if (!addressData?.city?.trim()) {
-        throw new Error('Cidade é obrigatória');
+        setError('Cidade é obrigatória');
+        setErrorType('validation');
+        setShowErrorModal(true);
+        setLoading(false);
+        return;
       }
       if (!addressData?.state?.trim()) {
-        throw new Error('Estado é obrigatório');
+        setError('Estado é obrigatório');
+        setErrorType('validation');
+        setShowErrorModal(true);
+        setLoading(false);
+        return;
       }
 
       // Atualizar dados do email antes de enviar
@@ -162,17 +215,71 @@ const EmailScreen = ({ navigation }) => {
       };
 
       // 5. Enviar para Celcoin com todos os dados
-      const { error: celcoinError } = await supabase.functions.invoke('submit-onboarding', {
+      const { data: celcoinResponse, error: celcoinError } = await supabase.functions.invoke('submit-onboarding', {
         body: formDataWithCode
       });
-      if (celcoinError) throw new Error('Erro ao enviar para Celcoin: ' + celcoinError.message);
+      
+      // Log detalhado da resposta para debug
+      console.log('Resposta completa da Celcoin (estrutura):', JSON.stringify(celcoinResponse, null, 2));
+      
+      // Verificar se a resposta indica erro
+      if (celcoinResponse && (celcoinResponse.success === false || 
+          (celcoinResponse.details && celcoinResponse.details.status === "ERROR"))) {
+        console.error('Erro na resposta da Celcoin:', celcoinResponse);
+        let errorMessage = 'Erro no processamento do cadastro.';
+        
+        // Tentar extrair a mensagem de erro específica
+        if (celcoinResponse.details && celcoinResponse.details.error && celcoinResponse.details.error.message) {
+          errorMessage = celcoinResponse.details.error.message;
+        } else if (celcoinResponse.error) {
+          errorMessage = celcoinResponse.error;
+        }
+        
+        setError(errorMessage);
+        setErrorType('celcoin');
+        setErrorDetails(celcoinResponse);
+        setShowErrorModal(true);
+        setLoading(false);
+        return; // Interrompe a execução para não navegar para a tela de sucesso
+      } else if (celcoinError) {
+        console.error('Erro ao enviar para Celcoin:', celcoinError);
+        setError(getReadableError(celcoinError));
+        setErrorType('celcoin');
+        setErrorDetails(celcoinError);
+        setShowErrorModal(true);
+        setLoading(false);
+        return; // Interrompe a execução para não navegar para a tela de sucesso
+      }
 
-      // 6. Se tudo der certo, navega para sucesso
+      console.log('Dados enviados para Celcoin com sucesso');
+
+      // 6. Se tudo der certo, navega para sucesso - só chega aqui se não houver erros
       navigation.replace('OnboardingSuccess');
 
     } catch (error) {
       console.error('Erro no cadastro:', error);
-      setError(error.message);
+      
+      // Extrair a mensagem de erro específica
+      let errorMessage = getReadableError(error);
+      
+      // Se a mensagem contiver "Error:", extrair apenas a parte após isso
+      if (errorMessage.includes('Error:')) {
+        errorMessage = errorMessage.split('Error:')[1].trim();
+      }
+      
+      setError(errorMessage);
+      
+      // Determinar o tipo de erro com base na mensagem
+      if (errorMessage.includes('obrigatório') || 
+          errorMessage.includes('inválido') || 
+          errorMessage.includes('formato')) {
+        setErrorType('validation');
+      } else {
+        setErrorType('generic');
+      }
+      
+      setErrorDetails(error);
+      setShowErrorModal(true);
       setLoading(false);
     }
   };
@@ -186,36 +293,39 @@ const EmailScreen = ({ navigation }) => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backText}>‹</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>E-mail</Text>
-          <Text style={styles.subtitle}>
-            Informe o endereço de e-mail
-          </Text>
+          <View style={styles.headerTop}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.backText}>‹</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>E-mail</Text>
+            <Text style={styles.subtitle}>
+              Informe o endereço de e-mail
+            </Text>
+          </View>
         </View>
 
         {/* Content */}
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          style={styles.content} 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
           <View style={styles.form}>
+            <Text style={styles.label}>E-mail</Text>
             <TextInput
-              label="E-mail"
               value={email}
               onChangeText={setEmail}
-              mode="flat"
-              style={styles.input}
-              contentStyle={styles.inputContent}
-              theme={{
-                colors: {
-                  primary: '#E91E63',
-                  error: '#B00020',
-                  onSurfaceVariant: '#666666',
-                  onSurface: '#000000',
-                },
-              }}
+              style={[styles.input, email && styles.filledInput]}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={email ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: email ? '600' : '400' } } }}
               keyboardType="email-address"
               autoCapitalize="none"
               error={!!error}
@@ -223,9 +333,9 @@ const EmailScreen = ({ navigation }) => {
             />
 
             {error ? (
-              <HelperText type="error" visible={!!error}>
+              <Text style={styles.errorText}>
                 {error}
-              </HelperText>
+              </Text>
             ) : null}
           </View>
         </ScrollView>
@@ -247,6 +357,29 @@ const EmailScreen = ({ navigation }) => {
           </Button>
         </View>
       </KeyboardAvoidingView>
+      <CustomAlert
+        visible={showErrorModal}
+        title={errorType === 'celcoin' ? 'Erro na validação dos dados' : 
+               errorType === 'validation' ? 'Erro de validação' : 'Erro'}
+        message={error}
+        onDismiss={() => setShowErrorModal(false)}
+        type="error"
+        confirmText={errorType === 'celcoin' ? 'Corrigir dados' : 'OK'}
+        confirmButtonColor="#E91E63"
+        textColor="#FFFFFF"
+        onConfirm={() => {
+          setShowErrorModal(false);
+          if (errorType === 'celcoin') {
+            // Voltar para a tela anterior para corrigir os dados
+            navigation.goBack();
+          }
+        }}
+        cancelText={errorType === 'celcoin' ? 'Tentar novamente' : null}
+        onCancel={errorType === 'celcoin' ? () => {
+          setShowErrorModal(false);
+          handleSubmit();
+        } : null}
+      />
     </SafeAreaView>
   );
 };
@@ -267,14 +400,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderBottomWidth: 1,
     borderBottomColor: '#F5F5F5',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
+    marginBottom: 24,
+  },
+  headerContent: {
+    paddingHorizontal: 24,
   },
   backButton: {
-    marginBottom: 16,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   backText: {
     fontSize: 32,
     color: '#E91E63',
+    marginTop: -4,
   },
   headerTitle: {
     fontSize: 20,
@@ -289,26 +435,43 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    flexGrow: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   form: {
     paddingHorizontal: 24,
+    paddingBottom: Platform.OS === 'android' ? 32 : 24,
+  },
+  label: {
+    fontSize: 13,
+    color: '#666666',
+    marginBottom: 8,
+    marginTop: 16,
   },
   input: {
-    marginBottom: 16,
-    backgroundColor: 'transparent',
-  },
-  inputContent: {
-    fontFamily: 'Roboto',
+    backgroundColor: '#FFF',
     fontSize: 16,
-    backgroundColor: 'transparent',
+    height: 48,
     paddingHorizontal: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    width: '100%',
+  },
+  filledInput: {
+    fontWeight: '500',
+  },
+  errorText: {
+    color: '#B00020',
+    fontSize: 12,
+    marginTop: 4,
   },
   footer: {
     padding: 16,
-    paddingBottom: 24,
     backgroundColor: '#FFF',
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: '#F5F5F5',
     ...Platform.select({
       android: {
         elevation: 8,
@@ -322,16 +485,16 @@ const styles = StyleSheet.create({
     }),
   },
   continueButton: {
-    borderRadius: 4,
-    backgroundColor: '#E91E63',
-    paddingVertical: 8,
     height: 48,
     justifyContent: 'center',
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
   },
   continueButtonLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '500',
     color: '#FFF',
+    textTransform: 'uppercase',
   },
 });
 

@@ -151,77 +151,90 @@ const PersonalDataScreen = ({ navigation }) => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backText}>‹</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Dados Pessoais</Text>
-          <Text style={styles.subtitle}>
-            Vamos precisar de algumas informações para seguir com seu cadastro
-          </Text>
+          <View style={styles.headerTop}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.backText}>‹</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Dados Pessoais</Text>
+            <Text style={styles.subtitle}>
+              Vamos precisar de algumas informações para seguir com seu cadastro
+            </Text>
+          </View>
         </View>
 
         {/* Content */}
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          style={styles.content} 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
           <View style={styles.form}>
-            <Text style={styles.fieldLabel}>CPF</Text>
+            <Text style={styles.label}>CPF</Text>
             <TextInput
               value={formData.documentNumber}
               onChangeText={(text) => handleChange('documentNumber', text)}
-              style={styles.input}
+              style={[styles.input, formData.documentNumber && styles.filledInput]}
               keyboardType="numeric"
               maxLength={14}
               disabled={!!formData.documentNumber}
-              underlineColor="#E0E0E0"
-              activeUnderlineColor="#E91E63"
-              mode="flat"
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={formData.documentNumber ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: formData.documentNumber ? '600' : '400' } } }}
             />
 
-            <Text style={styles.fieldLabel}>Nome Completo</Text>
+            <Text style={styles.label}>Nome Completo</Text>
             <TextInput
               value={formData.fullName}
               onChangeText={(text) => handleChange('fullName', text)}
-              style={styles.input}
+              style={[styles.input, formData.fullName && styles.filledInput]}
               error={!!errors.fullName}
-              underlineColor="#E0E0E0"
-              activeUnderlineColor="#E91E63"
-              mode="flat"
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={formData.fullName ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: formData.fullName ? '600' : '400' } } }}
             />
             {errors.fullName && (
               <Text style={styles.errorText}>{errors.fullName}</Text>
             )}
 
-            <Text style={styles.fieldLabel}>Data de Nascimento</Text>
+            <Text style={styles.label}>Data de Nascimento</Text>
             <TextInput
               value={formData.birthDate}
               onChangeText={(text) => handleChange('birthDate', text)}
-              style={styles.input}
+              style={[styles.input, formData.birthDate && styles.filledInput]}
               keyboardType="numeric"
               maxLength={10}
               placeholder="DD/MM/AAAA"
               error={!!errors.birthDate}
-              underlineColor="#E0E0E0"
-              activeUnderlineColor="#E91E63"
-              mode="flat"
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={formData.birthDate ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: formData.birthDate ? '600' : '400' } } }}
             />
             {errors.birthDate && (
               <Text style={styles.errorText}>{errors.birthDate}</Text>
             )}
 
-            <Text style={styles.fieldLabel}>Nome da Mãe</Text>
+            <Text style={styles.label}>Nome da Mãe</Text>
             <TextInput
               value={formData.motherName}
               onChangeText={(text) => handleChange('motherName', text)}
-              style={styles.input}
-              underlineColor="#E0E0E0"
-              activeUnderlineColor="#E91E63"
-              mode="flat"
+              style={[styles.input, formData.motherName && styles.filledInput]}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={formData.motherName ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: formData.motherName ? '600' : '400' } } }}
             />
 
             {/* Campo PEP */}
-            <Text style={styles.fieldLabel}>Pessoa Politicamente Exposta</Text>
+            <Text style={styles.label}>Pessoa Politicamente Exposta</Text>
             <TouchableOpacity 
               style={styles.pepSelector}
               onPress={() => setPepModalVisible(true)}
@@ -284,43 +297,67 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderBottomWidth: 1,
     borderBottomColor: '#F5F5F5',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
+    marginBottom: 24,
+  },
+  headerContent: {
+    paddingHorizontal: 24,
   },
   backButton: {
-    marginBottom: 16,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   backText: {
     fontSize: 32,
     color: '#E91E63',
+    marginTop: -4,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
-    marginBottom: 8,
+    color: '#666666',
+    lineHeight: 24,
   },
   content: {
     flex: 1,
-    padding: 16,
+    flexGrow: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   form: {
-    marginBottom: 24,
+    paddingHorizontal: 24,
+    paddingBottom: Platform.OS === 'android' ? 32 : 24,
   },
-  fieldLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 16,
+  label: {
+    fontSize: 13,
+    color: '#666666',
     marginBottom: 8,
+    marginTop: 16,
   },
   input: {
     backgroundColor: '#FFF',
     fontSize: 16,
-    height: 40,
+    height: 48,
     paddingHorizontal: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    width: '100%',
+  },
+  filledInput: {
+    fontWeight: '500',
   },
   errorText: {
     color: '#B00020',
@@ -366,16 +403,16 @@ const styles = StyleSheet.create({
     }),
   },
   continueButton: {
-    backgroundColor: '#E91E63',
-    borderRadius: 4,
-    paddingVertical: 8,
     height: 48,
     justifyContent: 'center',
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
   },
   continueButtonLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '500',
     color: '#FFF',
+    textTransform: 'uppercase',
   },
 });
 

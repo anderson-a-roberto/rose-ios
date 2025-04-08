@@ -31,8 +31,10 @@ const TransferOutReceipt = ({ transaction }) => {
     return types[movementType] || movementType;
   };
 
+  const title = 'Comprovante de Transferência Enviada';
+
   return (
-    <ReceiptBase transactionId={transaction.id}>
+    <ReceiptBase transactionId={transaction.id} title={title}>
       <View style={styles.row}>
         <Text style={styles.label}>Data e Hora:</Text>
         <Text style={styles.value}>{formatDate(transaction.createDate)}</Text>
@@ -48,6 +50,11 @@ const TransferOutReceipt = ({ transaction }) => {
         <Text style={[styles.value, styles.valueNegative]}>
           -{formatValue(transaction.amount)}
         </Text>
+      </View>
+
+      <View style={styles.statusContainer}>
+        <Text style={styles.statusLabel}>Status</Text>
+        <Text style={styles.statusValue}>CONFIRMADO</Text>
       </View>
 
       {transaction.description && (
@@ -99,11 +106,28 @@ const styles = StyleSheet.create({
     color: '#F44336',
     fontWeight: 'bold',
   },
+  statusContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  statusLabel: {
+    fontSize: 14,
+    color: '#666',
+    flex: 1,
+  },
+  statusValue: {
+    fontSize: 14,
+    color: '#333',
+    flex: 2,
+    textAlign: 'right',
+  },
   recipientInfo: {
     marginTop: 16,
     padding: 16,
     backgroundColor: '#f9f9f9',
-    borderRadius: 8,
+    borderRadius: 4,
   },
   sectionTitle: {
     fontSize: 16,

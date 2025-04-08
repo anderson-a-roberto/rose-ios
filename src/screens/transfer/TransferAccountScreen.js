@@ -142,19 +142,25 @@ const TransferAccountScreen = ({ navigation, route }) => {
               value={destinationAccount}
               onChangeText={handleAccountChange}
               keyboardType="numeric"
-              style={styles.input}
+              style={[styles.input, destinationAccount && styles.filledInput]}
               placeholder="Digite o número da conta"
               placeholderTextColor="#666"
               autoFocus={true}
               underlineColor="transparent"
               activeUnderlineColor="transparent"
               selectionColor="#E91E63"
+              textColor={destinationAccount ? '#000000' : '#999999'}
               error={!!error}
               theme={{
                 colors: {
                   text: '#000000',
                   placeholder: '#666666',
                   primary: '#E91E63',
+                },
+                fonts: { 
+                  regular: { 
+                    fontWeight: destinationAccount ? '600' : '400' 
+                  } 
                 }
               }}
             />
@@ -253,7 +259,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     paddingHorizontal: 0,
     height: 56,
-    color: '#000000'
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  filledInput: {
+    backgroundColor: 'transparent',
+    color: '#000000',
   },
   errorText: {
     color: '#B00020',

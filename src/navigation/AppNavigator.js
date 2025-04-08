@@ -41,6 +41,11 @@ import CompanyPasswordScreen from '../screens/onboarding/company/CompanyPassword
 import PixLimitsScreen from '../screens/PixLimitsScreen';
 import PixQrCodeScanScreen from '../screens/PixQrCodeScanScreen';
 import PixCopyPasteScreen from '../screens/PixCopyPasteScreen';
+import PixKeysScreen from '../screens/PixKeysScreen';
+import PixReceiveKeyScreen from '../screens/pix/PixReceiveKeyScreen';
+import PixReceiveKeyScreenV2 from '../screens/pix/PixReceiveKeyScreenV2';
+import PixReceiveAmountScreen from '../screens/pix/PixReceiveAmountScreen';
+import PixReceiveConfirmScreen from '../screens/pix/PixReceiveConfirmScreen';
 
 const Stack = createStackNavigator();
 
@@ -137,6 +142,11 @@ const AppNavigator = () => {
         <Stack.Screen name="PixLimits" component={PixLimitsScreen} />
         <Stack.Screen name="PixQrCode" component={PixQrCodeScanScreen} />
         <Stack.Screen name="PixCopyPaste" component={PixCopyPasteScreen} />
+        <Stack.Screen name="PixKeysScreen" component={PixKeysScreen} />
+        <Stack.Screen name="PixReceiveKeyScreen" component={PixReceiveKeyScreen} />
+        <Stack.Screen name="PixReceiveKeyScreenV2" component={PixReceiveKeyScreenV2} />
+        <Stack.Screen name="PixReceiveAmountScreen" component={PixReceiveAmountScreen} />
+        <Stack.Screen name="PixReceiveConfirmScreen" component={PixReceiveConfirmScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

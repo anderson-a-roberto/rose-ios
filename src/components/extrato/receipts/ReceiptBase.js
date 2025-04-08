@@ -2,11 +2,11 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
 
-const ReceiptBase = ({ children, transactionId }) => {
+const ReceiptBase = ({ children, transactionId, title }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Comprovante</Text>
+        <Text style={styles.title}>{title || 'Comprovante de Transferência Enviada'}</Text>
         <Text style={styles.transactionId}>ID: {transactionId}</Text>
       </View>
 
@@ -29,7 +29,6 @@ const ReceiptBase = ({ children, transactionId }) => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#fff',
-    borderRadius: 8,
     padding: 16,
     marginVertical: 8,
   },
@@ -38,6 +37,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e0e0e0',
     paddingBottom: 16,
     marginBottom: 16,
+    alignItems: 'center',
   },
   title: {
     fontSize: 20,

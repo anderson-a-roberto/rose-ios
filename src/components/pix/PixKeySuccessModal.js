@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 20,
     margin: 20,
-    borderRadius: 10,
+    borderRadius: 4,
   },
   content: {
     alignItems: 'center',
@@ -83,6 +83,7 @@ const styles = StyleSheet.create({
   },
   button: {
     width: '100%',
+    borderRadius: 4,
   },
 });
 

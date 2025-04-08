@@ -16,49 +16,62 @@ const getRecipientName = (clientCode, description, movementType) => {
 };
 
 const StatementTableRow = ({ transaction, onPress }) => {
+  // Se a transação não existir, retornar null para não renderizar nada
+  if (!transaction) {
+    console.warn('Tentativa de renderizar linha de extrato sem dados de transação');
+    return null;
+  }
+  
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
+    if (!dateString) return '';
+    
+    try {
+      return new Date(dateString).toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    } catch (error) {
+      console.warn('Erro ao formatar data:', error);
+      return '';
+    }
   };
 
-  const isPositive = transaction.balanceType === 'CREDIT';
+  const isPositive = transaction?.balanceType === 'CREDIT';
 
   // Determinar o tipo de transação e o título correspondente
   let title = '';
   let subtitle = '';
   let transactionType = '';
   
-  if (transaction.movementType === 'PIXPAYMENTOUT') {
+  if (transaction?.movementType === 'PIXPAYMENTOUT') {
     title = 'Transferência enviada';
     subtitle = getRecipientName(transaction.clientCode, transaction.description, transaction.movementType);
     transactionType = 'PIX';
-  } else if (transaction.movementType === 'PIXPAYMENTIN') {
+  } else if (transaction?.movementType === 'PIXPAYMENTIN') {
     title = 'Transferência recebida';
     subtitle = getRecipientName(transaction.clientCode, transaction.description, transaction.movementType);
     transactionType = 'PIX';
-  } else if (transaction.movementType === 'BILLPAYMENT') {
+  } else if (transaction?.movementType === 'BILLPAYMENT') {
     title = 'Pagamento efetuado';
     subtitle = getRecipientName(transaction.clientCode, transaction.description, transaction.movementType);
     transactionType = '';
-  } else if (transaction.movementType === 'TEFTRANSFEROUT') {
+  } else if (transaction?.movementType === 'TEFTRANSFEROUT') {
     title = 'Transferência enviada';
     subtitle = getRecipientName(transaction.clientCode, transaction.description, transaction.movementType);
     transactionType = 'Transferência';
-  } else if (transaction.movementType === 'TEFTRANSFERIN') {
+  } else if (transaction?.movementType === 'TEFTRANSFERIN') {
     title = 'Transferência recebida';
     subtitle = getRecipientName(transaction.clientCode, transaction.description, transaction.movementType);
     transactionType = 'Transferência';
-  } else if (transaction.movementType === 'PIXREVERSALOUT') {
+  } else if (transaction?.movementType === 'PIXREVERSALOUT') {
     title = 'Estorno enviado';
     subtitle = getRecipientName(transaction.clientCode, transaction.description, transaction.movementType);
     transactionType = 'PIX';
-  } else if (transaction.movementType === 'ENTRYCREDIT') {
+  } else if (transaction?.movementType === 'ENTRYCREDIT') {
     title = 'Crédito recebido';
     subtitle = getRecipientName(transaction.clientCode, transaction.description, transaction.movementType);
     transactionType = '';
@@ -83,10 +96,12 @@ const StatementTableRow = ({ transaction, onPress }) => {
           <Text style={styles.transactionTitle}>{title}</Text>
           {subtitle ? <Text style={styles.transactionSubtitle}>{subtitle}</Text> : null}
           <View style={styles.transactionDetails}>
-            <Text style={styles.transactionValue}>R$ {transaction.amount.toFixed(2).replace('.', ',')}</Text>
+            <Text style={styles.transactionValue}>
+              R$ {transaction && transaction.amount !== undefined ? transaction.amount.toFixed(2).replace('.', ',') : '0,00'}
+            </Text>
             {transactionType ? <Text style={styles.transactionMethod}>{transactionType}</Text> : null}
           </View>
-          <Text style={styles.transactionDate}>{formatDate(transaction.createDate)}</Text>
+          <Text style={styles.transactionDate}>{formatDate(transaction?.createDate)}</Text>
         </View>
       </View>
     </TouchableOpacity>

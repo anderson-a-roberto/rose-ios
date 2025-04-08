@@ -522,6 +522,7 @@ const styles = StyleSheet.create({
   confirmButtonLabel: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   errorContainer: {
     alignItems: 'center',

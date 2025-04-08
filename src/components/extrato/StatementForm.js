@@ -121,11 +121,13 @@ const StatementForm = ({ onSubmit }) => {
           mode="contained"
           onPress={handleSubmit}
           style={styles.button}
-          buttonColor="#e92176"
+          buttonColor="#E91E63"
           textColor="white"
           loading={loading}
+          contentStyle={styles.buttonContent}
+          labelStyle={styles.buttonLabel}
         >
-          Consultar Extrato
+          FILTRAR
         </Button>
       </View>
 
@@ -165,9 +167,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#682145',
   },
   button: {
-    borderRadius: 25,
-    height: 50,
-    justifyContent: 'center',
+    borderRadius: 8,
+    backgroundColor: '#E91E63',
+  },
+  buttonContent: {
+    height: 56,
+  },
+  buttonLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+    color: '#FFF',
   },
   contentContainer: {
     flex: 1,

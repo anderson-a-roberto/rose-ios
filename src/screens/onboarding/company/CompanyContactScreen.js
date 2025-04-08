@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform } from 'react-native';
 import { Text, TextInput, Button } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useOnboarding } from '../../../contexts/OnboardingContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../../config/supabase';
@@ -104,24 +103,30 @@ const CompanyContactScreen = ({ navigation }) => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         {/* Header */}
-        <View style={styles.headerTop}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <MaterialCommunityIcons name="chevron-left" size={32} color="#E91E63" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Contato da empresa</Text>
-          <Text style={styles.subtitle}>
-            Informe os dados de contato da sua empresa
-          </Text>
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.backText}>‹</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Contato da empresa</Text>
+            <Text style={styles.subtitle}>
+              Informe os dados de contato da sua empresa
+            </Text>
+          </View>
         </View>
 
         {/* Content */}
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          style={styles.content} 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
           <View style={styles.form}>
             <Text style={styles.label}>E-mail</Text>
             <TextInput
@@ -162,7 +167,7 @@ const CompanyContactScreen = ({ navigation }) => {
           <Button
             mode="contained"
             onPress={handleNext}
-            style={[styles.continueButton, !isFormValid() && styles.continueButtonDisabled]}
+            style={[styles.continueButton, !isFormValid() && styles.disabledButton]}
             labelStyle={styles.continueButtonLabel}
             loading={loading}
             disabled={loading || !isFormValid()}
@@ -183,38 +188,57 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFF',
+    minHeight: '100%',
+  },
+  header: {
+    paddingTop: Platform.OS === 'ios' ? 8 : 16,
+    paddingBottom: 24,
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
   },
   headerTop: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 8,
+    marginBottom: 24,
   },
   backButton: {
-    padding: 8,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backText: {
+    fontSize: 32,
+    color: '#E91E63',
+    marginTop: -4,
   },
   headerContent: {
     paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 24,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '600',
     color: '#000',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: '#666666',
+    lineHeight: 24,
   },
   content: {
     flex: 1,
+    flexGrow: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 24,
+    paddingBottom: Platform.OS === 'android' ? 32 : 24,
   },
   form: {
-    gap: 16,
     paddingVertical: 16,
   },
   label: {
@@ -230,29 +254,47 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
+    width: '100%',
   },
   filledInput: {
-    backgroundColor: '#FFF',
+    fontWeight: '500',
   },
   footer: {
-    padding: 24,
-    paddingBottom: 32,
+    padding: 16,
+    backgroundColor: '#FFF',
+    borderTopWidth: 1,
+    borderTopColor: '#F5F5F5',
+    ...Platform.select({
+      android: {
+        elevation: 8,
+      },
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+    }),
   },
   continueButton: {
+    height: 48,
+    justifyContent: 'center',
     backgroundColor: '#E91E63',
-    paddingVertical: 8,
+    borderRadius: 8,
   },
-  continueButtonDisabled: {
-    backgroundColor: '#ccc',
+  disabledButton: {
+    backgroundColor: '#E0E0E0',
   },
   continueButtonLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '500',
     color: '#FFF',
+    textTransform: 'uppercase',
   },
   error: {
     fontSize: 12,
     color: '#FF0000',
+    marginTop: 8,
     marginBottom: 8,
   },
 });

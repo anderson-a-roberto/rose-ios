@@ -119,45 +119,91 @@ const InternalTransferReceipt = ({ transaction, onTransferDetailsLoaded }) => {
         </Text>
       </View>
 
-      {/* Dados do Remetente */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Dados do Remetente</Text>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Nome</Text>
-          <Text style={styles.value}>{transferDetails?.body?.debitParty?.name || '-'}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>CPF/CNPJ</Text>
-          <Text style={styles.value}>{transferDetails?.body?.debitParty?.taxId || '-'}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Agência/Conta</Text>
-          <Text style={styles.value}>
-            {transferDetails?.body?.debitParty?.branch || '-'}/
-            {transferDetails?.body?.debitParty?.account || '-'}
-          </Text>
-        </View>
-      </View>
+      {isOutgoing ? (
+        <>
+          {/* Dados do Remetente */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Dados do Remetente</Text>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Nome</Text>
+              <Text style={styles.value}>{transferDetails?.body?.debitParty?.name || '-'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>CPF/CNPJ</Text>
+              <Text style={styles.value}>{transferDetails?.body?.debitParty?.taxId || '-'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Agência/Conta</Text>
+              <Text style={styles.value}>
+                {transferDetails?.body?.debitParty?.branch || '-'}/
+                {transferDetails?.body?.debitParty?.account || '-'}
+              </Text>
+            </View>
+          </View>
 
-      {/* Dados do Destinatário */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Dados do Destinatário</Text>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Nome</Text>
-          <Text style={styles.value}>{transferDetails?.body?.creditParty?.name || '-'}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>CPF/CNPJ</Text>
-          <Text style={styles.value}>{transferDetails?.body?.creditParty?.taxId || '-'}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Agência/Conta</Text>
-          <Text style={styles.value}>
-            {transferDetails?.body?.creditParty?.branch || '-'}/
-            {transferDetails?.body?.creditParty?.account || '-'}
-          </Text>
-        </View>
-      </View>
+          {/* Dados do Destinatário */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Dados do Destinatário</Text>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Nome</Text>
+              <Text style={styles.value}>{transferDetails?.body?.creditParty?.name || '-'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>CPF/CNPJ</Text>
+              <Text style={styles.value}>{transferDetails?.body?.creditParty?.taxId || '-'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Agência/Conta</Text>
+              <Text style={styles.value}>
+                {transferDetails?.body?.creditParty?.branch || '-'}/
+                {transferDetails?.body?.creditParty?.account || '-'}
+              </Text>
+            </View>
+          </View>
+        </>
+      ) : (
+        <>
+          {/* Dados do Pagador */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Dados do Pagador</Text>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Nome</Text>
+              <Text style={styles.value}>{transferDetails?.body?.debitParty?.name || '-'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>CPF/CNPJ</Text>
+              <Text style={styles.value}>{transferDetails?.body?.debitParty?.taxId || '-'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Agência/Conta</Text>
+              <Text style={styles.value}>
+                {transferDetails?.body?.debitParty?.branch || '-'}/
+                {transferDetails?.body?.debitParty?.account || '-'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Dados do Beneficiário */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Dados do Beneficiário</Text>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Nome</Text>
+              <Text style={styles.value}>{transferDetails?.body?.creditParty?.name || '-'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>CPF/CNPJ</Text>
+              <Text style={styles.value}>{transferDetails?.body?.creditParty?.taxId || '-'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Agência/Conta</Text>
+              <Text style={styles.value}>
+                {transferDetails?.body?.creditParty?.branch || '-'}/
+                {transferDetails?.body?.creditParty?.account || '-'}
+              </Text>
+            </View>
+          </View>
+        </>
+      )}
 
       {/* Identificação */}
       <View style={styles.section}>
@@ -172,12 +218,6 @@ const InternalTransferReceipt = ({ transaction, onTransferDetailsLoaded }) => {
             <Text style={styles.value}>{transferDetails.body.endToEndId}</Text>
           </View>
         )}
-        {transferDetails?.body?.clientRequestId && (
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>ID do Cliente</Text>
-            <Text style={styles.value}>{transferDetails.body.clientRequestId}</Text>
-          </View>
-        )}
       </View>
 
       {/* Descrição */}
@@ -185,6 +225,7 @@ const InternalTransferReceipt = ({ transaction, onTransferDetailsLoaded }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Descrição</Text>
           <View style={styles.infoRow}>
+            <Text style={styles.label}>Mensagem</Text>
             <Text style={styles.value}>
               {transferDetails?.body?.description || transaction.description}
             </Text>
@@ -224,6 +265,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#000000',
     marginBottom: 8,
+    textAlign: 'center',
   },
   date: {
     fontSize: 14,
@@ -231,39 +273,32 @@ const styles = StyleSheet.create({
   },
   statusContainer: {
     marginBottom: 16,
-    padding: 12,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
   },
   statusLabel: {
     fontSize: 14,
     color: '#666666',
-    fontWeight: '500',
+    marginBottom: 4,
   },
   statusValue: {
-    fontSize: 14,
+    fontSize: 16,
+    fontWeight: '500',
     color: '#4CAF50',
-    fontWeight: 'bold',
   },
   amountContainer: {
-    marginBottom: 16,
-    padding: 12,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 24,
+    padding: 16,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 4,
   },
   amountLabel: {
     fontSize: 14,
     color: '#666666',
-    fontWeight: '500',
+    marginBottom: 4,
   },
   amountValue: {
-    fontSize: 16,
+    fontSize: 24,
     fontWeight: 'bold',
   },
   amountPositive: {
@@ -273,16 +308,16 @@ const styles = StyleSheet.create({
     color: '#F44336',
   },
   section: {
-    marginBottom: 16,
-    padding: 12,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
+    marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '500',
     color: '#000000',
-    marginBottom: 8,
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    paddingBottom: 8,
   },
   infoRow: {
     flexDirection: 'row',
@@ -292,14 +327,13 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     color: '#666666',
-    flex: 1,
   },
   value: {
     fontSize: 14,
-    color: '#333333',
-    fontWeight: '500',
-    flex: 2,
+    color: '#000000',
+    flex: 1,
     textAlign: 'right',
+    marginLeft: 16,
   },
   loadingContainer: {
     padding: 24,

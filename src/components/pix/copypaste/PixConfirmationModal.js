@@ -183,6 +183,7 @@ const PixConfirmationModal = ({
               style={styles.cancelButton}
               textColor="#E91E63"
               buttonColor="#FFF"
+              contentStyle={styles.buttonContent}
             >
               Cancelar
             </Button>
@@ -194,6 +195,7 @@ const PixConfirmationModal = ({
               disabled={isLoading || !isValidToConfirm()}
               buttonColor="#E91E63"
               textColor="#FFF"
+              contentStyle={styles.buttonContent}
             >
               Confirmar
             </Button>
@@ -315,11 +317,18 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     flex: 1,
-    marginRight: 8,
+    marginRight: 12,
     borderColor: '#E91E63',
+    borderWidth: 1,
+    borderRadius: 4,
   },
   confirmButton: {
     flex: 2,
+    borderRadius: 4,
+  },
+  buttonContent: {
+    height: 48,
+    paddingVertical: 8,
   },
 });
 

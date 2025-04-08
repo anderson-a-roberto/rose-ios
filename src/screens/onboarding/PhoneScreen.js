@@ -46,36 +46,39 @@ const PhoneScreen = ({ navigation }) => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backText}>‹</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Celular</Text>
-          <Text style={styles.subtitle}>
-            Informe o número do seu celular
-          </Text>
+          <View style={styles.headerTop}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.backText}>‹</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Celular</Text>
+            <Text style={styles.subtitle}>
+              Informe o número do seu celular
+            </Text>
+          </View>
         </View>
 
         {/* Content */}
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          style={styles.content} 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
           <View style={styles.form}>
+            <Text style={styles.label}>Celular</Text>
             <TextInput
-              label="Celular"
               value={phoneNumber}
               onChangeText={handleChange}
-              mode="flat"
-              style={styles.input}
-              contentStyle={styles.inputContent}
-              theme={{
-                colors: {
-                  primary: '#E91E63',
-                  error: '#B00020',
-                  onSurfaceVariant: '#666666',
-                  onSurface: '#000000',
-                },
-              }}
+              style={[styles.input, phoneNumber && styles.filledInput]}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={phoneNumber ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: phoneNumber ? '600' : '400' } } }}
               keyboardType="numeric"
               maxLength={15}
             />
@@ -114,14 +117,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderBottomWidth: 1,
     borderBottomColor: '#F5F5F5',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
+    marginBottom: 24,
+  },
+  headerContent: {
+    paddingHorizontal: 24,
   },
   backButton: {
-    marginBottom: 16,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   backText: {
     fontSize: 32,
     color: '#E91E63',
+    marginTop: -4,
   },
   headerTitle: {
     fontSize: 20,
@@ -136,26 +152,38 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    flexGrow: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   form: {
     paddingHorizontal: 24,
+    paddingBottom: Platform.OS === 'android' ? 32 : 24,
+  },
+  label: {
+    fontSize: 13,
+    color: '#666666',
+    marginBottom: 8,
+    marginTop: 16,
   },
   input: {
-    marginBottom: 16,
-    backgroundColor: 'transparent',
-  },
-  inputContent: {
-    fontFamily: 'Roboto',
+    backgroundColor: '#FFF',
     fontSize: 16,
-    backgroundColor: 'transparent',
+    height: 48,
     paddingHorizontal: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    width: '100%',
+  },
+  filledInput: {
+    fontWeight: '500',
   },
   footer: {
     padding: 16,
-    paddingBottom: 24,
     backgroundColor: '#FFF',
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: '#F5F5F5',
     ...Platform.select({
       android: {
         elevation: 8,
@@ -169,16 +197,16 @@ const styles = StyleSheet.create({
     }),
   },
   continueButton: {
-    borderRadius: 4,
-    backgroundColor: '#E91E63',
-    paddingVertical: 8,
     height: 48,
     justifyContent: 'center',
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
   },
   continueButtonLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '500',
     color: '#FFF',
+    textTransform: 'uppercase',
   },
 });
 

@@ -57,23 +57,32 @@ const PasswordScreen = ({ navigation }) => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backText}>‹</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Senha do App</Text>
-          <Text style={styles.subtitle}>
-            Nesta etapa, você vai precisar cadastrar uma senha de acesso ao app
-          </Text>
+          <View style={styles.headerTop}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.backText}>‹</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Senha do App</Text>
+            <Text style={styles.subtitle}>
+              Nesta etapa, você vai precisar cadastrar uma senha de acesso ao app
+            </Text>
+          </View>
         </View>
 
         {/* Content */}
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          style={styles.content} 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
           <View style={styles.form}>
+            <Text style={styles.label}>Senha</Text>
             <TextInput
-              label="Senha"
               value={formData.password}
               onChangeText={(value) => setFormData(prev => ({ ...prev, password: value }))}
               secureTextEntry={!showPassword}
@@ -84,21 +93,15 @@ const PasswordScreen = ({ navigation }) => {
                   color="#666666"
                 />
               }
-              mode="flat"
-              style={styles.input}
-              contentStyle={styles.inputContent}
-              theme={{
-                colors: {
-                  primary: '#E91E63',
-                  error: '#B00020',
-                  onSurfaceVariant: '#666666',
-                  onSurface: '#000000',
-                },
-              }}
+              style={[styles.input, formData.password && styles.filledInput]}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={formData.password ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: formData.password ? '600' : '400' } } }}
             />
 
+            <Text style={styles.label}>Confirmar Senha</Text>
             <TextInput
-              label="Confirmar Senha"
               value={formData.confirmPassword}
               onChangeText={(value) => setFormData(prev => ({ ...prev, confirmPassword: value }))}
               secureTextEntry={!showConfirmPassword}
@@ -109,23 +112,17 @@ const PasswordScreen = ({ navigation }) => {
                   color="#666666"
                 />
               }
-              mode="flat"
-              style={styles.input}
-              contentStyle={styles.inputContent}
-              theme={{
-                colors: {
-                  primary: '#E91E63',
-                  error: '#B00020',
-                  onSurfaceVariant: '#666666',
-                  onSurface: '#000000',
-                },
-              }}
+              style={[styles.input, formData.confirmPassword && styles.filledInput]}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              textColor={formData.confirmPassword ? '#000' : '#999'}
+              theme={{ fonts: { regular: { fontWeight: formData.confirmPassword ? '600' : '400' } } }}
             />
 
             {error ? (
-              <HelperText type="error" visible={true}>
+              <Text style={styles.errorText}>
                 {error}
-              </HelperText>
+              </Text>
             ) : null}
           </View>
         </ScrollView>
@@ -164,14 +161,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderBottomWidth: 1,
     borderBottomColor: '#F5F5F5',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
+    marginBottom: 24,
+  },
+  headerContent: {
+    paddingHorizontal: 24,
   },
   backButton: {
-    marginBottom: 16,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   backText: {
     fontSize: 32,
     color: '#E91E63',
+    marginTop: -4,
   },
   headerTitle: {
     fontSize: 20,
@@ -186,25 +196,44 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
+    flexGrow: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   form: {
+    paddingHorizontal: 24,
+    paddingBottom: Platform.OS === 'android' ? 32 : 24,
+  },
+  label: {
+    fontSize: 13,
+    color: '#666666',
+    marginBottom: 8,
     marginTop: 16,
   },
   input: {
     backgroundColor: '#FFF',
+    fontSize: 16,
+    height: 48,
+    paddingHorizontal: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    width: '100%',
     marginBottom: 16,
   },
-  inputContent: {
-    backgroundColor: '#FFF',
-    fontSize: 16,
-    paddingHorizontal: 0,
+  filledInput: {
+    fontWeight: '500',
+  },
+  errorText: {
+    color: '#B00020',
+    fontSize: 12,
+    marginTop: 4,
   },
   footer: {
     padding: 16,
     backgroundColor: '#FFF',
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: '#F5F5F5',
     ...Platform.select({
       android: {
         elevation: 8,
@@ -218,16 +247,16 @@ const styles = StyleSheet.create({
     }),
   },
   continueButton: {
-    backgroundColor: '#E91E63',
-    borderRadius: 4,
-    paddingVertical: 8,
     height: 48,
     justifyContent: 'center',
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
   },
   continueButtonLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '500',
     color: '#FFF',
+    textTransform: 'uppercase',
   },
 });
 

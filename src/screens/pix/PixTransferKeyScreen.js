@@ -221,14 +221,15 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: '#E91E63',
-    height: 48,
+    borderRadius: 8,
   },
   buttonContent: {
-    height: 48,
+    height: 56,
   },
   buttonLabel: {
     fontSize: 16,
     fontWeight: 'bold',
+    letterSpacing: 0.5,
     color: '#FFF',
   }
 });

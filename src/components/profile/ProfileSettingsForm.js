@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Platform, TouchableOpacity } from 'react-native';
-import { TextInput, Button, Text, ActivityIndicator } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, Platform, TouchableOpacity, Alert } from 'react-native';
+import { TextInput, Button, Text, ActivityIndicator, Divider } from 'react-native-paper';
 import { supabase } from '../../config/supabase';
 import MaskInput from 'react-native-mask-input';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import CloseAccountDialog from './CloseAccountDialog';
+import { useNavigation } from '@react-navigation/native';
 
 export default function ProfileSettingsForm({ onBack }) {
+  const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [form, setForm] = useState({
@@ -27,9 +31,17 @@ export default function ProfileSettingsForm({ onBack }) {
     addressCity: '',
     addressState: ''
   });
+  
+  // Estados para o encerramento de conta
+  const [showCloseAccountDialog, setShowCloseAccountDialog] = useState(false);
+  const [isClosingAccount, setIsClosingAccount] = useState(false);
+  const [closeAccountError, setCloseAccountError] = useState({});
+  const [accountNumber, setAccountNumber] = useState('');
+  const [userTaxId, setUserTaxId] = useState('');
 
   useEffect(() => {
     loadProfile();
+    loadAccountNumber();
   }, []);
 
   const loadProfile = async () => {
@@ -40,43 +52,184 @@ export default function ProfileSettingsForm({ onBack }) {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
 
-      const { data: profile, error: profileError } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
-        .select(`
-          full_name, social_name, email, phone_number, birth_date, 
-          mother_name, document_number, document_type,
-          address_postal_code, address_street, address_number, address_complement,
-          address_neighborhood, address_city, address_state
-        `)
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+
+      // Preencher o formulário com os dados do perfil
+      setForm(prevForm => ({
+        ...prevForm,
+        fullName: data.full_name || '',
+        socialName: data.social_name || '',
+        email: data.email || '',
+        phoneNumber: data.phone_number || '',
+        birthDate: data.birth_date || '',
+        motherName: data.mother_name || '',
+        documentNumber: data.document_number || '',
+        documentType: data.document_type || 'CPF',
+        addressPostalCode: data.address_postal_code || '',
+        addressStreet: data.address_street || '',
+        addressNumber: data.address_number || '',
+        addressComplement: data.address_complement || '',
+        addressNeighborhood: data.address_neighborhood || '',
+        addressCity: data.address_city || '',
+        addressState: data.address_state || ''
+      }));
+      
+      // Armazenar o CPF/CNPJ do usuário para uso no encerramento de conta
+      if (data.document_number) {
+        setUserTaxId(data.document_number);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar perfil:', error);
+      setError('Não foi possível carregar os dados do perfil.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadAccountNumber = async () => {
+    try {
+      // Obter o usuário atual
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+
+      // Obter o perfil do usuário para conseguir o document_number
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('document_number')
         .eq('id', user.id)
         .single();
 
       if (profileError) throw profileError;
-
-      if (profile) {
-        setForm({
-          fullName: profile.full_name || '',
-          socialName: profile.social_name || '',
-          email: profile.email || '',
-          phoneNumber: profile.phone_number || '',
-          birthDate: profile.birth_date || '',
-          motherName: profile.mother_name || '',
-          documentNumber: profile.document_number || '',
-          documentType: profile.document_type || 'CPF',
-          addressPostalCode: profile.address_postal_code || '',
-          addressStreet: profile.address_street || '',
-          addressNumber: profile.address_number || '',
-          addressComplement: profile.address_complement || '',
-          addressNeighborhood: profile.address_neighborhood || '',
-          addressCity: profile.address_city || '',
-          addressState: profile.address_state || ''
-        });
+      
+      if (!profileData || !profileData.document_number) {
+        console.error('Documento não encontrado no perfil');
+        return;
       }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+
+      // Buscar o número da conta na tabela kyc_proposals_v2
+      const { data: kycData, error: kycError } = await supabase
+        .from('kyc_proposals_v2')
+        .select('account')
+        .eq('document_number', profileData.document_number)
+        .eq('onboarding_create_status', 'CONFIRMED')
+        .single();
+
+      if (kycError) {
+        console.error('Erro ao buscar conta na kyc_proposals_v2:', kycError);
+        return;
+      }
+      
+      if (kycData && kycData.account) {
+        setAccountNumber(kycData.account);
+      } else {
+        console.warn('Número da conta não encontrado na kyc_proposals_v2');
+      }
+    } catch (error) {
+      console.error('Erro ao carregar número da conta:', error);
     }
+  };
+
+  const handleCloseAccount = (data) => {
+    setIsClosingAccount(true);
+    setCloseAccountError({});
+    
+    // Gerar um código de cliente único para a transação
+    const clientCode = `CLOSE_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    
+    console.log('Enviando solicitação de encerramento:', {
+      account: data.account,
+      documentNumber: data.documentNumber,
+      reason: data.reason,
+      clientCode: clientCode
+    });
+    
+    supabase.functions.invoke("close-account", {
+      body: {
+        account: data.account,
+        documentNumber: data.documentNumber,
+        reason: data.reason,
+        clientCode: clientCode
+      },
+      method: 'DELETE'
+    }).then(({ data: responseData, error }) => {
+      console.log('Resposta da API:', responseData, error);
+      
+      if (error) {
+        console.error('Erro ao encerrar conta:', error);
+        setCloseAccountError({
+          errorCode: 'GENERIC',
+          errorMessage: typeof error.message === 'string' ? error.message : 'Ocorreu um erro ao processar sua solicitação.'
+        });
+        setIsClosingAccount(false);
+        return;
+      }
+      
+      if (responseData && responseData.status === 'ERROR') {
+        console.error('Erro retornado pela API:', responseData);
+        
+        // Extrair a mensagem de erro, garantindo que seja uma string
+        let errorMessage = 'Ocorreu um erro ao processar sua solicitação.';
+        
+        if (responseData.error) {
+          if (typeof responseData.error === 'string') {
+            errorMessage = responseData.error;
+          } else if (responseData.error.message && typeof responseData.error.message === 'string') {
+            errorMessage = responseData.error.message;
+          }
+        } else if (responseData.message && typeof responseData.message === 'string') {
+          errorMessage = responseData.message;
+        }
+        
+        setCloseAccountError({
+          errorCode: responseData.errorCode || 'UNKNOWN',
+          errorMessage: errorMessage
+        });
+        setIsClosingAccount(false);
+        return;
+      }
+      
+      // Sucesso
+      Alert.alert(
+        "Conta Encerrada",
+        "Sua conta foi encerrada com sucesso. Você será redirecionado para a tela inicial.",
+        [{ text: "OK" }]
+      );
+      
+      // Fechar o diálogo e redirecionar após 2 segundos
+      setTimeout(() => {
+        setShowCloseAccountDialog(false);
+        setIsClosingAccount(false);
+        
+        // Fazer logout e navegar para a tela inicial
+        supabase.auth.signOut().then(() => {
+          // Usar reset em vez de navigate para garantir que não haja histórico de navegação
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Welcome' }],
+          });
+        }).catch(error => {
+          console.error('Erro ao fazer logout:', error);
+          // Em caso de erro no logout, ainda tentamos redirecionar para a tela inicial
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Welcome' }],
+          });
+        });
+      }, 2000);
+    }).catch(error => {
+      console.error('Erro inesperado:', error);
+      setCloseAccountError({
+        errorCode: 'UNEXPECTED',
+        errorMessage: 'Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.'
+      });
+      setIsClosingAccount(false);
+    });
   };
 
   if (loading) {
@@ -367,7 +520,32 @@ export default function ProfileSettingsForm({ onBack }) {
         >
           Voltar
         </Button>
+        
+        <View style={styles.divider} />
+        
+        {/* Seção de Encerramento de Conta */}
+        <View style={styles.closeAccountSection}>
+          <Button
+            mode="contained"
+            onPress={() => setShowCloseAccountDialog(true)}
+            style={styles.closeAccountButton}
+            labelStyle={[styles.buttonLabel, { color: '#FFFFFF' }]}
+            buttonColor="#F44336"
+            icon="logout"
+          >
+            ENCERRAR CONTA
+          </Button>
+        </View>
       </View>
+      <CloseAccountDialog
+        visible={showCloseAccountDialog}
+        onDismiss={() => setShowCloseAccountDialog(false)}
+        documentNumber={userTaxId}
+        accountNumber={accountNumber}
+        onCloseAccount={handleCloseAccount}
+        isClosingAccount={isClosingAccount}
+        closeAccountError={closeAccountError}
+      />
     </View>
   );
 }
@@ -479,5 +657,19 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#FFF',
     textTransform: 'uppercase',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E0E0E0',
+    marginVertical: 16,
+  },
+  closeAccountSection: {
+    marginTop: 16,
+  },
+  closeAccountButton: {
+    height: 48,
+    justifyContent: 'center',
+    backgroundColor: '#F44336',
+    borderRadius: 4,
   },
 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, SafeAreaView, Image } from 'react-native';
+import { View, StyleSheet, SafeAreaView, Image, Platform } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 
@@ -43,10 +43,10 @@ const SuccessScreen = ({ navigation }) => {
           <Button
             mode="contained"
             onPress={handleGoToHome}
-            style={styles.button}
-            labelStyle={styles.buttonLabel}
+            style={styles.continueButton}
+            labelStyle={styles.continueButtonLabel}
           >
-            Voltar para a página inicial
+            VOLTAR PARA A PÁGINA INICIAL
           </Button>
         </View>
       </View>
@@ -61,10 +61,11 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+    minHeight: '100%',
   },
   logoContainer: {
     alignItems: 'center',
-    paddingTop: 40,
+    paddingTop: Platform.OS === 'ios' ? 40 : 48,
     paddingBottom: 20,
   },
   logo: {
@@ -85,14 +86,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
+    ...Platform.select({
+      android: {
+        elevation: 4,
+      },
+      ios: {
+        shadowColor: 'rgba(0, 0, 0, 0.2)',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.8,
+        shadowRadius: 2,
+      },
+    }),
   },
   checkMark: {
     color: '#682145',
     fontSize: 40,
+    fontWeight: '600',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '600',
     textAlign: 'center',
     marginBottom: 16,
     color: '#FFF',
@@ -101,7 +114,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     color: '#FFF',
-    opacity: 0.8,
+    opacity: 0.9,
     lineHeight: 24,
     marginBottom: 8,
   },
@@ -109,22 +122,35 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     color: '#FFF',
-    opacity: 0.8,
+    opacity: 0.9,
     lineHeight: 24,
   },
   footer: {
     padding: 16,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 16,
+    ...Platform.select({
+      android: {
+        elevation: 8,
+      },
+      ios: {
+        shadowColor: 'rgba(0, 0, 0, 0.2)',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.5,
+        shadowRadius: 4,
+      },
+    }),
   },
-  button: {
-    height: 56,
+  continueButton: {
+    height: 48,
     justifyContent: 'center',
-    backgroundColor: '#E91E63',
-    borderRadius: 4,
+    backgroundColor: '#FFF',
+    borderRadius: 8,
   },
-  buttonLabel: {
+  continueButtonLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFF',
+    fontWeight: '500',
+    color: '#682145',
+    textTransform: 'uppercase',
   },
 });
 
