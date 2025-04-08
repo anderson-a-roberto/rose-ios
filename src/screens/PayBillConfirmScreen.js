@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
 import { Text, Button, Divider } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
@@ -6,10 +6,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '../config/supabase'; // Import supabase instance
+import useDashboard from '../hooks/useDashboard'; // Importar o hook useDashboard
 
 export default function PayBillConfirmScreen({ route }) {
   const navigation = useNavigation();
   const { billData, balance } = route.params;
+  const { userAccount, loading: accountLoading } = useDashboard(); // Usar o hook para obter a conta do usuário
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -23,7 +26,16 @@ export default function PayBillConfirmScreen({ route }) {
   };
 
   const handlePayment = async () => {
+    if (accountLoading || !userAccount) {
+      console.error('Conta do usuário não disponível');
+      navigation.replace('PayBillError', { 
+        error: 'Não foi possível obter os dados da sua conta. Tente novamente.'
+      });
+      return;
+    }
+
     try {
+      setIsProcessing(true);
       // Navega para tela de loading
       navigation.navigate('PayBillLoading');
 
@@ -38,7 +50,7 @@ export default function PayBillConfirmScreen({ route }) {
           },
           clientRequestId,
           amount: billData.value,
-          account: "300550670149", // conta do usuário
+          account: userAccount, // Usar o número real da conta do usuário
           transactionIdAuthorize: billData.transactionId
         }
       });
@@ -68,6 +80,8 @@ export default function PayBillConfirmScreen({ route }) {
       navigation.replace('PayBillError', { 
         error: error.message || 'Não foi possível processar o pagamento. Tente novamente.'
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -132,7 +146,7 @@ export default function PayBillConfirmScreen({ route }) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Vencimento</Text>
           <Text style={styles.sectionValue}>
-            {formatDate(billData.registerData.payDueDate)}
+            {billData.registerData ? formatDate(billData.registerData.payDueDate) : formatDate(billData.settleDate)}
           </Text>
         </View>
 
