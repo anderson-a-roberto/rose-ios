@@ -57,7 +57,7 @@ const initialState = {
   partners: [
     // Modelo de sócio
     /*{
-      ownerType: '', // 'SOCIO', 'REPRESENTANTE' ou 'DEMAIS_SOCIOS'
+      ownerType: '', // 'SOCIO', 'REPRESENTANTE' ou 'DEMAIS SOCIOS'
       documentNumber: '',
       fullName: '',
       socialName: '',
@@ -205,7 +205,7 @@ export function OnboardingProvider({ children }) {
           city: onboardingData.companyAddress.city,
           state: onboardingData.companyAddress.state,
         },
-        owner: onboardingData.partners.map(partner => ({
+        owners: onboardingData.partners.map(partner => ({
           ownerType: partner.ownerType,
           documentNumber: partner.documentNumber.replace(/\D/g, ''),
           fullName: partner.fullName,
