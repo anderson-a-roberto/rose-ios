@@ -1,12 +1,12 @@
 import React, { useRef, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, StatusBar, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, StatusBar, Alert, ScrollView } from 'react-native';
 import { Text, Button, Divider } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { captureRef } from 'react-native-view-shot';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import ReceiptBase from '../../components/receipt/ReceiptBase';
+import PixOutReceipt from '../../components/extrato/receipts/PixOutReceipt';
 import MoneyValue from '../../components/receipt/MoneyValue';
 
 const PixTransferReceiptScreen = ({ navigation, route }) => {
@@ -26,10 +26,12 @@ const PixTransferReceiptScreen = ({ navigation, route }) => {
 
       const fileName = `comprovante-pix-${new Date().toISOString().slice(0,10)}.jpg`;
       
+      // Modificado para usar as mesmas configurações do ReceiptModal que funciona
       const uri = await captureRef(receiptRef, {
         format: 'jpg',
         quality: 0.8,
-        result: 'base64'
+        result: 'base64',
+        height: 1500 // Usar a mesma altura do ReceiptModal
       });
 
       const tempUri = FileSystem.cacheDirectory + fileName;
@@ -37,11 +39,16 @@ const PixTransferReceiptScreen = ({ navigation, route }) => {
         encoding: FileSystem.EncodingType.Base64
       });
 
+      // Adicionar um pequeno atraso para garantir que o arquivo seja gravado completamente
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       await Sharing.shareAsync(tempUri, {
         mimeType: 'image/jpeg',
         dialogTitle: 'Compartilhar Comprovante'
       });
 
+      // Adicionar um pequeno atraso antes de excluir o arquivo
+      await new Promise(resolve => setTimeout(resolve, 300));
       await FileSystem.deleteAsync(tempUri);
 
     } catch (error) {
@@ -69,68 +76,40 @@ const PixTransferReceiptScreen = ({ navigation, route }) => {
         </TouchableOpacity>
       </View>
 
-      <View ref={receiptRef} collapsable={false} style={styles.container}>
-        <ReceiptBase
-          transactionId={transferData.endToEndId}
-          timestamp={new Date()}
-          operationType="Transferência PIX"
-        >
-          {/* Valor */}
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Valor:</Text>
-            <MoneyValue value={-transferData.amount} />
-          </View>
-
-          <Divider style={styles.divider} />
-
-          {/* Descrição (se houver) */}
-          {transferData.description && (
-            <>
-              <View style={styles.infoRow}>
-                <Text style={styles.label}>Descrição:</Text>
-                <Text style={styles.value}>{transferData.description}</Text>
-              </View>
-              <Divider style={styles.divider} />
-            </>
-          )}
-
-          {/* Origem */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Origem</Text>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Nome:</Text>
-              <Text style={styles.value}>{transferData.debitParty.name}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>CPF/CNPJ:</Text>
-              <Text style={styles.value}>{transferData.debitParty.taxId}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Instituição:</Text>
-              <Text style={styles.value}>{transferData.debitParty.bank}</Text>
-            </View>
-          </View>
-
-          <Divider style={styles.divider} />
-
-          {/* Destino */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Destino</Text>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Nome:</Text>
-              <Text style={styles.value}>{transferData.beneficiary.name}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>CPF/CNPJ:</Text>
-              <Text style={styles.value}>{transferData.beneficiary.taxId}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Instituição:</Text>
-              <Text style={styles.value}>{transferData.beneficiary.bank}</Text>
-            </View>
-          </View>
-        </ReceiptBase>
-      </View>
+      <ScrollView style={styles.container}>
+        <View ref={receiptRef} collapsable={false} style={[styles.receiptContainer, {backgroundColor: '#FFF'}]}>
+          {/* Usando o mesmo componente do extrato para garantir consistência */}
+          <PixOutReceipt 
+            transaction={{
+              id: transferData.endToEndId,
+              createDate: new Date(),
+              amount: transferData.amount,
+              movementType: 'PIXPAYMENTOUT'
+            }}
+            onTransferDetailsLoaded={() => {}}
+            preloadedDetails={{
+              status: 'CONFIRMED',
+              body: {
+                debitParty: {
+                  name: transferData.debitParty.name,
+                  taxId: transferData.debitParty.taxId,
+                  bank: transferData.debitParty.bank,
+                  branch: transferData.debitParty.branch || '0001',
+                  account: transferData.debitParty.account || '42109747'
+                },
+                creditParty: {
+                  name: transferData.beneficiary.name,
+                  taxId: transferData.beneficiary.taxId,
+                  bank: transferData.beneficiary.bank,
+                  key: transferData.beneficiary.pixKey || transferData.beneficiary.taxId
+                },
+                endToEndId: transferData.endToEndId,
+                remittanceInformation: transferData.description || 'Transferência PIX'
+              }
+            }}
+          />
+        </View>
+      </ScrollView>
 
       {/* Share Button */}
       <View style={styles.buttonContainer}>
@@ -173,6 +152,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFF'
+  },
+  receiptContainer: {
+    backgroundColor: '#FFF',
+    minHeight: 100, // Garantir altura mínima para o conteúdo ser visível
+    paddingHorizontal: 8, // Adicionar padding horizontal para melhor aparência
+    paddingVertical: 16 // Adicionar padding vertical para melhor aparência
   },
   infoRow: {
     flexDirection: 'row',

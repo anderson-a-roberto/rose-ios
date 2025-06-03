@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { supabase } from '../../../config/supabase';
@@ -98,6 +98,11 @@ const InternalTransferReceipt = ({ transaction, onTransferDetailsLoaded }) => {
     <View style={styles.container}>
       {/* Cabeçalho */}
       <View style={styles.header}>
+        <Image 
+          source={require('../../../assets/images/icon.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.date}>{formatDate(transaction.createDate)}</Text>
       </View>
@@ -255,10 +260,16 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
     backgroundColor: '#FFFFFF',
+    paddingBottom: 0, // Reduzir o padding inferior para eliminar espaço em branco excessivo
   },
   header: {
     marginBottom: 16,
     alignItems: 'center',
+  },
+  logo: {
+    width: 40,
+    height: 40,
+    marginBottom: 8,
   },
   title: {
     fontSize: 20,

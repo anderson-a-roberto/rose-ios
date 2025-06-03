@@ -370,22 +370,12 @@ const PixCopyPasteScreen = ({ navigation, route }) => {
                   </View>
                   <View style={styles.buttonRow}>
                     <Button
-                      mode="outlined"
-                      onPress={handlePasteFromClipboard}
-                      style={styles.pasteButton}
-                      icon="content-paste"
-                      textColor="#E91E63"
-                      buttonColor="#FFF"
-                    >
-                      Colar
-                    </Button>
-                    <Button
                       mode="contained"
                       onPress={() => {
                         console.log('Botão Continuar clicado');
                         handleProcessPix();
                       }}
-                      style={styles.processButton}
+                      style={[styles.processButton, { flex: 1 }]}
                       loading={isProcessing}
                       disabled={isProcessing || !pixCode.trim()}
                       buttonColor="#E91E63"
@@ -511,19 +501,13 @@ const styles = StyleSheet.create({
   },
   buttonRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     marginTop: 16,
   },
-  pasteButton: {
-    flex: 1,
-    marginRight: 12,
-    borderColor: '#E91E63',
-    borderWidth: 1,
-    borderRadius: 4,
-  },
   processButton: {
-    flex: 2,
     borderRadius: 4,
+    height: 48,
+    justifyContent: 'center',
   },
   iconContainer: {
     alignItems: 'center',

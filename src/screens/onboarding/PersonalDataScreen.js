@@ -143,130 +143,143 @@ const PersonalDataScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView 
-        style={styles.container} 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <Text style={styles.backText}>‹</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Dados Pessoais</Text>
-            <Text style={styles.subtitle}>
-              Vamos precisar de algumas informações para seguir com seu cadastro
-            </Text>
-          </View>
-        </View>
-
-        {/* Content */}
-        <ScrollView 
-          style={styles.content} 
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-        >
-          <View style={styles.form}>
-            <Text style={styles.label}>CPF</Text>
-            <TextInput
-              value={formData.documentNumber}
-              onChangeText={(text) => handleChange('documentNumber', text)}
-              style={[styles.input, formData.documentNumber && styles.filledInput]}
-              keyboardType="numeric"
-              maxLength={14}
-              disabled={!!formData.documentNumber}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={formData.documentNumber ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: formData.documentNumber ? '600' : '400' } } }}
-            />
-
-            <Text style={styles.label}>Nome Completo</Text>
-            <TextInput
-              value={formData.fullName}
-              onChangeText={(text) => handleChange('fullName', text)}
-              style={[styles.input, formData.fullName && styles.filledInput]}
-              error={!!errors.fullName}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={formData.fullName ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: formData.fullName ? '600' : '400' } } }}
-            />
-            {errors.fullName && (
-              <Text style={styles.errorText}>{errors.fullName}</Text>
-            )}
-
-            <Text style={styles.label}>Data de Nascimento</Text>
-            <TextInput
-              value={formData.birthDate}
-              onChangeText={(text) => handleChange('birthDate', text)}
-              style={[styles.input, formData.birthDate && styles.filledInput]}
-              keyboardType="numeric"
-              maxLength={10}
-              placeholder="DD/MM/AAAA"
-              error={!!errors.birthDate}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={formData.birthDate ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: formData.birthDate ? '600' : '400' } } }}
-            />
-            {errors.birthDate && (
-              <Text style={styles.errorText}>{errors.birthDate}</Text>
-            )}
-
-            <Text style={styles.label}>Nome da Mãe</Text>
-            <TextInput
-              value={formData.motherName}
-              onChangeText={(text) => handleChange('motherName', text)}
-              style={[styles.input, formData.motherName && styles.filledInput]}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={formData.motherName ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: formData.motherName ? '600' : '400' } } }}
-            />
-
-            {/* Campo PEP */}
-            <Text style={styles.label}>Pessoa Politicamente Exposta</Text>
-            <TouchableOpacity 
-              style={styles.pepSelector}
-              onPress={() => setPepModalVisible(true)}
-            >
-              <View style={styles.pepSelectorContent}>
-                <View style={styles.pepIconContainer}>
-                  <MaterialCommunityIcons name="account-check" size={24} color="#E91E63" />
-                </View>
-                <View style={styles.pepTextContainer}>
-                  <Text style={styles.pepText}>
-                    {isPep ? 
-                      "Sou pessoa politicamente exposta" : 
-                      "Não sou e não tenho vínculo com pessoa exposta politicamente"
-                    }
-                  </Text>
-                </View>
-                <MaterialCommunityIcons name="chevron-right" size={24} color="#757575" />
-              </View>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Button
-            mode="contained"
-            onPress={handleNext}
-            style={styles.continueButton}
-            labelStyle={styles.continueButtonLabel}
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
           >
-            CONTINUAR
-          </Button>
+            <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Dados Pessoais</Text>
+          <Text style={styles.subtitle}>
+            Vamos precisar de algumas informações para seguir com seu cadastro
+          </Text>
+        </View>
+      </View>
+
+      {/* Wrapper para o KeyboardAvoidingView */}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoidingContainer}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        {/* Container principal que envolve o ScrollView e o botão */}
+        <View style={styles.mainContainer}>
+          {/* ScrollView com o formulário */}
+          <ScrollView 
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.form}>
+              {/* CPF */}
+              <Text style={styles.label}>CPF</Text>
+              <TextInput
+                style={[styles.input, formData.documentNumber ? styles.filledInput : null]}
+                value={formData.documentNumber}
+                onChangeText={(text) => handleChange('documentNumber', text)}
+                keyboardType="numeric"
+                maxLength={14} // 11 dígitos + 3 caracteres de formatação
+                editable={!formData.documentNumber} // Não permite edição se já estiver preenchido
+                mode="flat"
+                underlineColor="transparent"
+                activeUnderlineColor="#E91E63"
+                dense
+              />
+              
+              {/* Nome Completo */}
+              <Text style={styles.label}>Nome Completo</Text>
+              <TextInput
+                style={[styles.input, formData.fullName ? styles.filledInput : null]}
+                value={formData.fullName}
+                onChangeText={(text) => handleChange('fullName', text)}
+                placeholder="Digite seu nome completo (nome e sobrenome)"
+                mode="flat"
+                underlineColor="transparent"
+                activeUnderlineColor="#E91E63"
+                dense
+                error={!!errors.fullName}
+              />
+              {errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
+              
+              {/* Data de Nascimento */}
+              <Text style={styles.label}>Data de Nascimento</Text>
+              <TextInput
+                style={[styles.input, formData.birthDate ? styles.filledInput : null]}
+                value={formData.birthDate}
+                onChangeText={(text) => handleChange('birthDate', text)}
+                placeholder="DD/MM/AAAA"
+                keyboardType="numeric"
+                maxLength={10} // DD/MM/AAAA
+                mode="flat"
+                underlineColor="transparent"
+                activeUnderlineColor="#E91E63"
+                dense
+                error={!!errors.birthDate}
+              />
+              {errors.birthDate && <Text style={styles.errorText}>{errors.birthDate}</Text>}
+              
+              {/* Nome da Mãe */}
+              <Text style={styles.label}>Nome da Mãe</Text>
+              <TextInput
+                style={[styles.input, formData.motherName ? styles.filledInput : null]}
+                value={formData.motherName}
+                onChangeText={(text) => handleChange('motherName', text)}
+                placeholder="Digite o nome da mãe"
+                mode="flat"
+                underlineColor="transparent"
+                activeUnderlineColor="#E91E63"
+                dense
+              />
+              
+              {/* Pessoa Politicamente Exposta */}
+              <Text style={styles.label}>Pessoa Politicamente Exposta</Text>
+              <TouchableOpacity 
+                style={styles.pepSelector}
+                onPress={() => setPepModalVisible(true)}
+              >
+                <View style={styles.pepSelectorContent}>
+                  <View style={styles.pepIconContainer}>
+                    <MaterialCommunityIcons 
+                      name={isPep ? "checkbox-marked-circle" : "checkbox-blank-circle-outline"}
+                      size={24}
+                      color={isPep ? "#4CAF50" : "#757575"}
+                    />
+                  </View>
+                  <View style={styles.pepTextContainer}>
+                    <Text style={styles.pepText}>
+                      {isPep ? 
+                        "Sou pessoa politicamente exposta" : 
+                        "Não sou e não tenho vínculo com pessoa exposta politicamente"
+                      }
+                    </Text>
+                  </View>
+                  <MaterialCommunityIcons name="chevron-right" size={24} color="#757575" />
+                </View>
+              </TouchableOpacity>
+              
+              {/* Espaço extra no final para garantir que o último campo seja visível acima do botão */}
+              <View style={styles.bottomPadding} />
+            </View>
+          </ScrollView>
+
+          {/* Botão de continuar - sempre visível */}
+          <View style={styles.buttonContainer}>
+            <Button
+              mode="contained"
+              onPress={handleNext}
+              style={styles.continueButton}
+              labelStyle={styles.continueButtonLabel}
+            >
+              CONTINUAR
+            </Button>
+          </View>
         </View>
       </KeyboardAvoidingView>
 
@@ -286,17 +299,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF',
   },
-  container: {
-    flex: 1,
-    backgroundColor: '#FFF',
-    minHeight: '100%',
-  },
   header: {
     paddingTop: Platform.OS === 'ios' ? 8 : 16,
     paddingBottom: 24,
     backgroundColor: '#FFF',
     borderBottomWidth: 1,
     borderBottomColor: '#F5F5F5',
+    zIndex: 10,
   },
   headerTop: {
     flexDirection: 'row',
@@ -309,15 +318,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   backButton: {
-    width: 24,
-    height: 24,
+    width: 40,
+    height: 40,
     justifyContent: 'center',
-    alignItems: 'center',
-  },
-  backText: {
-    fontSize: 32,
-    color: '#E91E63',
-    marginTop: -4,
+    alignItems: 'flex-start',
   },
   headerTitle: {
     fontSize: 20,
@@ -330,16 +334,29 @@ const styles = StyleSheet.create({
     color: '#666666',
     lineHeight: 24,
   },
-  content: {
+  // Container principal para o KeyboardAvoidingView
+  keyboardAvoidingContainer: {
     flex: 1,
-    flexGrow: 1,
+    backgroundColor: '#FFF',
+  },
+  // Container que envolve o ScrollView e o botão
+  mainContainer: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: '#FFF',
+  },
+  // ScrollView que contém o formulário
+  scrollView: {
+    flex: 1,
+    backgroundColor: '#FFF',
   },
   scrollContent: {
-    flexGrow: 1,
+    paddingBottom: 24,
   },
   form: {
     paddingHorizontal: 24,
-    paddingBottom: Platform.OS === 'android' ? 32 : 24,
+    paddingTop: 8,
   },
   label: {
     fontSize: 13,
@@ -355,6 +372,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
     width: '100%',
+    ...(Platform.OS === 'ios' && {
+      height: 56, // Altura fixa para iOS
+      paddingVertical: 8, // Adicionar padding vertical para melhorar a visibilidade do cursor
+    }),
   },
   filledInput: {
     fontWeight: '500',
@@ -385,11 +406,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#212121',
   },
-  footer: {
+  // Espaço extra no final do formulário para garantir que o último campo fique visível acima do botão
+  bottomPadding: {
+    height: 100,
+  },
+  // Container do botão - sempre visível na parte inferior
+  buttonContainer: {
     padding: 16,
+    paddingBottom: Platform.OS === 'ios' ? 32 : 16,
     backgroundColor: '#FFF',
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: '#F5F5F5',
     ...Platform.select({
       android: {
         elevation: 8,

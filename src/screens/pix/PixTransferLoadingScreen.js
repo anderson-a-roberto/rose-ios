@@ -1,19 +1,70 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, StatusBar } from 'react-native';
 import { Text, ActivityIndicator } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { supabase } from '../../config/supabase';
 
 const PixTransferLoadingScreen = ({ navigation, route }) => {
-  const { transferData } = route.params;
+  const { transferData, payload } = route.params;
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Simular tempo de processamento e navegar para tela de sucesso
-    const timer = setTimeout(() => {
-      navigation.replace('PixTransferSuccess', { transferData });
-    }, 2000);
+    // Executar a transferência PIX
+    const executeTransfer = async () => {
+      try {
+        console.log('[PixTransferLoadingScreen] Iniciando transferência PIX');
+        console.log('[PixTransferLoadingScreen] Payload:', JSON.stringify(payload));
+        
+        // Realizar transferência PIX
+        const { data: transferResponse, error: transferError } = await supabase.functions.invoke(
+          'pix-cash-out',
+          {
+            body: payload
+          }
+        );
 
-    return () => clearTimeout(timer);
+        console.log('[PixTransferLoadingScreen] Resposta:', JSON.stringify(transferResponse));
+        
+        if (transferError) {
+          console.error('[PixTransferLoadingScreen] Erro na função:', transferError);
+          throw transferError;
+        }
+
+        if (transferResponse.status === 'ERROR') {
+          console.error('[PixTransferLoadingScreen] Erro na resposta:', transferResponse.error);
+          throw new Error(transferResponse.error?.message || 'Erro ao realizar transferência PIX');
+        }
+
+        // Atualizar dados da transferência com a resposta
+        const updatedTransferData = {
+          ...transferData,
+          ...transferResponse.body
+        };
+
+        // Navegar para tela de sucesso
+        setTimeout(() => {
+          navigation.replace('PixTransferSuccess', { transferData: updatedTransferData });
+        }, 1500);
+      } catch (err) {
+        console.error('[PixTransferLoadingScreen] Erro ao realizar transferência:', err);
+        setError(err.message || 'Erro ao realizar transferência');
+        
+        // Navegar para tela de erro (você pode criar uma tela específica para isso)
+        setTimeout(() => {
+          // Voltar para a tela de confirmação com mensagem de erro
+          navigation.navigate('PixTransferConfirm', { 
+            ...route.params,
+            error: err.message || 'Erro ao realizar transferência' 
+          });
+        }, 1500);
+      }
+    };
+
+    // Executar a transferência
+    executeTransfer();
+
+    // Não há necessidade de cleanup neste caso
   }, []);
 
   return (
@@ -28,9 +79,9 @@ const PixTransferLoadingScreen = ({ navigation, route }) => {
               color="#FFF"
             />
           </View>
-          <Text style={styles.title}>Processando...</Text>
+          <Text style={styles.title}>{error ? 'Erro' : 'Processando...'}</Text>
           <Text style={styles.subtitle}>
-            Estamos processando sua transferência
+            {error ? error : 'Estamos processando sua transferência'}
           </Text>
           <ActivityIndicator 
             size="large" 

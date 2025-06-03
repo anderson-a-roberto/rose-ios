@@ -68,33 +68,23 @@ const TransferAccountScreen = ({ navigation, route }) => {
         description: "Transferência interna"
       };
 
-      // Chamar edge function
-      const { data: transferResult, error: transferError } = await supabase.functions.invoke(
-        'internal-transfer',
-        { body: payload }
-      );
-
-      if (transferError) throw transferError;
-
-      // Aceita tanto SUCCESS quanto PROCESSING como estados válidos
-      if (transferResult.status === 'SUCCESS' || transferResult.status === 'PROCESSING') {
-        const transferData = {
-          status: transferResult.status,
-          destinatario: transferResult.body.creditParty.name || 'Beneficiário',
-          conta: destinationAccount,
-          valor: amount,
-          data: new Date().toISOString()
-        };
-        
-        navigation.navigate('TransferSuccess', { transferData });
-      } else {
-        throw new Error('Erro ao processar transferência');
-      }
+      // Preparar dados para a tela de verificação de PIN
+      const transferData = {
+        amount: amount,
+        destinationAccount: destinationAccount,
+        sourceAccount: kycData.account,
+        description: "Transferência interna"
+      };
+      
+      // Navegar para a tela de verificação de PIN
+      navigation.navigate('TransferPin', {
+        transferData,
+        payload
+      });
 
     } catch (err) {
-      console.error('Erro ao realizar transferência:', err);
-      setError(err.message || 'Erro ao realizar transferência. Tente novamente.');
-    } finally {
+      console.error('Erro ao preparar transferência:', err);
+      setError(err.message || 'Erro ao preparar transferência. Tente novamente.');
       setLoading(false);
     }
   };

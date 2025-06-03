@@ -2,7 +2,7 @@
   "expo": {
     "name": "Banco Rose",
     "slug": "banco-rose",
-    "version": "1.0.0",
+    "version": "1.0.8",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -12,15 +12,22 @@
       "backgroundColor": "#ffffff"
     },
     "updates": {
-      "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/022c2307-44ea-4458-8c78-4bb4c1a4be31"
+      "fallbackToCacheTimeout": 0
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.banco.rose"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.banco.rose",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "O Banco Rose precisa acessar sua câmera para ler códigos QR de pagamentos PIX e para o processo de verificação de identidade (KYC), permitindo que você faça transferências e comprove sua identidade de forma rápida e segura.",
+        "NSPhotoLibraryUsageDescription": "O Banco Rose precisa acessar sua galeria de fotos para que você possa selecionar documentos de identidade durante o processo de verificação (KYC) e para compartilhar comprovantes de pagamentos PIX.",
+        "NSPhotoLibraryAddUsageDescription": "O Banco Rose precisa de permissão para salvar comprovantes de pagamentos PIX na sua galeria de fotos, permitindo que você tenha acesso offline aos seus comprovantes de transações.",
+        "NSMicrophoneUsageDescription": "O Banco Rose pode precisar acessar seu microfone durante o processo de verificação de identidade (KYC), caso seja necessário realizar uma chamada de vídeo para confirmar sua identidade.",
+        "NSLocationWhenInUseUsageDescription": "O Banco Rose pode precisar acessar sua localização durante o processo de verificação de identidade (KYC) e para detectar possíveis fraudes, garantindo maior segurança nas suas transações financeiras."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -30,15 +37,17 @@
       "package": "com.banco.rose",
       "permissions": [
         "INTERNET",
-        "CAMERA",
+        "CAMERA"
+      ],
+      "blockedPermissions": [
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
-        "INTERNET",
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "READ_MEDIA_IMAGES",
+        "READ_MEDIA_VIDEO",
+        "READ_MEDIA_AUDIO",
+        "ACCESS_MEDIA_LOCATION"
       ],
-
+      "requestLegacyExternalStorage": false,
       "softwareKeyboardLayoutMode": "pan",
       "allowBackup": true
     },

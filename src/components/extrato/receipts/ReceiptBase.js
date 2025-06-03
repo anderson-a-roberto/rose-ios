@@ -1,11 +1,16 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
 import { Text } from 'react-native-paper';
 
 const ReceiptBase = ({ children, transactionId, title }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <Image 
+          source={require('../../../assets/images/icon.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
         <Text style={styles.title}>{title || 'Comprovante de Transferência Enviada'}</Text>
         <Text style={styles.transactionId}>ID: {transactionId}</Text>
       </View>
@@ -38,6 +43,11 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     marginBottom: 16,
     alignItems: 'center',
+  },
+  logo: {
+    width: 40,
+    height: 40,
+    marginBottom: 8,
   },
   title: {
     fontSize: 20,

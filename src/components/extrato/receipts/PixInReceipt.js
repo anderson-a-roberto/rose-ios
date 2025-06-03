@@ -3,6 +3,7 @@ import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { supabase } from '../../../config/supabase';
+import ReceiptBase from '../../receipt/ReceiptBase';
 
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleString('pt-BR', {
@@ -87,13 +88,11 @@ const PixInReceipt = ({ transaction, onTransferDetailsLoaded }) => {
   }
 
   return (
-    <View style={styles.container}>
-      {/* Cabeçalho */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Comprovante de PIX Recebido</Text>
-        <Text style={styles.date}>{formatDate(transaction.createDate)}</Text>
-      </View>
-
+    <ReceiptBase
+      transactionId={transaction.id}
+      timestamp={transaction.createDate}
+      operationType="PIX Recebido"
+    >
       {/* Status */}
       <View style={styles.statusContainer}>
         <Text style={styles.statusLabel}>Status</Text>
@@ -174,29 +173,11 @@ const PixInReceipt = ({ transaction, onTransferDetailsLoaded }) => {
           <Text style={styles.value}>{formatDate(transferDetails?.requestBody?.createTimestamp || transaction.createDate)}</Text>
         </View>
       </View>
-    </View>
+    </ReceiptBase>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    backgroundColor: '#FFFFFF',
-  },
-  header: {
-    marginBottom: 16,
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginBottom: 8,
-  },
-  date: {
-    fontSize: 14,
-    color: '#666666',
-  },
   statusContainer: {
     marginBottom: 16,
     alignItems: 'center',

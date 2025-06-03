@@ -5,17 +5,37 @@ import { useNavigation } from '@react-navigation/native';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { TERMS_TEXT } from '../../constants/terms';
 
-export default function TermsScreen() {
+export default function TermsScreen({ route }) {
   const navigation = useNavigation();
   const { onboardingData, setTermsAccepted, updateOnboardingData } = useOnboarding();
   const [accepted, setAccepted] = useState(false);
+  
+  // Receber parâmetros diretamente da rota
+  const { documentNumber, accountType } = route.params || {};
+  
+  // Atualizar o contexto com os dados da rota ao montar o componente
+  React.useEffect(() => {
+    if (documentNumber && accountType) {
+      console.log('TermsScreen: Atualizando contexto com dados da rota', { documentNumber, accountType });
+      updateOnboardingData({
+        accountType,
+        ...(accountType === 'PF' 
+          ? { personalData: { documentNumber } }
+          : { companyData: { documentNumber } }
+        ),
+      });
+    }
+  }, [documentNumber, accountType]);
 
   const handleAcceptTerms = () => {
     // Marca os termos como aceitos
     setTermsAccepted();
 
     // Navega para a próxima tela
-    if (onboardingData.accountType === 'PF') {
+    // Usar accountType da rota se disponível, senão usar do contexto
+    const currentAccountType = accountType || onboardingData.accountType;
+    
+    if (currentAccountType === 'PF') {
       navigation.navigate('OnboardingPersonalData');
     } else {
       navigation.navigate('CompanyData');
@@ -30,7 +50,7 @@ export default function TermsScreen() {
           <View style={styles.headerTop}>
             <TouchableOpacity
               style={styles.backButton}
-              onPress={() => navigation.goBack()}
+              onPress={() => navigation.navigate('Welcome')}
             >
               <Text style={styles.backText}>‹</Text>
             </TouchableOpacity>
@@ -43,74 +63,77 @@ export default function TermsScreen() {
           </View>
         </View>
 
-        {/* Content */}
-        <View style={styles.viewportContainer}>
-          <View style={styles.viewport}>
-            <ScrollView 
-              style={styles.scrollView}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.scrollContent}
-              bounces={false}
-            >
-              <View style={styles.termsBox}>
-                <Image 
-                  source={require('../../assets/images/logo-white.png')}
-                  style={styles.logo}
-                  resizeMode="contain"
-                />
-
-                <Text style={styles.mainTitle}>
-                  CONDIÇÕES GERAIS DE ABERTURA E{'\n'}
-                  MANUTENÇÃO DE CONTA DE PAGAMENTO{'\n'}
-                  PRÉ-PAGA {onboardingData.accountType === 'PF' ? 'PESSOA FÍSICA' : 'PESSOA JURÍDICA'}
-                </Text>
-
-                <Text style={styles.paragraph}>
-                  {TERMS_TEXT.INTRODUCTION}
-                </Text>
-
-                {TERMS_TEXT.SERVICES.map((service, index) => (
-                  <View key={index} style={styles.serviceItem}>
-                    <Text style={styles.serviceTitle}>{service.title}</Text>
-                    <Text style={styles.paragraph}>{service.content}</Text>
-                  </View>
-                ))}
-
-                {TERMS_TEXT.CLAUSES.map((clause, index) => (
-                  <View key={index} style={styles.clauseItem}>
-                    <Text style={styles.clauseTitle}>
-                      [Cláusula {clause.number}] {clause.title}
-                    </Text>
-                    <Text style={styles.paragraph}>{clause.content}</Text>
-                  </View>
-                ))}
-              </View>
-            </ScrollView>
-          </View>
-        </View>
-
-        {/* Footer */}
-        <View style={styles.footer}>
-          <View style={styles.checkboxContainer}>
-            <Checkbox
-              status={accepted ? 'checked' : 'unchecked'}
-              onPress={() => setAccepted(!accepted)}
-              color="#E91E63"
-            />
-            <Text style={styles.checkboxLabel}>
-              Li e concordo com os termos e condições
-            </Text>
-          </View>
-
-          <Button
-            mode="contained"
-            onPress={handleAcceptTerms}
-            disabled={!accepted}
-            style={[styles.continueButton, !accepted && styles.buttonDisabled]}
-            labelStyle={styles.continueButtonLabel}
+        {/* Content Container */}
+        <View style={styles.contentContainer}>
+          {/* Scrollable Content */}
+          <ScrollView 
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
           >
-            CONTINUAR
-          </Button>
+            <View style={styles.termsBox}>
+              <Image 
+                source={require('../../assets/images/logo-white.png')}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+
+              <Text style={styles.mainTitle}>
+                CONDIÇÕES GERAIS DE ABERTURA E{'\n'}
+                MANUTENÇÃO DE CONTA DE PAGAMENTO{'\n'}
+                PRÉ-PAGA {(accountType || onboardingData.accountType) === 'PF' ? 'PESSOA FÍSICA' : 'PESSOA JURÍDICA'}
+              </Text>
+
+              <Text style={styles.paragraph}>
+                {TERMS_TEXT.INTRODUCTION}
+              </Text>
+
+              {TERMS_TEXT.SERVICES.map((service, index) => (
+                <View key={index} style={styles.serviceItem}>
+                  <Text style={styles.serviceTitle}>{service.title}</Text>
+                  <Text style={styles.paragraph}>{service.content}</Text>
+                </View>
+              ))}
+
+              {TERMS_TEXT.CLAUSES.map((clause, index) => (
+                <View key={index} style={styles.clauseItem}>
+                  <Text style={styles.clauseTitle}>
+                    [Cláusula {clause.number}] {clause.title}
+                  </Text>
+                  <Text style={styles.paragraph}>{clause.content}</Text>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+
+          {/* Footer - Fixed at bottom */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity 
+              style={styles.checkboxContainer}
+              onPress={() => setAccepted(!accepted)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.customCheckbox}>
+                {accepted && (
+                  <View style={styles.checkboxInner}>
+                    <Text style={styles.checkboxIcon}>✓</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={styles.checkboxLabel}>
+                Li e concordo com os termos e condições
+              </Text>
+            </TouchableOpacity>
+
+            <Button
+              mode="contained"
+              onPress={handleAcceptTerms}
+              disabled={!accepted}
+              style={[styles.continueButton, !accepted && styles.buttonDisabled]}
+              labelStyle={styles.continueButtonLabel}
+            >
+              CONTINUAR
+            </Button>
+          </View>
         </View>
       </View>
     </SafeAreaView>
@@ -125,7 +148,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFF',
-    minHeight: '100%',
   },
   header: {
     paddingTop: Platform.OS === 'ios' ? 8 : 16,
@@ -166,32 +188,21 @@ const styles = StyleSheet.create({
     color: '#666666',
     lineHeight: 24,
   },
-  viewportContainer: {
+  contentContainer: {
     flex: 1,
     backgroundColor: '#FFF',
-    position: 'relative',
   },
-  viewport: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#FFF',
-    zIndex: 1,
-  },
-  scrollView: {
+  content: {
     flex: 1,
-  },
-  scrollContent: {
-    padding: 24,
-    paddingBottom: Platform.OS === 'android' ? 32 : 24,
+    paddingHorizontal: 24,
+    paddingTop: 24,
   },
   termsBox: {
     borderWidth: 1,
     borderColor: '#F5F5F5',
     padding: 16,
     borderRadius: 8,
+    marginBottom: 24,
   },
   logo: {
     width: 120,
@@ -233,8 +244,9 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 16,
   },
-  footer: {
+  buttonContainer: {
     padding: 16,
+    paddingBottom: Platform.OS === 'ios' ? 32 : 16,
     backgroundColor: '#FFF',
     borderTopWidth: 1,
     borderTopColor: '#F5F5F5',
@@ -254,6 +266,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
+  },
+  customCheckbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderColor: '#682145',
+    borderRadius: 4,
+    backgroundColor: '#FFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxInner: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#E91E63',
+    borderRadius: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxIcon: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   checkboxLabel: {
     marginLeft: 8,

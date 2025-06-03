@@ -14,6 +14,32 @@ export default function WelcomeScreen() {
   const [showRegisterSheet, setShowRegisterSheet] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Função para padronizar os logs de decisão
+  const logDecision = (kycData, destination) => {
+    console.log(`\n\n🚨 DECISÃO DE NAVEGAÇÃO 🚨`);
+    console.log(`➡️ Redirecionando para: ${destination}`);
+    console.log(`Motivo: ${getNavigationReason(kycData, destination)}`);
+    console.log(`====================================\n\n`);
+  };
+
+  // Função para determinar o motivo da navegação
+  const getNavigationReason = (kycData, destination) => {
+    if (destination === 'Rejected') {
+      if (kycData.proposal_status === 'REPROVED') return 'proposal_status = REPROVED';
+      if (kycData.background_check_status === 'REPROVED') return 'background_check_status = REPROVED';
+      if (kycData.onboarding_create_status === 'REPROVED') return 'onboarding_create_status = REPROVED';
+      if (kycData.documentscopy_status === 'REPROVED') return 'documentscopy_status = REPROVED';
+      return 'Status reprovado';
+    }
+    
+    if (destination === 'LoginPassword') return 'onboarding_create_status = CONFIRMED';
+    if (destination === 'KYC') return 'documentscopy_status = PENDING com URL';
+    if (destination === 'ThankYou') return 'Proposta em processamento ou pendente';
+    if (destination === 'OnboardingTerms') return 'Nenhuma condição anterior atendida';
+    
+    return 'Motivo desconhecido';
+  };
+
   const handleLoginContinue = async (documentNumber, accountType) => {
     try {
       setLoading(true);
@@ -24,7 +50,15 @@ export default function WelcomeScreen() {
         .from('kyc_proposals_v2')
         .select('*')
         .eq('document_number', documentNumber)
+        .order('created_at', { ascending: false }) // Pegar a proposta mais recente
         .maybeSingle();
+
+      // Log SUPER DETALHADO do resultado da consulta
+      console.log('\n\n==== RESULTADO DA CONSULTA SUPABASE ====');
+      console.log('CPF/CNPJ consultado:', documentNumber);
+      console.log('Dados recebidos:', JSON.stringify(kycData, null, 2));
+      console.log('Erro:', kycError);
+      console.log('====================================\n\n');
 
       if (kycError) {
         console.error('Erro ao consultar kyc_proposals_v2:', kycError);
@@ -32,8 +66,10 @@ export default function WelcomeScreen() {
         return;
       }
 
-      // Se não encontrar registro, vai para cadastro
+      // Verificar se temos dados da proposta
       if (!kycData) {
+        console.log('\n\n⚠️ ATENÇÃO: Nenhum dado encontrado para o CPF/CNPJ', documentNumber, '\n\n');
+        
         // Atualiza o contexto com os dados iniciais
         updateOnboardingData({
           accountType,
@@ -43,35 +79,229 @@ export default function WelcomeScreen() {
           ),
         });
         
-        navigation.navigate('OnboardingTerms');
+        // Usar navigation.reset para limpar a pilha de navegação
+        navigation.reset({
+          index: 0,
+          routes: [{ 
+            name: 'OnboardingTerms', 
+            params: {
+              documentNumber,
+              accountType
+            }
+          }],
+        });
+        return;
+      }
+      
+      // Verificar se a proposta está inativa (usuário solicitou nova tentativa)
+      if (kycData.status === 'inactive') {
+        console.log('\n\n🔄 PROPOSTA INATIVA: Usuário solicitou nova tentativa', '\n\n');
+        
+        // Atualiza o contexto com os dados iniciais
+        updateOnboardingData({
+          accountType,
+          ...(accountType === 'PF' 
+            ? { personalData: { documentNumber } }
+            : { companyData: { documentNumber } }
+          ),
+        });
+        
+        // Usar navigation.reset para limpar a pilha de navegação
+        navigation.reset({
+          index: 0,
+          routes: [{ 
+            name: 'OnboardingTerms', 
+            params: {
+              documentNumber,
+              accountType,
+              isRetry: true // Indicar que é uma nova tentativa
+            }
+          }],
+        });
         return;
       }
 
-      // Verifica os status e redireciona
-      if (kycData.onboarding_create_status === 'CONFIRMED') {
-        navigation.navigate('LoginPassword', { documentNumber });
-      } else if (kycData.documentscopy_status === 'PENDING' && kycData.url_documentscopy) {
-        navigation.navigate('KYC', { 
-          kycUrl: kycData.url_documentscopy, 
-          documentNumber 
-        });
-      } else if (kycData.documentscopy_status === 'PROCESSING') {
-        navigation.navigate('OnboardingSuccess');
-      } else if (kycData.onboarding_create_status === 'REPROVED') {
-        navigation.navigate('OnboardingSuccess');
-      } else {
-        // Se nenhuma condição for atendida, vai para cadastro
-        // Atualiza o contexto com os dados iniciais
-        updateOnboardingData({
-          accountType,
-          ...(accountType === 'PF' 
-            ? { personalData: { documentNumber } }
-            : { companyData: { documentNumber } }
-          ),
-        });
+      // Log de análise de status
+      console.log('\n\n🔍 ANÁLISE DE STATUS:');
+      console.log(`proposal_status: ${kycData.proposal_status || 'null'}`);
+      console.log(`background_check_status: ${kycData.background_check_status || 'null'}`);
+      console.log(`onboarding_create_status: ${kycData.onboarding_create_status || 'null'}`);
+      console.log(`documentscopy_status: ${kycData.documentscopy_status || 'null'}`);
+      console.log('====================================\n\n');
+
+      // VERIFICAÇÃO PRIORITÁRIA: Verifica se proposal_status ou background_check_status estão como REPROVED
+      if (kycData.proposal_status === 'REPROVED' || kycData.background_check_status === 'REPROVED') {
+        console.log('\n\n🛑 REPROVED DETECTADO! 🛑');
+        logDecision(kycData, 'Rejected');
         
-        navigation.navigate('OnboardingTerms');
+        // Usar navigation.reset para limpar a pilha de navegação
+        navigation.reset({
+          index: 0,
+          routes: [{ 
+            name: 'Rejected', 
+            params: {
+              documentNumber,
+              accountType,
+              reason: 'REPROVED',
+              statusDetails: {
+                proposal_status: kycData.proposal_status,
+                background_check_status: kycData.background_check_status
+              }
+            }
+          }],
+        });
+        return;
       }
+
+      // Verificação secundária de outros status como REPROVED
+      if (kycData.onboarding_create_status === 'REPROVED' || kycData.documentscopy_status === 'REPROVED') {
+        console.log('\n\n🛑 OUTRO STATUS REPROVED DETECTADO! 🛑');
+        logDecision(kycData, 'Rejected');
+        
+        // Usar navigation.reset para limpar a pilha de navegação
+        navigation.reset({
+          index: 0,
+          routes: [{ 
+            name: 'Rejected', 
+            params: {
+              documentNumber,
+              accountType,
+              reason: 'REPROVED',
+              statusDetails: {
+                onboarding_create_status: kycData.onboarding_create_status,
+                documentscopy_status: kycData.documentscopy_status
+              }
+            }
+          }],
+        });
+        return;
+      }
+
+      // Verificar se a proposta está confirmada (usuário já cadastrado)
+      if (kycData.onboarding_create_status === 'CONFIRMED') {
+        console.log('\n\n✅ PROPOSTA CONFIRMADA! ✅');
+        logDecision(kycData, 'BlockCheck');
+        
+        // Redirecionar para a tela de verificação de bloqueio antes do login
+        navigation.reset({
+          index: 0,
+          routes: [{ 
+            name: 'BlockCheck', 
+            params: {
+              documentNumber: documentNumber
+            }
+          }],
+        });
+        return;
+      }
+
+      // Verifica se tem documentos pendentes com URL
+      if (kycData.documentscopy_status === 'PENDING' && kycData.url_documentscopy) {
+        console.log('\n\n📄 DOCUMENTOS PENDENTES COM URL! 📄');
+        logDecision(kycData, 'KYC');
+        
+        // Se o status da proposta for REPROVED e o status não for 'inactive', vai para tela de rejeição
+        if ((kycData.proposal_status === 'REPROVED' || 
+            kycData.background_check_status === 'REPROVED' ||
+            kycData.onboarding_create_status === 'REPROVED' ||
+            kycData.documentscopy_status === 'REPROVED') &&
+            kycData.status === 'active') { // Verificar se a proposta está ativa
+        
+          console.log('\n\n❌ STATUS REPROVADO! ❌');
+          logDecision(kycData, 'Rejected');
+          
+          // Obter o motivo da rejeição
+          let reason = '';
+          if (kycData.proposal_status === 'REPROVED') {
+            reason = kycData.proposal_status_details || 'Proposta reprovada';
+          } else if (kycData.background_check_status === 'REPROVED') {
+            reason = kycData.background_check_status_details || 'Verificação de antecedentes reprovada';
+          } else if (kycData.onboarding_create_status === 'REPROVED') {
+            reason = kycData.onboarding_create_status_details || 'Criação de conta reprovada';
+          } else if (kycData.documentscopy_status === 'REPROVED') {
+            reason = kycData.documentscopy_status_details || 'Verificação de documentos reprovada';
+          }
+          
+          navigation.reset({
+            index: 0,
+            routes: [{ 
+              name: 'Rejected', 
+              params: {
+                documentNumber,
+                accountType,
+                reason,
+                statusDetails: kycData
+              }
+            }],
+          });
+          return;
+        }
+        
+        // Usar navigation.reset para limpar a pilha de navegação
+        navigation.reset({
+          index: 0,
+          routes: [{ 
+            name: 'KYC', 
+            params: {
+              kycUrl: kycData.url_documentscopy, 
+              documentNumber
+            }
+          }],
+        });
+        return;
+      }
+
+      // Verifica se está em processamento ou pendente
+      if (
+        kycData.documentscopy_status === 'PROCESSING' ||
+        kycData.background_check_status === 'PENDING' ||
+        (kycData.proposal_status === 'PENDING' && 
+          !kycData.onboarding_create_status && 
+          !kycData.documentscopy_status && 
+          !kycData.background_check_status)
+      ) {
+        console.log('\n\n⏳ PROPOSTA EM PROCESSAMENTO OU PENDENTE! ⏳');
+        logDecision(kycData, 'ThankYou');
+        
+        // Usar navigation.reset para limpar a pilha de navegação
+        navigation.reset({
+          index: 0,
+          routes: [{ 
+            name: 'ThankYou', 
+            params: {
+              documentNumber,
+              accountType,
+              status: 'PENDING'
+            }
+          }],
+        });
+        return;
+      }
+
+      // Se nenhuma condição for atendida, vai para cadastro
+      console.log('\n\n⚠️ NENHUMA CONDIÇÃO ATENDIDA! ⚠️');
+      logDecision(kycData, 'OnboardingTerms');
+      
+      // Atualiza o contexto com os dados iniciais
+      updateOnboardingData({
+        accountType,
+        ...(accountType === 'PF' 
+          ? { personalData: { documentNumber } }
+          : { companyData: { documentNumber } }
+        ),
+      });
+      
+      // Usar navigation.reset para limpar a pilha de navegação
+      navigation.reset({
+        index: 0,
+        routes: [{ 
+          name: 'OnboardingTerms', 
+          params: {
+            documentNumber,
+            accountType
+          }
+        }],
+      });
     } catch (error) {
       console.error('Erro ao validar documento:', error);
       // TODO: Mostrar erro ao usuário
@@ -90,8 +320,17 @@ export default function WelcomeScreen() {
         : { companyData: { documentNumber } }
       ),
     });
-    // Agora vamos para OnboardingTerms
-    navigation.navigate('OnboardingTerms');
+    // Agora vamos para OnboardingTerms usando navigation.reset
+    navigation.reset({
+      index: 0,
+      routes: [{ 
+        name: 'OnboardingTerms', 
+        params: {
+          documentNumber,
+          accountType
+        }
+      }],
+    });
   };
 
   return (

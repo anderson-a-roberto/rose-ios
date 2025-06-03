@@ -1,27 +1,111 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, TouchableOpacity, ScrollView, StatusBar, TextInput, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { Text, Button, Portal, Modal, RadioButton } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { supabase } from '../config/supabase';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const KEY_TYPES = {
-  EVP: "Chave Aleatória"
+  EVP: "Chave Aleatória",
+  CPF: "CPF",
+  EMAIL: "Email",
+  PHONE: "Telefone",
+  CNPJ: "CNPJ"
 };
 
-const getIconForKeyType = (key) => {
-  return 'key-variant';
+const getIconForKeyType = (keyType) => {
+  switch (keyType) {
+    case 'CPF':
+      return 'card-account-details';
+    case 'CNPJ':
+      return 'domain';
+    case 'EMAIL':
+      return 'email';
+    case 'PHONE':
+      return 'phone';
+    case 'EVP':
+    default:
+      return 'key-variant';
+  }
 };
 
 const RegisterPixKeyScreen = ({ navigation }) => {
   const [selectedType, setSelectedType] = useState('EVP');
+  const [keyValue, setKeyValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successData, setSuccessData] = useState(null);
+  const [userDocument, setUserDocument] = useState('');
+  const [documentType, setDocumentType] = useState('');
+  const scrollViewRef = useRef(null);
+  const inputRef = useRef(null);
+
+  // Buscar documento do usuário ao carregar a tela
+  useEffect(() => {
+    const fetchUserDocument = async () => {
+      try {
+        // Buscar usuário logado
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+
+        // Buscar CPF/CNPJ do usuário
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('document_number')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) throw profileError;
+
+        setUserDocument(profileData.document_number);
+        
+        // Determinar se é CPF ou CNPJ baseado no tamanho
+        if (profileData.document_number.length <= 11) {
+          setDocumentType('CPF');
+        } else {
+          setDocumentType('CNPJ');
+        }
+      } catch (err) {
+        console.error('Erro ao buscar documento do usuário:', err);
+      }
+    };
+
+    fetchUserDocument();
+  }, []);
+
+  const validateKeyValue = () => {
+    if (selectedType === 'EVP') {
+      return true; // Não precisa de validação para chave aleatória
+    }
+
+    if (!keyValue.trim()) {
+      setError(`Por favor, informe um valor para a chave ${KEY_TYPES[selectedType]}`);
+      return false;
+    }
+
+    // Validação específica para CPF e CNPJ
+    if (selectedType === 'CPF' && documentType === 'CPF') {
+      if (keyValue.replace(/[^0-9]/g, '') !== userDocument.replace(/[^0-9]/g, '')) {
+        setError('Você só pode cadastrar o seu próprio CPF como chave PIX');
+        return false;
+      }
+    } else if (selectedType === 'CNPJ' && documentType === 'CNPJ') {
+      if (keyValue.replace(/[^0-9]/g, '') !== userDocument.replace(/[^0-9]/g, '')) {
+        setError('Você só pode cadastrar o seu próprio CNPJ como chave PIX');
+        return false;
+      }
+    }
+
+    return true;
+  };
 
   const handleCreateKey = async () => {
     try {
+      if (!validateKeyValue()) {
+        return;
+      }
+
       setLoading(true);
       setError(null);
 
@@ -49,28 +133,35 @@ const RegisterPixKeyScreen = ({ navigation }) => {
 
       if (kycError) throw kycError;
 
+      // Preparar dados para envio
+      const requestBody = {
+        account: kycData.account,
+        keyType: selectedType
+      };
+
+      // Adicionar valor da chave apenas se não for EVP
+      if (selectedType !== 'EVP') {
+        requestBody.key = keyValue;
+      }
+
       // Registrar chave PIX
       const { data: registerData, error: registerError } = await supabase.functions.invoke(
         'register-pix-key',
-        {
-          body: {
-            account: kycData.account,
-            keyType: 'EVP',
-            key: undefined
-          }
-        }
+        { body: requestBody }
       );
 
       if (registerError) throw registerError;
 
       if (registerData.status === 'CONFIRMED') {
         setSuccessData({
-          keyType: KEY_TYPES['EVP'],
-          key: registerData.body.key
+          keyType: KEY_TYPES[selectedType],
+          key: registerData.body?.key || keyValue
         });
         setShowSuccessModal(true);
         // Atualizar lista na tela anterior usando navegação direta
         navigation.navigate('PixKeys', { updatePixKeys: true });
+      } else if (registerData.error) {
+        throw new Error(registerData.error.message || 'Erro ao registrar chave PIX');
       } else {
         throw new Error('Erro ao registrar chave PIX');
       }
@@ -143,54 +234,147 @@ const RegisterPixKeyScreen = ({ navigation }) => {
           </View>
         </View>
 
-        <ScrollView style={styles.content}>
-          {/* Key Type Options */}
-          <View style={styles.optionsContainer}>
-            <TouchableOpacity
-              key="EVP"
-              style={[
-                styles.optionCard,
-                styles.optionCardSelected
-              ]}
-              onPress={() => setSelectedType('EVP')}
-            >
-              <View style={styles.optionContent}>
-                <MaterialCommunityIcons
-                  name="key-variant"
-                  size={24}
-                  color="#E91E63"
-                />
-                <View style={styles.optionTextContainer}>
-                  <Text style={styles.optionTitle}>Chave Aleatória</Text>
-                  <Text style={styles.optionSubtitle}>
-                    Chave aleatória gerada automaticamente
-                  </Text>
-                </View>
-              </View>
-              <RadioButton
-                value="EVP"
-                status="checked"
-                color="#E91E63"
-              />
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-
-        {/* Register Button */}
-        <View style={styles.buttonContainer}>
-          <Button
-            mode="contained"
-            onPress={handleCreateKey}
-            style={styles.button}
-            contentStyle={styles.buttonContent}
-            labelStyle={styles.buttonLabel}
-            loading={loading}
-            disabled={loading || !selectedType}
+        {/* Content Container com KeyboardAvoidingView */}
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingContainer}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
+        >
+          <ScrollView 
+            ref={scrollViewRef}
+            style={styles.content}
+            keyboardShouldPersistTaps="handled"
           >
-            CADASTRAR CHAVE
-          </Button>
-          {error && <Text style={styles.errorText}>{error}</Text>}
-        </View>
+            {/* Key Type Options */}
+            <View style={styles.optionsContainer}>
+              {Object.entries(KEY_TYPES)
+              // Filtrar para mostrar apenas CPF ou CNPJ de acordo com o tipo de conta
+              .filter(([type]) => {
+                // Sempre mostrar EVP, EMAIL e PHONE
+                if (type === 'EVP' || type === 'EMAIL' || type === 'PHONE') {
+                  return true;
+                }
+                // Mostrar CPF apenas se o usuário for PF
+                if (type === 'CPF') {
+                  return documentType === 'CPF';
+                }
+                // Mostrar CNPJ apenas se o usuário for PJ
+                if (type === 'CNPJ') {
+                  return documentType === 'CNPJ';
+                }
+                return false;
+              })
+              .map(([type, label]) => (
+                <TouchableOpacity
+                  key={type}
+                  style={[
+                    styles.optionCard,
+                    selectedType === type && styles.optionCardSelected
+                  ]}
+                  onPress={() => {
+                    setSelectedType(type);
+                    setError(null);
+                    
+                    // Limpar o valor da chave ao mudar de tipo
+                    if (type === 'EVP') {
+                      setKeyValue('');
+                    } else if ((type === 'CPF' && documentType === 'CPF') || 
+                        (type === 'CNPJ' && documentType === 'CNPJ')) {
+                      // Preencher com documento apenas para CPF/CNPJ
+                      setKeyValue(userDocument);
+                    } else {
+                      // Para email e telefone, sempre limpar
+                      setKeyValue('');
+                      
+                      // Se for email ou telefone, focar no input após um breve delay
+                      if (type === 'EMAIL' || type === 'PHONE') {
+                        setTimeout(() => {
+                          inputRef.current?.focus();
+                        }, 300);
+                      }
+                    }
+                  }}
+                >
+                  <View style={styles.optionContent}>
+                    <MaterialCommunityIcons
+                      name={getIconForKeyType(type)}
+                      size={24}
+                      color="#E91E63"
+                    />
+                    <View style={styles.optionTextContainer}>
+                      <Text style={styles.optionTitle}>{label}</Text>
+                      <Text style={styles.optionSubtitle}>
+                        {type === 'EVP' 
+                          ? 'Chave aleatória gerada automaticamente'
+                          : type === 'CPF' 
+                            ? 'Utilize seu CPF como chave PIX'
+                            : type === 'CNPJ' 
+                              ? 'Utilize seu CNPJ como chave PIX'
+                              : type === 'EMAIL' 
+                                ? 'Utilize seu email como chave PIX'
+                                : 'Utilize seu telefone como chave PIX'}
+                      </Text>
+                    </View>
+                  </View>
+                  <RadioButton
+                    value={type}
+                    status={selectedType === type ? 'checked' : 'unchecked'}
+                    color="#E91E63"
+                  />
+                </TouchableOpacity>
+              ))}
+          </View>
+          
+            {/* Campo para digitar valor da chave (exceto para EVP) */}
+            {selectedType !== 'EVP' && (
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Valor da Chave {KEY_TYPES[selectedType]}</Text>
+                <TextInput
+                  ref={inputRef}
+                  style={styles.input}
+                  value={keyValue}
+                  onChangeText={setKeyValue}
+                  placeholder={`Digite seu ${KEY_TYPES[selectedType]}`}
+                  keyboardType={selectedType === 'PHONE' ? 'phone-pad' : selectedType === 'EMAIL' ? 'email-address' : 'default'}
+                  editable={(selectedType !== 'CPF' && selectedType !== 'CNPJ') || 
+                           (selectedType === 'CPF' && documentType !== 'CPF') || 
+                           (selectedType === 'CNPJ' && documentType !== 'CNPJ')}
+                  onFocus={() => {
+                    // Quando o input receber foco, rolar para ele
+                    setTimeout(() => {
+                      scrollViewRef.current?.scrollToEnd({ animated: true });
+                    }, 100);
+                  }}
+                />
+                {((selectedType === 'CPF' && documentType === 'CPF') || 
+                  (selectedType === 'CNPJ' && documentType === 'CNPJ')) && (
+                  <Text style={styles.infoText}>Você só pode cadastrar seu próprio {selectedType} como chave PIX</Text>
+                )}
+              </View>
+            )}
+            {/* Espaço adicional para garantir que o input fique visível acima do teclado */}
+            <View style={styles.keyboardSpacer} />
+          </ScrollView>
+
+          {/* Register Button */}
+          <View style={styles.buttonContainer}>
+            <Button
+              mode="contained"
+              onPress={() => {
+                Keyboard.dismiss();
+                handleCreateKey();
+              }}
+              style={styles.button}
+              contentStyle={styles.buttonContent}
+              labelStyle={styles.buttonLabel}
+              loading={loading}
+              disabled={loading || !selectedType}
+            >
+              CADASTRAR CHAVE
+            </Button>
+            {error && <Text style={styles.errorText}>{error}</Text>}
+          </View>
+        </KeyboardAvoidingView>
       </View>
       
       {/* Success Modal */}
@@ -200,6 +384,37 @@ const RegisterPixKeyScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  inputContainer: {
+    marginTop: 24,
+    paddingHorizontal: 20,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 8,
+    padding: 16,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
+  keyboardSpacer: {
+    height: 200, // Espaço adicional para garantir que o input fique visível
+  },
+  keyboardAvoidingContainer: {
+    flex: 1,
+    backgroundColor: '#FFF',
+  },
   safeArea: {
     flex: 1,
     backgroundColor: '#FFF'

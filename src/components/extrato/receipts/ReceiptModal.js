@@ -74,7 +74,8 @@ const ReceiptModal = ({ visible, onDismiss, transaction }) => {
       const uri = await captureRef(receiptRef, {
         format: 'jpg',
         quality: 0.8,
-        result: 'base64'
+        result: 'base64',
+        height: 1500 // Altura suficiente para capturar todo o conteúdo
       });
 
 
@@ -255,27 +256,31 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     margin: 20,
     borderRadius: 4,
-    maxHeight: '80%',
+    maxHeight: '85%', // Aumentar um pouco a altura máxima para mostrar mais conteúdo
+    overflow: 'hidden',
   },
   scrollView: {
-    padding: 16,
+    padding: 0, // Remover padding desnecessário
   },
   receiptContainer: {
     backgroundColor: '#fff',
-    minHeight: 100,
+    paddingBottom: 0, // Remover padding inferior desnecessário
   },
   buttonContainer: {
-    padding: 16,
+    padding: 12, // Padding lateral e superior
+    paddingBottom: 0, // Remover padding inferior
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
   },
   button: {
-    marginTop: 8,
+    marginTop: 4, // Margem superior entre botões
+    marginBottom: 4, // Margem inferior entre botões
     borderRadius: 4,
   },
   closeButton: {
     borderColor: '#E91E63',
     borderWidth: 1,
+    marginBottom: 0, // Remover margem inferior do último botão
   },
   confirmModal: {
     backgroundColor: '#fff',

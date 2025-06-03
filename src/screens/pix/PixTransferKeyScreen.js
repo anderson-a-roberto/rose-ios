@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text, TextInput, Button } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -84,7 +84,9 @@ const PixTransferKeyScreen = ({ navigation, route }) => {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
-      <View style={styles.container}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
@@ -115,10 +117,19 @@ const PixTransferKeyScreen = ({ navigation, route }) => {
             underlineColor="transparent"
             activeUnderlineColor="transparent"
             textColor={pixKey ? '#000' : '#999'}
-            theme={{ fonts: { regular: { fontWeight: pixKey ? '600' : '400' } } }}
+            theme={{ 
+              fonts: { regular: { fontWeight: pixKey ? '600' : '400' } },
+              colors: {
+                text: '#000000',
+                placeholder: '#999999',
+                primary: '#E91E63',
+              }
+            }}
             placeholder="Digite a chave PIX"
             error={!!error}
             disabled={loading}
+            selectionColor="#E91E63"
+            autoFocus={true}
           />
           {error && <Text style={styles.errorText}>{error}</Text>}
         </View>
@@ -137,7 +148,7 @@ const PixTransferKeyScreen = ({ navigation, route }) => {
             CONTINUAR
           </Button>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };

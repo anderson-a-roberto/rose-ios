@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform, KeyboardAvoidingView } from 'react-native';
 import { Text, TextInput, Button } from 'react-native-paper';
 import { useOnboarding } from '../../../contexts/OnboardingContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -100,82 +100,91 @@ const CompanyContactScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <Text style={styles.backText}>‹</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Contato da empresa</Text>
-            <Text style={styles.subtitle}>
-              Informe os dados de contato da sua empresa
-            </Text>
-          </View>
-        </View>
-
-        {/* Content */}
-        <ScrollView 
-          style={styles.content} 
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-        >
-          <View style={styles.form}>
-            <Text style={styles.label}>E-mail</Text>
-            <TextInput
-              value={formData.businessEmail}
-              onChangeText={(value) => handleChange('businessEmail', value)}
-              style={[styles.input, formData.businessEmail && styles.filledInput]}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={formData.businessEmail ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: formData.businessEmail ? '600' : '400' } } }}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              error={formData.businessEmail && !isValidEmail(formData.businessEmail)}
-            />
-
-            <Text style={styles.label}>Telefone</Text>
-            <TextInput
-              value={formData.contactNumber}
-              onChangeText={(value) => handleChange('contactNumber', value)}
-              style={[styles.input, formData.contactNumber && styles.filledInput]}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={formData.contactNumber ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: formData.contactNumber ? '600' : '400' } } }}
-              keyboardType="numeric"
-              maxLength={15}
-              error={formData.contactNumber && !isValidPhone(formData.contactNumber)}
-            />
-
-            {error ? (
-              <Text style={styles.error}>{error}</Text>
-            ) : null}
-          </View>
-        </ScrollView>
-
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Button
-            mode="contained"
-            onPress={handleNext}
-            style={[styles.continueButton, !isFormValid() && styles.disabledButton]}
-            labelStyle={styles.continueButtonLabel}
-            loading={loading}
-            disabled={loading || !isFormValid()}
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
           >
-            {loading ? 'SALVANDO...' : 'CONTINUAR'}
-          </Button>
+            <Text style={styles.backText}>‹</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Contato da empresa</Text>
+          <Text style={styles.subtitle}>
+            Informe os dados de contato da sua empresa
+          </Text>
         </View>
       </View>
+
+      {/* Wrapper para o KeyboardAvoidingView */}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoidingContainer}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        {/* Container principal que envolve o ScrollView e o botão */}
+        <View style={styles.mainContainer}>
+          {/* ScrollView com o formulário */}
+          <ScrollView 
+              style={styles.content}
+              contentContainerStyle={styles.scrollContent}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={styles.form}>
+                <Text style={styles.label}>E-mail</Text>
+                <TextInput
+                  value={formData.businessEmail}
+                  onChangeText={(value) => handleChange('businessEmail', value)}
+                  style={[styles.input, formData.businessEmail && styles.filledInput]}
+                  underlineColor="transparent"
+                  activeUnderlineColor="#E91E63"
+                  selectionColor="#E91E63"
+                  cursorColor="#E91E63"
+                  caretHidden={false}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  error={formData.businessEmail && !isValidEmail(formData.businessEmail)}
+                />
+
+                <Text style={styles.label}>Telefone</Text>
+                <TextInput
+                  value={formData.contactNumber}
+                  onChangeText={(value) => handleChange('contactNumber', value)}
+                  style={[styles.input, formData.contactNumber && styles.filledInput]}
+                  underlineColor="transparent"
+                  activeUnderlineColor="#E91E63"
+                  selectionColor="#E91E63"
+                  cursorColor="#E91E63"
+                  caretHidden={false}
+                  keyboardType="numeric"
+                  maxLength={15}
+                  error={formData.contactNumber && !isValidPhone(formData.contactNumber)}
+                />
+
+                {error ? (
+                  <Text style={styles.error}>{error}</Text>
+                ) : null}
+              </View>
+            </ScrollView>
+            
+            {/* Botão de continuar - sempre visível */}
+            <View style={styles.buttonContainer}>
+              <Button
+                mode="contained"
+                onPress={handleNext}
+                style={[styles.continueButton, !isFormValid() && styles.disabledButton]}
+                labelStyle={styles.continueButtonLabel}
+                loading={loading}
+                disabled={loading || !isFormValid()}
+              >
+                {loading ? 'SALVANDO...' : 'CONTINUAR'}
+              </Button>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -185,10 +194,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF',
   },
-  container: {
+  // Container principal para o KeyboardAvoidingView
+  keyboardAvoidingContainer: {
     flex: 1,
     backgroundColor: '#FFF',
-    minHeight: '100%',
+  },
+  // Container que envolve o ScrollView e o botão
+  mainContainer: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: '#FFF',
   },
   header: {
     paddingTop: Platform.OS === 'ios' ? 8 : 16,
@@ -229,14 +245,9 @@ const styles = StyleSheet.create({
     color: '#666666',
     lineHeight: 24,
   },
-  content: {
-    flex: 1,
-    flexGrow: 1,
-  },
   scrollContent: {
-    flexGrow: 1,
     paddingHorizontal: 24,
-    paddingBottom: Platform.OS === 'android' ? 32 : 24,
+    paddingBottom: 24,
   },
   form: {
     paddingVertical: 16,
@@ -259,8 +270,9 @@ const styles = StyleSheet.create({
   filledInput: {
     fontWeight: '500',
   },
-  footer: {
+  buttonContainer: {
     padding: 16,
+    paddingBottom: Platform.OS === 'ios' ? 32 : 16,
     backgroundColor: '#FFF',
     borderTopWidth: 1,
     borderTopColor: '#F5F5F5',

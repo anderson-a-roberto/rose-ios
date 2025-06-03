@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { Modal, Portal, Text, TextInput, Button, Menu } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { TouchableOpacity } from 'react-native';
@@ -198,156 +198,180 @@ const PartnerFormModal = ({ visible, onDismiss, onSave, initialData = null, exis
           </Text>
         </View>
 
-        <ScrollView 
-          style={styles.content} 
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={true}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingContainer}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
-          <View style={styles.form}>
-            {/* Tipo de Sócio */}
-            <Text style={styles.label}>Tipo</Text>
-            <Menu
-              visible={showTypeMenu}
-              onDismiss={() => setShowTypeMenu(false)}
-              anchor={
-                <TouchableOpacity
-                  style={[styles.input, styles.menuButton]}
-                  onPress={() => setShowTypeMenu(true)}
-                >
-                  <Text style={[
-                    styles.menuButtonText,
-                    partnerData.ownerType && { color: '#000', fontWeight: '600' }
-                  ]}>
-                    {partnerData.ownerType
-                      ? OWNER_TYPES.find(t => t.value === partnerData.ownerType)?.label
-                      : 'Selecione o tipo'}
-                  </Text>
-                  <MaterialCommunityIcons name="chevron-down" size={24} color="#666" />
-                </TouchableOpacity>
-              }
+          <View style={styles.mainContainer}>
+            <ScrollView 
+              style={styles.content} 
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={true}
             >
-              {getAvailableOwnerTypes().map((type) => (
-                <Menu.Item
-                  key={type.value}
-                  onPress={() => {
-                    setPartnerData(prev => ({ ...prev, ownerType: type.value }));
-                    setShowTypeMenu(false);
-                  }}
-                  title={type.label}
+              <View style={styles.form}>
+                {/* Tipo de Sócio */}
+                <Text style={styles.label}>Tipo</Text>
+                <Menu
+                  visible={showTypeMenu}
+                  onDismiss={() => setShowTypeMenu(false)}
+                  anchor={
+                    <TouchableOpacity
+                      style={[styles.input, styles.menuButton]}
+                      onPress={() => setShowTypeMenu(true)}
+                    >
+                      <Text style={[
+                        styles.menuButtonText,
+                        partnerData.ownerType && { color: '#000', fontWeight: '600' }
+                      ]}>
+                        {partnerData.ownerType
+                          ? OWNER_TYPES.find(t => t.value === partnerData.ownerType)?.label
+                          : 'Selecione o tipo'}
+                      </Text>
+                      <MaterialCommunityIcons name="chevron-down" size={24} color="#666" />
+                    </TouchableOpacity>
+                  }
+                >
+                  {getAvailableOwnerTypes().map((type) => (
+                    <Menu.Item
+                      key={type.value}
+                      onPress={() => {
+                        setPartnerData(prev => ({ ...prev, ownerType: type.value }));
+                        setShowTypeMenu(false);
+                      }}
+                      title={type.label}
+                    />
+                  ))}
+                </Menu>
+
+                {partnerData.ownerType === 'REPRESENTANTE' && (
+                  <Text style={styles.infoMessage}>
+                    Será obrigatório o envio da procuração de poderes.
+                  </Text>
+                )}
+
+                <Text style={styles.label}>Nome Completo</Text>
+                <TextInput
+                  value={partnerData.fullName}
+                  onChangeText={(text) => setPartnerData(prev => ({ ...prev, fullName: text }))}
+                  style={[styles.input, partnerData.fullName && styles.filledInput]}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  textColor={partnerData.fullName ? '#000' : '#999'}
+                  theme={{ fonts: { regular: { fontWeight: partnerData.fullName ? '600' : '400' } } }}
+              selectionColor="#E91E63"
+              cursorColor="#E91E63"
+            />
+
+                <Text style={styles.label}>CPF</Text>
+                <TextInput
+                  value={partnerData.documentNumber}
+                  onChangeText={(text) => setPartnerData(prev => ({ ...prev, documentNumber: formatCPF(text) }))}
+                  style={[styles.input, partnerData.documentNumber && styles.filledInput]}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  textColor={partnerData.documentNumber ? '#000' : '#999'}
+                  theme={{ fonts: { regular: { fontWeight: partnerData.documentNumber ? '600' : '400' } } }}
+                  keyboardType="numeric"
+                  maxLength={14}
+                  selectionColor="#E91E63"
+                  cursorColor="#E91E63"
                 />
-              ))}
-            </Menu>
 
-            {partnerData.ownerType === 'REPRESENTANTE' && (
-              <Text style={styles.infoMessage}>
-                Será obrigatório o envio da procuração de poderes.
-              </Text>
-            )}
+                <Text style={styles.label}>Data de Nascimento</Text>
+                <TextInput
+                  value={partnerData.birthDate}
+                  onChangeText={(text) => {
+                    const formatted = formatDate(text);
+                    setPartnerData(prev => ({ ...prev, birthDate: formatted }));
+                  }}
+                  style={[styles.input, partnerData.birthDate && styles.filledInput]}
+                  placeholder="DD/MM/AAAA"
+                  keyboardType="numeric"
+                  maxLength={10}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  textColor={partnerData.birthDate ? '#000' : '#999'}
+                  theme={{ fonts: { regular: { fontWeight: partnerData.birthDate ? '600' : '400' } } }}
+                  selectionColor="#E91E63"
+                  cursorColor="#E91E63"
+                />
 
-            <Text style={styles.label}>Nome Completo</Text>
-            <TextInput
-              value={partnerData.fullName}
-              onChangeText={(text) => setPartnerData(prev => ({ ...prev, fullName: text }))}
-              style={[styles.input, partnerData.fullName && styles.filledInput]}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={partnerData.fullName ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: partnerData.fullName ? '600' : '400' } } }}
+                <Text style={styles.label}>Nome da Mãe</Text>
+                <TextInput
+                  value={partnerData.motherName}
+                  onChangeText={(text) => setPartnerData(prev => ({ ...prev, motherName: text }))}
+                  style={[styles.input, partnerData.motherName && styles.filledInput]}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  textColor={partnerData.motherName ? '#000' : '#999'}
+                  theme={{ fonts: { regular: { fontWeight: partnerData.motherName ? '600' : '400' } } }}
+                  selectionColor="#E91E63"
+                  cursorColor="#E91E63"
             />
 
-            <Text style={styles.label}>CPF</Text>
-            <TextInput
-              value={partnerData.documentNumber}
-              onChangeText={(text) => setPartnerData(prev => ({ ...prev, documentNumber: formatCPF(text) }))}
-              style={[styles.input, partnerData.documentNumber && styles.filledInput]}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={partnerData.documentNumber ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: partnerData.documentNumber ? '600' : '400' } } }}
-              keyboardType="numeric"
-              maxLength={14}
-            />
+                <Text style={styles.label}>E-mail</Text>
+                <TextInput
+                  value={partnerData.email}
+                  onChangeText={(text) => setPartnerData(prev => ({ ...prev, email: text }))}
+                  style={[styles.input, partnerData.email && styles.filledInput]}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  textColor={partnerData.email ? '#000' : '#999'}
+                  theme={{ fonts: { regular: { fontWeight: partnerData.email ? '600' : '400' } } }}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  selectionColor="#E91E63"
+                  cursorColor="#E91E63"
+                />
 
-            <Text style={styles.label}>Data de Nascimento</Text>
-            <TextInput
-              value={partnerData.birthDate}
-              onChangeText={(text) => setPartnerData(prev => ({ ...prev, birthDate: formatDate(text) }))}
-              style={[styles.input, partnerData.birthDate && styles.filledInput]}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={partnerData.birthDate ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: partnerData.birthDate ? '600' : '400' } } }}
-              keyboardType="numeric"
-              maxLength={10}
-              placeholder="DD/MM/AAAA"
-            />
+                <Text style={styles.label}>Telefone</Text>
+                <TextInput
+                  value={partnerData.phoneNumber}
+                  onChangeText={(text) => setPartnerData(prev => ({ ...prev, phoneNumber: formatPhone(text) }))}
+                  style={[styles.input, partnerData.phoneNumber && styles.filledInput]}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  textColor={partnerData.phoneNumber ? '#000' : '#999'}
+                  theme={{ fonts: { regular: { fontWeight: partnerData.phoneNumber ? '600' : '400' } } }}
+                  keyboardType="phone-pad"
+                  maxLength={15}
+                  selectionColor="#E91E63"
+                  cursorColor="#E91E63"
+                />
 
-            <Text style={styles.label}>Nome da Mãe</Text>
-            <TextInput
-              value={partnerData.motherName}
-              onChangeText={(text) => setPartnerData(prev => ({ ...prev, motherName: text }))}
-              style={[styles.input, partnerData.motherName && styles.filledInput]}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={partnerData.motherName ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: partnerData.motherName ? '600' : '400' } } }}
-            />
-
-            <Text style={styles.label}>E-mail</Text>
-            <TextInput
-              value={partnerData.email}
-              onChangeText={(text) => setPartnerData(prev => ({ ...prev, email: text }))}
-              style={[styles.input, partnerData.email && styles.filledInput]}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={partnerData.email ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: partnerData.email ? '600' : '400' } } }}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-
-            <Text style={styles.label}>Telefone</Text>
-            <TextInput
-              value={partnerData.phoneNumber}
-              onChangeText={(text) => setPartnerData(prev => ({ ...prev, phoneNumber: formatPhone(text) }))}
-              style={[styles.input, partnerData.phoneNumber && styles.filledInput]}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={partnerData.phoneNumber ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: partnerData.phoneNumber ? '600' : '400' } } }}
-              keyboardType="numeric"
-            />
-
-            {/* PPE */}
-            <TouchableOpacity
-              style={styles.pepContainer}
-              onPress={() => setPartnerData(prev => ({ 
+                {/* PPE */}
+                <TouchableOpacity
+                  style={styles.pepContainer}
+                  onPress={() => setPartnerData(prev => ({ 
                 ...prev, 
                 isPoliticallyExposedPerson: !prev.isPoliticallyExposedPerson 
               }))}
-            >
-              <MaterialCommunityIcons
-                name={partnerData.isPoliticallyExposedPerson ? "checkbox-marked" : "checkbox-blank-outline"}
-                size={24}
-                color="#E91E63"
-              />
-              <Text style={styles.pepText}>Pessoa Politicamente Exposta</Text>
-            </TouchableOpacity>
+                >
+                  <MaterialCommunityIcons
+                    name={partnerData.isPoliticallyExposedPerson ? "checkbox-marked" : "checkbox-blank-outline"}
+                    size={24}
+                    color="#E91E63"
+                  />
+                  <Text style={styles.pepText}>Pessoa Politicamente Exposta</Text>
+                </TouchableOpacity>
 
-            {/* Endereço - Sempre visível */}
-            <Text style={styles.sectionTitle}>Endereço</Text>
+                {/* Endereço - Sempre visível */}
+                <Text style={styles.sectionTitle}>Endereço</Text>
 
-            <Text style={styles.label}>CEP</Text>
-            <TextInput
-              value={partnerData.address.postalCode}
-              onChangeText={handleCEPChange}
-              style={[styles.input, partnerData.address.postalCode && styles.filledInput]}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={partnerData.address.postalCode ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: partnerData.address.postalCode ? '600' : '400' } } }}
-              keyboardType="numeric"
-              maxLength={9}
+                <Text style={styles.label}>CEP</Text>
+                <TextInput
+                  value={partnerData.address.postalCode}
+                  onChangeText={handleCEPChange}
+                  style={[styles.input, partnerData.address.postalCode && styles.filledInput]}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  textColor={partnerData.address.postalCode ? '#000' : '#999'}
+                  theme={{ fonts: { regular: { fontWeight: partnerData.address.postalCode ? '600' : '400' } } }}
+                  keyboardType="numeric"
+                  maxLength={9}
+                  selectionColor="#E91E63"
+                  cursorColor="#E91E63"
             />
 
             <Text style={styles.label}>Rua</Text>
@@ -362,6 +386,8 @@ const PartnerFormModal = ({ visible, onDismiss, onSave, initialData = null, exis
               activeUnderlineColor="transparent"
               textColor={partnerData.address.street ? '#000' : '#999'}
               theme={{ fonts: { regular: { fontWeight: partnerData.address.street ? '600' : '400' } } }}
+              selectionColor="#E91E63"
+              cursorColor="#E91E63"
             />
 
             <Text style={styles.label}>Número</Text>
@@ -377,6 +403,8 @@ const PartnerFormModal = ({ visible, onDismiss, onSave, initialData = null, exis
               textColor={partnerData.address.number ? '#000' : '#999'}
               theme={{ fonts: { regular: { fontWeight: partnerData.address.number ? '600' : '400' } } }}
               keyboardType="numeric"
+              selectionColor="#E91E63"
+              cursorColor="#E91E63"
             />
 
             <Text style={styles.label}>Complemento (opcional)</Text>
@@ -391,6 +419,8 @@ const PartnerFormModal = ({ visible, onDismiss, onSave, initialData = null, exis
               activeUnderlineColor="transparent"
               textColor={partnerData.address.addressComplement ? '#000' : '#999'}
               theme={{ fonts: { regular: { fontWeight: partnerData.address.addressComplement ? '600' : '400' } } }}
+              selectionColor="#E91E63"
+              cursorColor="#E91E63"
             />
 
             <Text style={styles.label}>Bairro</Text>
@@ -405,6 +435,8 @@ const PartnerFormModal = ({ visible, onDismiss, onSave, initialData = null, exis
               activeUnderlineColor="transparent"
               textColor={partnerData.address.neighborhood ? '#000' : '#999'}
               theme={{ fonts: { regular: { fontWeight: partnerData.address.neighborhood ? '600' : '400' } } }}
+              selectionColor="#E91E63"
+              cursorColor="#E91E63"
             />
 
             <Text style={styles.label}>Cidade</Text>
@@ -419,6 +451,8 @@ const PartnerFormModal = ({ visible, onDismiss, onSave, initialData = null, exis
               activeUnderlineColor="transparent"
               textColor={partnerData.address.city ? '#000' : '#999'}
               theme={{ fonts: { regular: { fontWeight: partnerData.address.city ? '600' : '400' } } }}
+              selectionColor="#E91E63"
+              cursorColor="#E91E63"
             />
 
             <Text style={styles.label}>Estado</Text>
@@ -435,31 +469,35 @@ const PartnerFormModal = ({ visible, onDismiss, onSave, initialData = null, exis
               theme={{ fonts: { regular: { fontWeight: partnerData.address.state ? '600' : '400' } } }}
               maxLength={2}
               autoCapitalize="characters"
+              selectionColor="#E91E63"
+              cursorColor="#E91E63"
             />
+              </View>
+            </ScrollView>
+            
+            <View style={styles.footer}>
+              <Button
+                mode="outlined"
+                onPress={onDismiss}
+                style={styles.cancelButton}
+                labelStyle={styles.cancelButtonLabel}
+                uppercase={false}
+              >
+                Cancelar
+              </Button>
+              <Button
+                mode="contained"
+                onPress={handleSave}
+                style={[styles.saveButton, !isPartnerValid() && styles.saveButtonDisabled]}
+                labelStyle={styles.saveButtonLabel}
+                disabled={!isPartnerValid()}
+                uppercase={false}
+              >
+                {initialData ? 'Atualizar' : 'Adicionar'}
+              </Button>
+            </View>
           </View>
-        </ScrollView>
-
-        <View style={styles.footer}>
-          <Button
-            mode="outlined"
-            onPress={onDismiss}
-            style={styles.cancelButton}
-            labelStyle={styles.cancelButtonLabel}
-            uppercase={false}
-          >
-            Cancelar
-          </Button>
-          <Button
-            mode="contained"
-            onPress={handleSave}
-            style={[styles.saveButton, !isPartnerValid() && styles.saveButtonDisabled]}
-            labelStyle={styles.saveButtonLabel}
-            disabled={!isPartnerValid()}
-            uppercase={false}
-          >
-            {initialData ? 'Atualizar' : 'Adicionar'}
-          </Button>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </Portal>
   );
@@ -476,6 +514,15 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '90%',
     maxHeight: '95%',
+  },
+  keyboardAvoidingContainer: {
+    flex: 1,
+    display: 'flex',
+  },
+  mainContainer: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
   },
   header: {
     padding: 24,

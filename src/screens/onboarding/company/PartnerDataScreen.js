@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Platform, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Platform, FlatList, KeyboardAvoidingView } from 'react-native';
 import { Text, Button, List, Card, Dialog, Portal } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useOnboarding } from '../../../contexts/OnboardingContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import PartnerFormModal from '../../../components/onboarding/company/PartnerFormModal';
+// Modal substituído pela tela PartnerFormScreen
 
 const OWNER_TYPES = [
   { label: 'Sócio', value: 'SOCIO' },
@@ -12,30 +12,52 @@ const OWNER_TYPES = [
   { label: 'Demais Sócios', value: 'DEMAIS SOCIOS' },
 ];
 
-const PartnerDataScreen = ({ navigation }) => {
+const PartnerDataScreen = ({ navigation, route }) => {
   const { onboardingData, addPartner, updatePartner, removePartner } = useOnboarding();
-  const [modalVisible, setModalVisible] = useState(false);
+  // Não precisamos mais do estado do modal
   const [editingPartner, setEditingPartner] = useState(null);
+  
+  // Efeito para processar o retorno da tela de formulário
+  useEffect(() => {
+    if (route.params?.newPartner) {
+      const { newPartner, action } = route.params;
+      
+      if (action === 'add') {
+        // Adicionar novo sócio
+        addPartner(newPartner);
+      } else if (action === 'update') {
+        // Atualizar sócio existente
+        const index = onboardingData.partners.findIndex(p => p.documentNumber === newPartner.documentNumber);
+        if (index !== -1) {
+          updatePartner(index, newPartner);
+        }
+      }
+      
+      // Limpar os parâmetros da rota
+      navigation.setParams({ newPartner: null, action: null });
+    }
+  }, [route.params]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [partnerToDelete, setPartnerToDelete] = useState(null);
 
-  const handleAddPartner = (partner) => {
-    addPartner(partner);
-    setModalVisible(false);
+  const handleAddPartner = () => {
+    // Navegar para a tela de formulário de sócio
+    navigation.navigate('PartnerForm', {
+      existingPartners: onboardingData.partners
+    });
   };
 
   const handleEditPartner = (partner) => {
-    const index = onboardingData.partners.findIndex(p => p.id === partner.id);
-    if (index !== -1) {
-      updatePartner(index, partner);
-    }
-    setModalVisible(false);
-    setEditingPartner(null);
+    // Navegar para a tela de formulário de sócio com os dados do sócio para edição
+    navigation.navigate('PartnerForm', {
+      initialData: partner,
+      existingPartners: onboardingData.partners
+    });
   };
 
-  const openEditModal = (partner) => {
+  const openEditPartner = (partner) => {
     setEditingPartner(partner);
-    setModalVisible(true);
+    handleEditPartner(partner);
   };
 
   const confirmDeletePartner = (partner) => {
@@ -63,7 +85,7 @@ const PartnerDataScreen = ({ navigation }) => {
             <Text style={styles.partnerType}>{OWNER_TYPES.find(t => t.value === item.ownerType)?.label || item.ownerType}</Text>
           </View>
           <View style={styles.partnerActions}>
-            <TouchableOpacity onPress={() => openEditModal(item)} style={styles.actionButton}>
+            <TouchableOpacity onPress={() => openEditPartner(item)} style={styles.actionButton}>
               <MaterialCommunityIcons name="pencil" size={22} color="#FFFFFF" />
               <Text style={styles.actionButtonText}>Editar</Text>
             </TouchableOpacity>
@@ -84,74 +106,66 @@ const PartnerDataScreen = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-              <Text style={styles.backButtonText}>‹</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.headerContent}>
-            <Text style={styles.title}>Dados do sócio</Text>
-            <Text style={styles.subtitle}>Informe os dados do sócio administrador</Text>
-          </View>
-        </View>
-
-        <View style={styles.content}>
-          {onboardingData.partners.length === 0 ? (
-            <View style={styles.emptyState}>
-              <View style={styles.emptyIconContainer}>
-                <MaterialCommunityIcons name="account-group-outline" size={48} color="#CCCCCC" />
-              </View>
-              <Text style={styles.emptyTitle}>Nenhum sócio cadastrado</Text>
-              <Text style={styles.emptySubtitle}>Adicione pelo menos um sócio para continuar</Text>
-            </View>
-          ) : (
-            <FlatList
-              data={onboardingData.partners}
-              renderItem={renderPartnerItem}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.partnersList}
-            />
-          )}
-
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => {
-              setEditingPartner(null);
-              setModalVisible(true);
-            }}
-          >
-            <MaterialCommunityIcons name="plus" size={20} color="#E91E63" style={styles.addButtonIcon} />
-            <Text style={styles.addButtonText}>Adicionar Sócio</Text>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Text style={styles.backButtonText}>‹</Text>
           </TouchableOpacity>
         </View>
-
-        <View style={styles.footer}>
-          <Button
-            mode="contained"
-            style={[styles.continueButton, onboardingData.partners.length === 0 && styles.disabledButton]}
-            labelStyle={styles.continueButtonLabel}
-            disabled={onboardingData.partners.length === 0}
-            onPress={() => navigation.navigate('CompanyPassword')}
-            uppercase={false}
-          >
-            Continuar
-          </Button>
+        <View style={styles.headerContent}>
+          <Text style={styles.title}>Dados do sócio</Text>
+          <Text style={styles.subtitle}>Informe os dados do sócio administrador</Text>
         </View>
       </View>
 
-      <PartnerFormModal
-        visible={modalVisible}
-        onDismiss={() => {
-          setModalVisible(false);
-          setEditingPartner(null);
-        }}
-        onSave={editingPartner ? handleEditPartner : handleAddPartner}
-        initialData={editingPartner}
-        existingPartners={onboardingData.partners}
-      />
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoidingContainer}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <View style={styles.mainContainer}>
+          <View style={styles.scrollableContent}>
+            {onboardingData.partners && onboardingData.partners.length > 0 ? (
+              <FlatList
+                data={onboardingData.partners}
+                renderItem={renderPartnerItem}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.partnersList}
+              />
+            ) : (
+              <View style={styles.emptyState}>
+                <View style={styles.emptyIconContainer}>
+                  <MaterialCommunityIcons name="account-group-outline" size={48} color="#CCCCCC" />
+                </View>
+                <Text style={styles.emptyTitle}>Nenhum sócio cadastrado</Text>
+                <Text style={styles.emptySubtitle}>Adicione pelo menos um sócio para continuar</Text>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={handleAddPartner}
+            >
+              <MaterialCommunityIcons name="plus" size={20} color="#E91E63" style={styles.addButtonIcon} />
+              <Text style={styles.addButtonText}>Adicionar Sócio</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.buttonContainer}>
+            <Button
+              mode="contained"
+              style={[styles.continueButton, onboardingData.partners.length === 0 && styles.disabledButton]}
+              labelStyle={styles.continueButtonLabel}
+              disabled={onboardingData.partners.length === 0}
+              onPress={() => navigation.navigate('CompanyPassword')}
+              uppercase={false}
+            >
+              Continuar
+            </Button>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
 
       <Portal>
         <Dialog visible={showDeleteConfirm} onDismiss={() => setShowDeleteConfirm(false)}>
@@ -174,9 +188,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF',
   },
-  container: {
+  // Container principal para o KeyboardAvoidingView
+  keyboardAvoidingContainer: {
     flex: 1,
     backgroundColor: '#FFF',
+  },
+  // Container que envolve o ScrollView e o botão
+  mainContainer: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: '#FFF',
+  },
+  scrollableContent: {
+    flex: 1,
+    padding: 24,
   },
   header: {
     borderBottomWidth: 1,
@@ -315,8 +341,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
   },
-  footer: {
+  buttonContainer: {
     padding: 16,
+    paddingBottom: Platform.OS === 'ios' ? 32 : 16,
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
     backgroundColor: '#FFF',

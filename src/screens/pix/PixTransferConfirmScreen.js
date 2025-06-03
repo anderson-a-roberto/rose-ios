@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, StatusBar, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, StatusBar, ScrollView, Alert } from 'react-native';
 import { Text, Button, TextInput, Divider } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,9 +20,65 @@ const PixTransferConfirmScreen = ({ navigation, route }) => {
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { amount, pixKey, dictData, accountData } = route.params;
+  const { amount, pixKey, dictData, accountData, error: routeError } = route.params || {};
+  
+  // Se houver erro passado via rota, mostrar alerta
+  React.useEffect(() => {
+    if (routeError) {
+      setError(routeError);
+      Alert.alert('Erro', routeError);
+    }
+  }, [routeError]);
 
-  const handleTransfer = async () => {
+  // Função para navegar para a tela de verificação de PIN
+  const handleTransfer = () => {
+    // Estruturar payload completo
+    const payload = {
+      debitParty: {
+        account: accountData.account,
+        branch: "1",
+        taxId: accountData.documentNumber,
+        name: "Usuário", // TODO: Adicionar nome do usuário
+        accountType: "TRAN"
+      },
+      creditParty: {
+        bank: dictData.participant,
+        key: pixKey,
+        branch: dictData.branch || "1",
+        taxId: dictData.documentnumber,
+        name: dictData.name,
+        accountType: "TRAN"
+      },
+      amount: amount,
+      clientCode: generateClientCode(),
+      endToEndId: dictData.endtoendid,
+      initiationType: "DICT",
+      paymentType: "IMMEDIATE",
+      urgency: "HIGH",
+      transactionType: "TRANSFER",
+      remittanceInformation: description || "Transferência PIX"
+    };
+    
+    // Preparar dados para a tela de verificação de PIN
+    const transferData = {
+      amount,
+      description: description || "Transferência PIX",
+      beneficiary: {
+        name: dictData.name,
+        taxId: dictData.documentnumber,
+        bank: dictData.participant
+      }
+    };
+    
+    // Navegar para a tela de verificação de PIN
+    navigation.navigate('PixTransferPin', {
+      transferData,
+      payload
+    });
+  };
+  
+  // Função para executar a transferência após verificação do PIN
+  const executeTransfer = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -176,6 +232,8 @@ const PixTransferConfirmScreen = ({ navigation, route }) => {
             TRANSFERIR
           </Button>
         </View>
+        
+
       </View>
     </SafeAreaView>
   );

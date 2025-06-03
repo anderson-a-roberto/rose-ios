@@ -13,7 +13,9 @@
         "buildType": "apk"
       },
       "ios": {
-        "buildConfiguration": "Debug"
+        "buildConfiguration": "Debug",
+        "image": "latest",
+        "resourceClass": "m-medium"
       }
     },
     "preview": {
@@ -37,7 +39,9 @@
         "gradleCommand": ":app:bundleRelease"
       },
       "ios": {
-        "buildConfiguration": "Release"
+        "buildConfiguration": "Release",
+        "image": "macos-sequoia-15.3-xcode-16.2",
+        "resourceClass": "m-medium"
       }
     }
   },

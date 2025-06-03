@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Platform, KeyboardAvoidingView } from 'react-native';
 import { Text, TextInput, Button, Switch } from 'react-native-paper';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 
@@ -115,140 +115,164 @@ const AddressScreen = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <Text style={styles.backText}>‹</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Meu Endereço</Text>
-            <Text style={styles.subtitle}>
-              Falta pouco! Agora precisaremos das informações do seu endereço
-            </Text>
-          </View>
-        </View>
-
-        {/* Content */}
-        <ScrollView 
-          style={styles.content} 
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-        >
-          <View style={styles.form}>
-            <Text style={styles.label}>CEP</Text>
-            <TextInput
-              value={formData.postalCode}
-              onChangeText={(value) => handleChange('postalCode', value)}
-              style={[styles.input, formData.postalCode && styles.filledInput]}
-              keyboardType="numeric"
-              maxLength={9}
-              placeholder="00000-000"
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={formData.postalCode ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: formData.postalCode ? '600' : '400' } } }}
-            />
-
-            <Text style={styles.label}>Cidade</Text>
-            <TextInput
-              value={formData.city}
-              onChangeText={(value) => handleChange('city', value)}
-              style={[styles.input, styles.disabledInput, formData.city && styles.filledInput]}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={formData.city ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: formData.city ? '600' : '400' } } }}
-            />
-
-            <Text style={styles.label}>Estado</Text>
-            <TextInput
-              value={formData.state}
-              onChangeText={(value) => handleChange('state', value)}
-              style={[styles.input, styles.disabledInput, formData.state && styles.filledInput]}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={formData.state ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: formData.state ? '600' : '400' } } }}
-            />
-
-            <Text style={styles.label}>Endereço</Text>
-            <TextInput
-              value={formData.street}
-              onChangeText={(value) => handleChange('street', value)}
-              style={[styles.input, formData.street && styles.filledInput]}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={formData.street ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: formData.street ? '600' : '400' } } }}
-            />
-
-            <Text style={styles.label}>Número</Text>
-            <TextInput
-              value={formData.number}
-              onChangeText={(value) => handleChange('number', value)}
-              style={[styles.input, formData.number && styles.filledInput]}
-              keyboardType="numeric"
-              disabled={formData.noNumber}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={formData.number ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: formData.number ? '600' : '400' } } }}
-            />
-            <View style={styles.switchContainer}>
-              <Switch
-                value={formData.noNumber}
-                onValueChange={handleNoNumber}
-                color="#E91E63"
-              />
-              <Text style={styles.switchLabel}>SEM NÚMERO</Text>
-            </View>
-
-            <Text style={styles.label}>Bairro</Text>
-            <TextInput
-              value={formData.neighborhood}
-              onChangeText={(value) => handleChange('neighborhood', value)}
-              style={[styles.input, formData.neighborhood && styles.filledInput]}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={formData.neighborhood ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: formData.neighborhood ? '600' : '400' } } }}
-            />
-
-            <Text style={styles.label}>Complemento</Text>
-            <TextInput
-              value={formData.complement}
-              onChangeText={(value) => handleChange('complement', value)}
-              style={[styles.input, formData.complement && styles.filledInput]}
-              placeholder="Opcional"
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={formData.complement ? '#000' : '#999'}
-              theme={{ fonts: { regular: { fontWeight: formData.complement ? '600' : '400' } } }}
-            />
-          </View>
-        </ScrollView>
-
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Button
-            mode="contained"
-            onPress={handleNext}
-            style={styles.continueButton}
-            labelStyle={styles.continueButtonLabel}
-            disabled={!isFormValid()}
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
           >
-            Continuar
-          </Button>
+            <Text style={styles.backText}>‹</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Endereço</Text>
+          <Text style={styles.subtitle}>
+            Informe seu endereço residencial
+          </Text>
         </View>
       </View>
+
+      {/* Wrapper para o KeyboardAvoidingView */}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoidingContainer}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        {/* Container principal que envolve o ScrollView e o botão */}
+        <View style={styles.mainContainer}>
+          {/* ScrollView com o formulário */}
+          <ScrollView 
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.form}>
+              {/* CEP */}
+              <Text style={styles.label}>CEP</Text>
+              <TextInput
+                value={formData.postalCode}
+                onChangeText={(value) => handleChange('postalCode', value)}
+                keyboardType="numeric"
+                maxLength={9}
+                style={[styles.input, formData.postalCode && styles.filledInput]}
+                underlineColor="transparent"
+                activeUnderlineColor="#E91E63"
+                selectionColor="#E91E63"
+                cursorColor="#E91E63"
+                caretHidden={false}
+              />
+
+              {/* Rua/Avenida */}
+              <Text style={styles.label}>Rua/Avenida</Text>
+              <TextInput
+                value={formData.street}
+                onChangeText={(value) => handleChange('street', value)}
+                style={[styles.input, formData.street && styles.filledInput]}
+                underlineColor="transparent"
+                activeUnderlineColor="#E91E63"
+                selectionColor="#E91E63"
+                cursorColor="#E91E63"
+                caretHidden={false}
+              />
+
+              {/* Número */}
+              <Text style={styles.label}>Número</Text>
+              <TextInput
+                value={formData.number}
+                onChangeText={(value) => handleChange('number', value)}
+                keyboardType="numeric"
+                style={[styles.input, formData.number && styles.filledInput]}
+                editable={!formData.noNumber}
+                underlineColor="transparent"
+                activeUnderlineColor="#E91E63"
+                selectionColor="#E91E63"
+                cursorColor="#E91E63"
+                caretHidden={false}
+              />
+              <View style={styles.switchContainer}>
+                <Switch
+                  value={formData.noNumber}
+                  onValueChange={handleNoNumber}
+                  color="#E91E63"
+                />
+                <Text style={styles.switchLabel}>Sem número</Text>
+              </View>
+
+              {/* Cidade */}
+              <Text style={styles.label}>Cidade</Text>
+              <TextInput
+                value={formData.city}
+                onChangeText={(value) => handleChange('city', value)}
+                style={[styles.input, formData.city && styles.filledInput]}
+                underlineColor="transparent"
+                activeUnderlineColor="#E91E63"
+                selectionColor="#E91E63"
+                cursorColor="#E91E63"
+                caretHidden={false}
+              />
+
+              {/* Estado */}
+              <Text style={styles.label}>Estado</Text>
+              <TextInput
+                value={formData.state}
+                onChangeText={(value) => handleChange('state', value)}
+                maxLength={2}
+                style={[styles.input, formData.state && styles.filledInput]}
+                underlineColor="transparent"
+                activeUnderlineColor="#E91E63"
+                selectionColor="#E91E63"
+                cursorColor="#E91E63"
+                caretHidden={false}
+              />
+
+              {/* Bairro */}
+              <Text style={styles.label}>Bairro</Text>
+              <TextInput
+                value={formData.neighborhood}
+                onChangeText={(value) => handleChange('neighborhood', value)}
+                style={[styles.input, formData.neighborhood && styles.filledInput]}
+                underlineColor="transparent"
+                activeUnderlineColor="#E91E63"
+                selectionColor="#E91E63"
+                cursorColor="#E91E63"
+                caretHidden={false}
+              />
+
+              <Text style={styles.label}>Complemento</Text>
+              <TextInput
+                value={formData.complement}
+                onChangeText={(value) => handleChange('complement', value)}
+                style={[styles.input, formData.complement && styles.filledInput]}
+                placeholder="Opcional"
+                underlineColor="transparent"
+                activeUnderlineColor="#E91E63"
+                selectionColor="#E91E63"
+                cursorColor="#E91E63"
+                caretHidden={false}
+              />
+              
+              {/* Espaço extra no final para garantir que o último campo seja visível acima do botão */}
+              <View style={styles.bottomPadding} />
+            </View>
+          </ScrollView>
+
+          {/* Botão de continuar - sempre visível */}
+          <View style={styles.buttonContainer}>
+            <Button
+              mode="contained"
+              onPress={handleNext}
+              style={styles.continueButton}
+              labelStyle={styles.continueButtonLabel}
+              disabled={!isFormValid()}
+            >
+              CONTINUAR
+            </Button>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -258,17 +282,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF',
   },
-  container: {
-    flex: 1,
-    backgroundColor: '#FFF',
-    minHeight: '100%',
-  },
   header: {
     paddingTop: Platform.OS === 'ios' ? 8 : 16,
     paddingBottom: 24,
     backgroundColor: '#FFF',
     borderBottomWidth: 1,
     borderBottomColor: '#F5F5F5',
+    zIndex: 10,
   },
   headerTop: {
     flexDirection: 'row',
@@ -281,10 +301,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   backButton: {
-    width: 24,
-    height: 24,
+    width: 40,
+    height: 40,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   backText: {
     fontSize: 32,
@@ -302,16 +322,29 @@ const styles = StyleSheet.create({
     color: '#666666',
     lineHeight: 24,
   },
-  content: {
+  // Container principal para o KeyboardAvoidingView
+  keyboardAvoidingContainer: {
     flex: 1,
-    flexGrow: 1,
+    backgroundColor: '#FFF',
+  },
+  // Container que envolve o ScrollView e o botão
+  mainContainer: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: '#FFF',
+  },
+  // ScrollView que contém o formulário
+  scrollView: {
+    flex: 1,
+    backgroundColor: '#FFF',
   },
   scrollContent: {
-    flexGrow: 1,
+    paddingBottom: 24,
   },
   form: {
     paddingHorizontal: 24,
-    paddingBottom: Platform.OS === 'android' ? 32 : 24,
+    paddingTop: 8,
   },
   label: {
     fontSize: 13,
@@ -327,6 +360,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
     width: '100%',
+    ...(Platform.OS === 'ios' && {
+      height: 56, // Altura fixa para iOS
+      paddingVertical: 8, // Adicionar padding vertical para melhorar a visibilidade do cursor
+    }),
   },
   filledInput: {
     fontWeight: '500',
@@ -352,11 +389,17 @@ const styles = StyleSheet.create({
     color: '#666666',
     fontWeight: '500',
   },
-  footer: {
+  // Espaço extra no final do formulário para garantir que o último campo fique visível acima do botão
+  bottomPadding: {
+    height: 100,
+  },
+  // Container do botão - sempre visível na parte inferior
+  buttonContainer: {
     padding: 16,
+    paddingBottom: Platform.OS === 'ios' ? 32 : 16,
     backgroundColor: '#FFF',
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: '#F5F5F5',
     ...Platform.select({
       android: {
         elevation: 8,

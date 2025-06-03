@@ -3,12 +3,17 @@ import {
   View, 
   StyleSheet, 
   TouchableOpacity, 
-  Platform, 
   ScrollView, 
   ActivityIndicator,
+  Platform,
+  StatusBar,
+  Modal,
   RefreshControl
 } from 'react-native';
-import { Text, Button } from 'react-native-paper';
+import { 
+  Text, 
+  Button 
+} from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import { useTransactionsQuery } from '../hooks/useTransactionsQuery';
@@ -61,46 +66,60 @@ export default function StatementScreen({ route }) {
   const transactions = data?.data || [];
 
   const onStartDateChange = (event, selectedDate) => {
-    setShowStartPicker(Platform.OS === 'ios');
-    if (selectedDate) {
-      // Calcula a data máxima permitida (6 dias após a data selecionada = 7 dias total)
-      const maxEndDate = new Date(selectedDate);
-      maxEndDate.setDate(maxEndDate.getDate() + 6);
+    if (Platform.OS === 'android') {
+      setShowStartPicker(false);
+      if (selectedDate) {
+        // Calcula a data máxima permitida (6 dias após a data selecionada = 7 dias total)
+        const maxEndDate = new Date(selectedDate);
+        maxEndDate.setDate(maxEndDate.getDate() + 6);
 
-      // Se a data final atual estiver mais que 6 dias depois da nova data inicial
-      if (endDate > maxEndDate) {
-        setEndDate(maxEndDate);
-        alert('Período máximo de 7 dias');
+        // Se a data final atual estiver mais que 6 dias depois da nova data inicial
+        if (endDate > maxEndDate) {
+          setEndDate(maxEndDate);
+          alert('Período máximo de 7 dias');
+        }
+
+        // Se a data final for menor que a nova data inicial
+        if (endDate < selectedDate) {
+          setEndDate(selectedDate);
+        }
+
+        setStartDate(selectedDate);
       }
-
-      // Se a data final for menor que a nova data inicial
-      if (endDate < selectedDate) {
-        setEndDate(selectedDate);
+    } else {
+      // No iOS, apenas atualizamos a data temporariamente
+      if (selectedDate) {
+        setStartDate(selectedDate);
       }
-
-      setStartDate(selectedDate);
     }
   };
 
   const onEndDateChange = (event, selectedDate) => {
-    setShowEndPicker(Platform.OS === 'ios');
-    if (selectedDate) {
-      // Calcula a data mínima permitida (6 dias antes da data selecionada = 7 dias total)
-      const minStartDate = new Date(selectedDate);
-      minStartDate.setDate(minStartDate.getDate() - 6);
+    if (Platform.OS === 'android') {
+      setShowEndPicker(false);
+      if (selectedDate) {
+        // Calcula a data mínima permitida (6 dias antes da data selecionada = 7 dias total)
+        const minStartDate = new Date(selectedDate);
+        minStartDate.setDate(minStartDate.getDate() - 6);
 
-      // Se a data inicial estiver mais que 6 dias antes da nova data final
-      if (startDate < minStartDate) {
-        setStartDate(minStartDate);
-        alert('Período máximo de 7 dias');
+        // Se a data inicial estiver mais que 6 dias antes da nova data final
+        if (startDate < minStartDate) {
+          setStartDate(minStartDate);
+          alert('Período máximo de 7 dias');
+        }
+
+        // Se a data inicial for maior que a nova data final
+        if (startDate > selectedDate) {
+          setStartDate(selectedDate);
+        }
+
+        setEndDate(selectedDate);
       }
-
-      // Se a data inicial for maior que a nova data final
-      if (startDate > selectedDate) {
-        setStartDate(selectedDate);
+    } else {
+      // No iOS, apenas atualizamos a data temporariamente
+      if (selectedDate) {
+        setEndDate(selectedDate);
       }
-
-      setEndDate(selectedDate);
     }
   };
 
@@ -154,6 +173,7 @@ export default function StatementScreen({ route }) {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#682145" />
       {/* Card do Topo */}
       <View style={styles.topCard}>
         {/* Header */}
@@ -288,7 +308,8 @@ export default function StatementScreen({ route }) {
         )}
       </ScrollView>
 
-      {showStartPicker && (
+      {/* DateTimePicker para Android */}
+      {Platform.OS === 'android' && showStartPicker && (
         <DateTimePicker
           value={startDate}
           mode="date"
@@ -298,7 +319,7 @@ export default function StatementScreen({ route }) {
         />
       )}
 
-      {showEndPicker && (
+      {Platform.OS === 'android' && showEndPicker && (
         <DateTimePicker
           value={endDate}
           mode="date"
@@ -306,6 +327,82 @@ export default function StatementScreen({ route }) {
           onChange={onEndDateChange}
           maximumDate={new Date()}
         />
+      )}
+
+      {/* Modal para iOS com DateTimePicker */}
+      {Platform.OS === 'ios' && (
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={showStartPicker || showEndPicker}
+          onRequestClose={() => {
+            setShowStartPicker(false);
+            setShowEndPicker(false);
+          }}
+        >
+          <View style={styles.iosDatePickerContainer}>
+            <View style={styles.iosDatePickerContent}>
+              <View style={styles.iosDatePickerHeader}>
+                <TouchableOpacity 
+                  onPress={() => {
+                    setShowStartPicker(false);
+                    setShowEndPicker(false);
+                  }}
+                  style={styles.iosDatePickerButton}
+                >
+                  <Text style={styles.iosDatePickerButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+                
+                <Text style={styles.iosDatePickerTitle}>
+                  {showStartPicker ? 'Data Inicial' : 'Data Final'}
+                </Text>
+                
+                <TouchableOpacity 
+                  onPress={() => {
+                    // Validar e aplicar as datas selecionadas
+                    if (showStartPicker) {
+                      // Validar data inicial
+                      const maxEndDate = new Date(startDate);
+                      maxEndDate.setDate(maxEndDate.getDate() + 6);
+                      if (endDate > maxEndDate) {
+                        setEndDate(maxEndDate);
+                        alert('Período máximo de 7 dias');
+                      }
+                      if (endDate < startDate) {
+                        setEndDate(startDate);
+                      }
+                    } else {
+                      // Validar data final
+                      const minStartDate = new Date(endDate);
+                      minStartDate.setDate(minStartDate.getDate() - 6);
+                      if (startDate < minStartDate) {
+                        setStartDate(minStartDate);
+                        alert('Período máximo de 7 dias');
+                      }
+                      if (startDate > endDate) {
+                        setStartDate(endDate);
+                      }
+                    }
+                    setShowStartPicker(false);
+                    setShowEndPicker(false);
+                  }}
+                  style={styles.iosDatePickerButton}
+                >
+                  <Text style={[styles.iosDatePickerButtonText, { color: '#E91E63' }]}>Confirmar</Text>
+                </TouchableOpacity>
+              </View>
+              
+              <DateTimePicker
+                value={showStartPicker ? startDate : endDate}
+                mode="date"
+                display="spinner"
+                onChange={showStartPicker ? onStartDateChange : onEndDateChange}
+                maximumDate={new Date()}
+                style={styles.iosDatePicker}
+              />
+            </View>
+          </View>
+        </Modal>
       )}
 
       <ReceiptModal
@@ -318,6 +415,41 @@ export default function StatementScreen({ route }) {
 }
 
 const styles = StyleSheet.create({
+  // Estilos para o DatePicker do iOS
+  iosDatePickerContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  iosDatePickerContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 20,
+  },
+  iosDatePickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  iosDatePickerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  iosDatePickerButton: {
+    padding: 8,
+  },
+  iosDatePickerButtonText: {
+    fontSize: 16,
+    color: '#007AFF',
+  },
+  iosDatePicker: {
+    height: 200,
+  },
   container: {
     flex: 1,
     backgroundColor: 'white',
@@ -338,8 +470,9 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: '500',
+    fontWeight: 'bold',
     color: 'white',
+    textAlign: 'center',
   },
   backButton: {
     width: 40,
@@ -486,4 +619,5 @@ const styles = StyleSheet.create({
   transactionsList: {
     paddingVertical: 16,
   },
+
 });

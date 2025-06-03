@@ -1,12 +1,12 @@
 import React, { useRef, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, StatusBar, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, StatusBar, Alert, ScrollView } from 'react-native';
 import { Text, Button, Divider } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { captureRef } from 'react-native-view-shot';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import ReceiptBase from '../../components/receipt/ReceiptBase';
+import PixOutReceipt from '../../components/extrato/receipts/PixOutReceipt';
 import MoneyValue from '../../components/receipt/MoneyValue';
 
 const PixQrCodeReceiptScreen = ({ navigation, route }) => {
@@ -24,12 +24,13 @@ const PixQrCodeReceiptScreen = ({ navigation, route }) => {
         return;
       }
 
-      const fileName = `comprovante-pix-qrcode-${new Date().toISOString().slice(0,10)}.jpg`;
+      const fileName = `comprovante-pix-${new Date().toISOString().slice(0,10)}.jpg`;
       
       const uri = await captureRef(receiptRef, {
         format: 'jpg',
         quality: 0.8,
-        result: 'base64'
+        result: 'base64',
+        height: 1500
       });
 
       const tempUri = FileSystem.cacheDirectory + fileName;
@@ -37,11 +38,14 @@ const PixQrCodeReceiptScreen = ({ navigation, route }) => {
         encoding: FileSystem.EncodingType.Base64
       });
 
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       await Sharing.shareAsync(tempUri, {
         mimeType: 'image/jpeg',
         dialogTitle: 'Compartilhar Comprovante'
       });
 
+      await new Promise(resolve => setTimeout(resolve, 300));
       await FileSystem.deleteAsync(tempUri);
 
     } catch (error) {
@@ -69,72 +73,40 @@ const PixQrCodeReceiptScreen = ({ navigation, route }) => {
         </TouchableOpacity>
       </View>
 
-      <View ref={receiptRef} collapsable={false} style={styles.container}>
-        <ReceiptBase
-          transactionId={paymentData.endToEndId || paymentData.id}
-          timestamp={new Date()}
-          operationType="Transferência PIX"
-        >
-          {/* Valor */}
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Valor:</Text>
-            <MoneyValue value={-paymentData.amount} />
-          </View>
-
-          <Divider style={styles.divider} />
-
-          {/* Descrição (se houver) */}
-          {paymentData.remittanceInformation && (
-            <>
-              <View style={styles.infoRow}>
-                <Text style={styles.label}>Descrição:</Text>
-                <Text style={styles.value}>{paymentData.remittanceInformation}</Text>
-              </View>
-              <Divider style={styles.divider} />
-            </>
-          )}
-
-          {/* Origem */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Origem</Text>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Nome:</Text>
-              <Text style={styles.value}>{paymentData.debitParty?.name || 'Fernando Luz'}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>CPF/CNPJ:</Text>
-              <Text style={styles.value}>{paymentData.debitParty?.taxId || '17927237098'}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Instituição:</Text>
-              <Text style={styles.value}>{paymentData.debitParty?.bank || 'Inova Bank'}</Text>
-            </View>
-          </View>
-
-          <Divider style={styles.divider} />
-
-          {/* Destino */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Destino</Text>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Nome:</Text>
-              <Text style={styles.value}>{paymentData.creditParty?.name || 'Fernando Luz'}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>CPF/CNPJ:</Text>
-              <Text style={styles.value}>{
-                paymentData.creditParty?.taxId 
-                  ? `***${paymentData.creditParty.taxId.substring(3, 9)}**` 
-                  : '***000510**'
-              }</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Instituição:</Text>
-              <Text style={styles.value}>{paymentData.creditParty?.bank || '13935893'}</Text>
-            </View>
-          </View>
-        </ReceiptBase>
-      </View>
+      <ScrollView style={styles.container}>
+        <View ref={receiptRef} collapsable={false} style={[styles.receiptContainer, {backgroundColor: '#FFF'}]}>
+          {/* Usando o mesmo componente do extrato para garantir consistência */}
+          <PixOutReceipt 
+            transaction={{
+              id: paymentData.endToEndId || paymentData.id,
+              createDate: new Date(),
+              amount: paymentData.amount,
+              movementType: 'PIXPAYMENTOUT'
+            }}
+            onTransferDetailsLoaded={() => {}}
+            preloadedDetails={{
+              status: 'CONFIRMED',
+              body: {
+                debitParty: {
+                  name: paymentData.debitParty?.name || 'Fernando Luz',
+                  taxId: paymentData.debitParty?.taxId || '17927237098',
+                  bank: paymentData.debitParty?.bank || 'Inova Bank',
+                  branch: paymentData.debitParty?.branch || '0001',
+                  account: paymentData.debitParty?.account || '42109747'
+                },
+                creditParty: {
+                  name: paymentData.creditParty?.name || 'Beneficiário',
+                  taxId: paymentData.creditParty?.taxId || '39064256810',
+                  bank: paymentData.creditParty?.bank || 'Banco do Brasil',
+                  key: paymentData.creditParty?.key || paymentData.creditParty?.taxId || '39064256810'
+                },
+                endToEndId: paymentData.endToEndId || paymentData.id,
+                remittanceInformation: paymentData.remittanceInformation || 'Transferência PIX'
+              }
+            }}
+          />
+        </View>
+      </ScrollView>
 
       {/* Botão de compartilhar */}
       <View style={styles.footer}>
@@ -163,9 +135,15 @@ const PixQrCodeReceiptScreen = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: '#FFF'
+  },
+  receiptContainer: {
+    backgroundColor: '#FFF',
+    minHeight: 100, // Garantir altura mínima para o conteúdo ser visível
+    paddingHorizontal: 8, // Adicionar padding horizontal para melhor aparência
+    paddingVertical: 16 // Adicionar padding vertical para melhor aparência
   },
   header: {
     flexDirection: 'row',

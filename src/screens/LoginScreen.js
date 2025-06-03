@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Linking, KeyboardAvoidingView, Platform, ScrollView, Keyboard } from 'react-native';
 import { Text, TextInput } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -70,7 +70,8 @@ export default function LoginScreen() {
 
       // Verifica os status e redireciona
       if (kycData.onboarding_create_status === 'CONFIRMED') {
-        navigation.navigate('LoginPassword', { documentNumber: numbers });
+        // Redireciona para a tela de verificação de bloqueio em vez de ir direto para a senha
+        navigation.navigate('BlockCheck', { cpf: numbers });
       } else if (kycData.documentscopy_status === 'PENDING' && kycData.url_documentscopy) {
         navigation.navigate('KYC', { 
           kycUrl: kycData.url_documentscopy, 
@@ -104,50 +105,62 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoidView}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.scrollViewContent}
+          keyboardShouldPersistTaps="handled"
         >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#1D1D1D" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Entrar</Text>
-      </View>
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <MaterialCommunityIcons name="arrow-left" size={24} color="#1D1D1D" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Entrar</Text>
+          </View>
 
-      {/* Content */}
-      <View style={styles.content}>
-        <Text style={styles.subtitle}>Insira os dados abaixo</Text>
+          {/* Content */}
+          <View style={styles.content}>
+            <Text style={styles.subtitle}>Insira os dados abaixo</Text>
 
-        <View style={styles.inputContainer}>
-          <TextInput
-            label="CPF/CNPJ"
-            value={document}
-            onChangeText={handleDocumentChange}
-            style={styles.input}
-            keyboardType="numeric"
-            maxLength={18}
-            autoFocus
-            error={!!error}
-            disabled={loading}
-          />
-          {error && <Text style={styles.errorText}>{error}</Text>}
-        </View>
-      </View>
+            <View style={styles.inputContainer}>
+              <TextInput
+                label="CPF/CNPJ"
+                value={document}
+                onChangeText={handleDocumentChange}
+                style={styles.input}
+                keyboardType="numeric"
+                maxLength={18}
+                autoFocus
+                error={!!error}
+                disabled={loading}
+                onSubmitEditing={Keyboard.dismiss}
+              />
+              {error && <Text style={styles.errorText}>{error}</Text>}
+            </View>
+          </View>
 
-      {/* Footer */}
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[
-            styles.continueButton,
-            (!document || loading) && styles.continueButtonDisabled
-          ]}
-          onPress={handleContinue}
-          disabled={!document || loading}
-        >
-          <Text style={styles.continueButtonText}>CONTINUAR</Text>
-        </TouchableOpacity>
-      </View>
+          {/* Footer */}
+          <View style={styles.footer}>
+            <TouchableOpacity
+              style={[
+                styles.continueButton,
+                (!document || loading) && styles.continueButtonDisabled
+              ]}
+              onPress={handleContinue}
+              disabled={!document || loading}
+            >
+              <Text style={styles.continueButtonText}>CONTINUAR</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -156,6 +169,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  keyboardAvoidView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    // Garante que o conteúdo ocupe toda a altura disponível
+    ...(Platform.OS === 'ios' && { minHeight: '100%' }),
   },
   header: {
     flexDirection: 'row',
@@ -197,6 +218,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: '#E5E5E5',
+    // Garante que o footer fique visível acima do teclado no iOS
+    ...(Platform.OS === 'ios' && { marginBottom: 20 }),
   },
   continueButton: {
     backgroundColor: '#682145',

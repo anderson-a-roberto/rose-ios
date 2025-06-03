@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, SafeAreaView, Image, Platform } from 'react-native';
+import { View, StyleSheet, SafeAreaView, Image, Platform, ScrollView, KeyboardAvoidingView } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 
@@ -23,30 +23,40 @@ const SuccessScreen = ({ navigation }) => {
           />
         </View>
 
-        {/* Content */}
-        <View style={styles.content}>
-          <View style={styles.checkCircle}>
-            <Text style={styles.checkMark}>✓</Text>
-          </View>
-          
-          <Text style={styles.title}>Obrigado pelo seu cadastro!</Text>
-          <Text style={styles.message}>
-            Seu cadastro foi recebido com sucesso e está em análise.
-          </Text>
-          <Text style={styles.submessage}>
-            Você receberá uma notificação assim que seu cadastro for aprovado.
-          </Text>
+        {/* Content Container */}
+        <View style={styles.contentContainer}>
+          {/* Scrollable Content */}
+          <ScrollView 
+            style={styles.content}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.centerContent}>
+              <View style={styles.checkCircle}>
+                <Text style={styles.checkMark}>✓</Text>
+              </View>
+              
+              <Text style={styles.title}>Obrigado pelo seu cadastro!</Text>
+              <Text style={styles.message}>
+                Seu cadastro foi recebido com sucesso e está em análise.
+              </Text>
+              <Text style={styles.submessage}>
+                Você receberá uma notificação assim que seu cadastro for aprovado.
+              </Text>
+            </View>
+          </ScrollView>
         </View>
 
-        {/* Footer */}
-        <View style={styles.footer}>
+        {/* Footer - Fixed at bottom */}
+        <View style={styles.buttonContainer}>
           <Button
             mode="contained"
             onPress={handleGoToHome}
             style={styles.continueButton}
             labelStyle={styles.continueButtonLabel}
+            uppercase={false}
           >
-            VOLTAR PARA A PÁGINA INICIAL
+            Voltar para a página inicial
           </Button>
         </View>
       </View>
@@ -61,7 +71,12 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    minHeight: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  contentContainer: {
+    flex: 1,
+    backgroundColor: '#682145',
   },
   logoContainer: {
     alignItems: 'center',
@@ -74,9 +89,18 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 24, // Espaço normal sem necessidade de compensação para botão absoluto
+  },
+  centerContent: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
+    paddingVertical: 40,
+    minHeight: 300, // Garante altura mínima para conteúdo centralizado
   },
   checkCircle: {
     width: 80,
@@ -125,9 +149,12 @@ const styles = StyleSheet.create({
     opacity: 0.9,
     lineHeight: 24,
   },
-  footer: {
+  buttonContainer: {
     padding: 16,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 16,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+    backgroundColor: '#682145',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
     ...Platform.select({
       android: {
         elevation: 8,

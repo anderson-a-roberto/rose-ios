@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F5F5F5',
-    height: 100,
+    minHeight: 100,
   },
   transactionTypeContainer: {
     width: 36,
@@ -128,6 +128,7 @@ const styles = StyleSheet.create({
   },
   transactionContent: {
     flex: 1,
+    paddingBottom: 8,
   },
   transactionTitle: {
     fontSize: 16,
@@ -162,6 +163,7 @@ const styles = StyleSheet.create({
   transactionDate: {
     fontSize: 12,
     color: '#999999',
+    marginBottom: 4,
   },
 });
 

@@ -3,6 +3,7 @@ import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { supabase } from '../../../config/supabase';
+import ReceiptBase from '../../receipt/ReceiptBase';
 
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleString('pt-BR', {
@@ -21,13 +22,24 @@ const formatCurrency = (value) => {
   }).format(value);
 };
 
-const PixOutReceipt = ({ transaction, onTransferDetailsLoaded }) => {
+const PixOutReceipt = ({ transaction, onTransferDetailsLoaded, preloadedDetails }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [transferDetails, setTransferDetails] = useState(null);
   const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
+    // Se temos detalhes pré-carregados, usamos eles diretamente
+    if (preloadedDetails) {
+      setTransferDetails(preloadedDetails);
+      setLoading(false);
+      setHasLoaded(true);
+      if (onTransferDetailsLoaded) {
+        onTransferDetailsLoaded(preloadedDetails);
+      }
+      return;
+    }
+    
     const fetchTransferDetails = async () => {
       // Evitar múltiplas chamadas
       if (hasLoaded) return;
@@ -67,7 +79,7 @@ const PixOutReceipt = ({ transaction, onTransferDetailsLoaded }) => {
     };
 
     fetchTransferDetails();
-  }, [transaction.id, onTransferDetailsLoaded, hasLoaded]);
+  }, [transaction.id, onTransferDetailsLoaded, hasLoaded, preloadedDetails]);
 
   if (loading) {
     return (
@@ -88,13 +100,11 @@ const PixOutReceipt = ({ transaction, onTransferDetailsLoaded }) => {
   }
 
   return (
-    <View style={styles.container}>
-      {/* Cabeçalho */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Comprovante de PIX Enviado</Text>
-        <Text style={styles.date}>{formatDate(transaction.createDate)}</Text>
-      </View>
-
+    <ReceiptBase
+      transactionId={transaction.id}
+      timestamp={transaction.createDate}
+      operationType="Transferência PIX"
+    >
       {/* Status */}
       <View style={styles.statusContainer}>
         <Text style={styles.statusLabel}>Status</Text>
@@ -189,29 +199,11 @@ const PixOutReceipt = ({ transaction, onTransferDetailsLoaded }) => {
           </View>
         )}
       </View>
-    </View>
+    </ReceiptBase>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    backgroundColor: '#FFFFFF',
-  },
-  header: {
-    marginBottom: 16,
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginBottom: 8,
-  },
-  date: {
-    fontSize: 14,
-    color: '#666666',
-  },
   statusContainer: {
     marginBottom: 16,
     alignItems: 'center',

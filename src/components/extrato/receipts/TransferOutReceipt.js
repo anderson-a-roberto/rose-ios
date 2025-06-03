@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
-import ReceiptBase from './ReceiptBase';
+import ReceiptBase from '../../receipt/ReceiptBase';
 
 const TransferOutReceipt = ({ transaction }) => {
   const formatDate = (dateString) => {
@@ -24,17 +24,23 @@ const TransferOutReceipt = ({ transaction }) => {
 
   const getTransactionType = (movementType) => {
     const types = {
-      'TEDTRANSFEROUT': 'Transferência TED Enviada',
-      'TEFTRANSFEROUT': 'Transferência TEF Enviada',
+      'TEDTRANSFEROUT': 'Transferência entre contas',
+      'TEFTRANSFEROUT': 'Transferência entre contas',
+      'INTERNALTRANSFER': 'Transferência entre contas',
       'PIXDEBIT': 'PIX Enviado'
     };
-    return types[movementType] || movementType;
+    return types[movementType] || 'Transferência entre contas';
   };
 
   const title = 'Comprovante de Transferência Enviada';
 
   return (
-    <ReceiptBase transactionId={transaction.id} title={title}>
+    <ReceiptBase
+      transactionId={transaction.id || ''}
+      timestamp={transaction.createDate}
+      operationType={getTransactionType(transaction.movementType)}
+      hideValidation={true}
+    >
       <View style={styles.row}>
         <Text style={styles.label}>Data e Hora:</Text>
         <Text style={styles.value}>{formatDate(transaction.createDate)}</Text>
@@ -64,17 +70,23 @@ const TransferOutReceipt = ({ transaction }) => {
         </View>
       )}
 
-      {transaction.recipient && (
+      {transaction.recipient && transaction.recipient.account && (
         <View style={styles.recipientInfo}>
           <Text style={styles.sectionTitle}>Dados do Destinatário</Text>
-          <Text style={styles.value}>{transaction.recipient.name}</Text>
-          <Text style={styles.value}>CPF/CNPJ: {transaction.recipient.documentNumber}</Text>
-          {transaction.recipient.bankName && (
-            <>
-              <Text style={styles.value}>Banco: {transaction.recipient.bankName}</Text>
-              <Text style={styles.value}>Agência: {transaction.recipient.branch}</Text>
-              <Text style={styles.value}>Conta: {transaction.recipient.account}</Text>
-            </>
+          {transaction.recipient.account && (
+            <Text style={styles.value}>Conta: {transaction.recipient.account}</Text>
+          )}
+          {transaction.recipient.name && transaction.recipient.name !== `Conta ${transaction.recipient.account}` && (
+            <Text style={styles.value}>{transaction.recipient.name}</Text>
+          )}
+          {transaction.recipient.documentNumber && transaction.recipient.documentNumber !== '-' && (
+            <Text style={styles.value}>CPF/CNPJ: {transaction.recipient.documentNumber}</Text>
+          )}
+          {transaction.recipient.bankName && transaction.recipient.bankName !== 'Banco Inovação' && (
+            <Text style={styles.value}>Banco: {transaction.recipient.bankName}</Text>
+          )}
+          {transaction.recipient.branch && transaction.recipient.branch !== '0001' && (
+            <Text style={styles.value}>Agência: {transaction.recipient.branch}</Text>
           )}
         </View>
       )}

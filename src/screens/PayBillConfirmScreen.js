@@ -25,7 +25,7 @@ export default function PayBillConfirmScreen({ route }) {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
-  const handlePayment = async () => {
+  const handlePayment = () => {
     if (accountLoading || !userAccount) {
       console.error('Conta do usuário não disponível');
       navigation.replace('PayBillError', { 
@@ -36,49 +36,24 @@ export default function PayBillConfirmScreen({ route }) {
 
     try {
       setIsProcessing(true);
-      // Navega para tela de loading
-      navigation.navigate('PayBillLoading');
-
-      // Gera um UUID único para a transação
-      const clientRequestId = uuidv4();
-
-      // Chama a edge function para realizar o pagamento
-      const { data: paymentData, error: paymentError } = await supabase.functions.invoke('bill-payment', {
-        body: {
-          barCodeInfo: {
-            digitable: billData.barCode.digitable
-          },
-          clientRequestId,
-          amount: billData.value,
-          account: userAccount, // Usar o número real da conta do usuário
-          transactionIdAuthorize: billData.transactionId
-        }
+      
+      // Preparar dados para a tela de verificação de PIN
+      const enhancedBillData = {
+        ...billData,
+        userAccount: userAccount, // Adicionar a conta do usuário aos dados do boleto
+        clientRequestId: uuidv4() // Gerar um ID único para a transação
+      };
+      
+      // Navegar para a tela de verificação de PIN
+      navigation.navigate('PayBillPin', {
+        billData: enhancedBillData,
+        balance
       });
-
-      if (paymentError) throw paymentError;
-
-      // Verifica se o status é PROCESSING (caso de sucesso da Celcoin)
-      if (paymentData.status === "PROCESSING") {
-        // Navega para tela de sucesso com os dados do pagamento
-        navigation.replace('PayBillSuccess', {
-          paymentData: {
-            ...billData,
-            ...paymentData.body,
-            assignor: billData.assignor,
-            barCode: billData.barCode,
-            value: billData.value,
-            status: paymentData.status,
-            transactionId: paymentData.body.transactionIdAuthorize
-          }
-        });
-      } else {
-        throw new Error(paymentData.message || 'Erro ao processar pagamento');
-      }
-
+      
     } catch (error) {
-      console.error('Erro ao processar pagamento:', error);
+      console.error('Erro ao preparar pagamento:', error);
       navigation.replace('PayBillError', { 
-        error: error.message || 'Não foi possível processar o pagamento. Tente novamente.'
+        error: error.message || 'Não foi possível preparar o pagamento. Tente novamente.'
       });
     } finally {
       setIsProcessing(false);

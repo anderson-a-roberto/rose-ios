@@ -150,33 +150,50 @@ const PixReceiveKeyScreen = ({ navigation, route }) => {
           </View>
         ) : (
           <ScrollView style={styles.keysList} showsVerticalScrollIndicator={false}>
-            {keys.map((key) => (
-              <PixKeyItem
-                key={key.id}
-                keyId={key.id}
-                type={key.type}
-                value={key.value}
-                selected={selectedKey?.id === key.id}
-                onSelect={handleKeySelect}
-              />
-            ))}
+            {keys.length > 0 ? (
+              keys.map((key) => (
+                <PixKeyItem
+                  key={key.id}
+                  keyId={key.id}
+                  type={key.type}
+                  value={key.value}
+                  selected={selectedKey?.id === key.id}
+                  onSelect={handleKeySelect}
+                />
+              ))
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>Nenhuma chave PIX encontrada</Text>
+                <Text style={styles.emptySubText}>É necessário cadastrar uma chave PIX para receber pagamentos</Text>
+                <Button 
+                  mode="contained" 
+                  onPress={() => navigation.navigate('RegisterPixKey')}
+                  style={styles.registerKeyButton}
+                  labelStyle={styles.buttonLabel}
+                >
+                  CADASTRAR CHAVE PIX
+                </Button>
+              </View>
+            )}
           </ScrollView>
         )}
       </View>
 
       {/* Continue Button */}
-      <View style={styles.footer}>
-        <Button
-          mode="contained"
-          onPress={handleContinue}
-          style={styles.continueButton}
-          contentStyle={styles.buttonContent}
-          labelStyle={styles.buttonLabel}
-          disabled={!selectedKey}
-        >
-          CONTINUAR
-        </Button>
-      </View>
+      {keys.length > 0 && (
+        <View style={styles.footer}>
+          <Button
+            mode="contained"
+            onPress={handleContinue}
+            style={styles.continueButton}
+            contentStyle={styles.buttonContent}
+            labelStyle={styles.buttonLabel}
+            disabled={!selectedKey}
+          >
+            CONTINUAR
+          </Button>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -276,6 +293,34 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 32,
+    paddingHorizontal: 24,
+  },
+  emptyText: {
+    fontSize: 18,
+    color: '#666',
+    textAlign: 'center',
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: '#888',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  registerKeyButton: {
+    backgroundColor: '#E91E63',
+    marginTop: 16,
+    width: '100%',
+    borderRadius: 4,
+    height: 56,
+    justifyContent: 'center',
   },
   errorText: {
     fontSize: 16,

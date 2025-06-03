@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
 import { Text } from 'react-native-paper';
 
 const PixCopyPasteReceipt = ({ paymentResult, emvData, dictData }) => {
@@ -53,6 +53,13 @@ const PixCopyPasteReceipt = ({ paymentResult, emvData, dictData }) => {
 
   return (
     <View style={styles.container}>
+      <View style={styles.logoContainer}>
+        <Image 
+          source={require('../../../assets/images/icon.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      </View>
       <Text style={styles.receiptTitle}>Comprovante de Pagamento</Text>
       
       <View style={styles.section}>
@@ -131,6 +138,14 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: '#eeeeee',
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  logo: {
+    width: 40,
+    height: 40,
   },
   receiptTitle: {
     fontSize: 16,

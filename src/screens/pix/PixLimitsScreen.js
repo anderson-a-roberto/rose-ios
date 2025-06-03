@@ -1,174 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { 
   View, 
   StyleSheet, 
   TouchableOpacity, 
   StatusBar, 
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform
+  ScrollView
 } from 'react-native';
-import { Text, Button, TextInput, Divider } from 'react-native-paper';
+import { Text, Divider } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { supabase } from '../../config/supabase';
 
 const formatCurrency = (value) => {
-  if (!value) return '';
-  // Remove todos os caracteres não numéricos
-  const numericValue = value.replace(/[^0-9]/g, '');
   // Converte para número e formata como moeda
-  const formattedValue = (Number(numericValue) / 100).toLocaleString('pt-BR', {
+  return value.toLocaleString('pt-BR', {
     style: 'currency',
     currency: 'BRL',
   });
-  return formattedValue;
-};
-
-const parseCurrency = (value) => {
-  if (!value) return '';
-  // Remove todos os caracteres não numéricos
-  return value.replace(/[^0-9]/g, '');
 };
 
 const PixLimitsScreen = ({ navigation }) => {
-  // Estados para os limites
-  const [personDayLimit, setPersonDayLimit] = useState('300000'); // R$ 3.000,00
-  const [personNightLimit, setPersonNightLimit] = useState('100000'); // R$ 1.000,00
-  const [companyDayLimit, setCompanyDayLimit] = useState('300000'); // R$ 3.000,00
-  const [companyNightLimit, setCompanyNightLimit] = useState('100000'); // R$ 1.000,00
-  const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Buscar limites atuais do usuário
-  useEffect(() => {
-    fetchUserLimits();
-  }, []);
-
-  const fetchUserLimits = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Obter usuário autenticado
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) {
-        console.error('Erro ao obter usuário:', userError);
-        return;
-      }
-      
-      if (!user) {
-        console.error('Usuário não autenticado');
-        return;
-      }
-
-      // Buscar limites do usuário no banco de dados
-      const { data, error } = await supabase
-        .from('pix_limits')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (error && error.code !== 'PGRST116') { // PGRST116 é o código para "não encontrado"
-        console.error('Erro ao buscar limites:', error);
-        return;
-      }
-
-      // Se encontrou dados, atualiza os estados
-      if (data) {
-        setPersonDayLimit(data.person_day_limit.toString());
-        setPersonNightLimit(data.person_night_limit.toString());
-        setCompanyDayLimit(data.company_day_limit.toString());
-        setCompanyNightLimit(data.company_night_limit.toString());
-      }
-    } catch (error) {
-      console.error('Erro ao buscar limites:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSaveLimits = async () => {
-    try {
-      setIsSaving(true);
-      
-      // Obter usuário autenticado
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) {
-        console.error('Erro ao obter usuário:', userError);
-        return;
-      }
-      
-      if (!user) {
-        console.error('Usuário não autenticado');
-        return;
-      }
-
-      // Verificar se já existe um registro para o usuário
-      const { data: existingData, error: checkError } = await supabase
-        .from('pix_limits')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error('Erro ao verificar limites existentes:', checkError);
-        return;
-      }
-
-      // Preparar dados para salvar
-      const limitsData = {
-        user_id: user.id,
-        person_day_limit: parseInt(personDayLimit),
-        person_night_limit: parseInt(personNightLimit),
-        company_day_limit: parseInt(companyDayLimit),
-        company_night_limit: parseInt(companyNightLimit),
-        updated_at: new Date()
-      };
-
-      let result;
-      
-      // Se já existe, atualiza. Caso contrário, insere.
-      if (existingData) {
-        result = await supabase
-          .from('pix_limits')
-          .update(limitsData)
-          .eq('id', existingData.id);
-      } else {
-        result = await supabase
-          .from('pix_limits')
-          .insert([limitsData]);
-      }
-
-      if (result.error) {
-        console.error('Erro ao salvar limites:', result.error);
-        return;
-      }
-
-      // Exibir mensagem de sucesso
-      alert('Limites atualizados com sucesso!');
-    } catch (error) {
-      console.error('Erro ao salvar limites:', error);
-      alert('Erro ao salvar limites. Tente novamente.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleCurrencyInput = (value, setter) => {
-    const numericValue = parseCurrency(value);
-    setter(numericValue);
-  };
+  // Limites fixos definidos pelo Banco Central
+  const personDayLimit = 3000.00; // R$ 3.000,00
+  const personNightLimit = 1000.00; // R$ 1.000,00
+  const companyDayLimit = 3000.00; // R$ 3.000,00
+  const companyNightLimit = 1000.00; // R$ 1.000,00
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
       
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
-      >
+      <View style={{ flex: 1 }}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
@@ -181,50 +41,33 @@ const PixLimitsScreen = ({ navigation }) => {
           </View>
           <View style={styles.headerContent}>
             <Text style={styles.headerTitle}>Meus Limites PIX</Text>
-            <Text style={styles.subtitle}>Defina limites personalizados para suas transferências</Text>
+            <Text style={styles.subtitle}>Limites de transferência PIX</Text>
           </View>
         </View>
-
 
         <ScrollView style={styles.scrollView}>
           <View style={styles.container}>
             <View style={styles.infoCard}>
               <Text style={styles.infoTitle}>Suas transferências ainda mais protegidas</Text>
-              <Text style={styles.infoDescription}>
-                Defina limites personalizados para suas transferências PIX, garantindo mais segurança para suas transações.
-              </Text>
+              <Text style={styles.infoDescription}>Limites de transferência PIX definidos pelo Banco Central para garantir mais segurança para suas transações.</Text>
             </View>
 
             {/* Limites para pessoas */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Defina quanto pode ser enviado para pessoas</Text>
+              <Text style={styles.sectionTitle}>Limites para pessoas</Text>
               
               <View style={styles.limitItem}>
                 <Text style={styles.limitLabel}>Limite PIX Dia (6h às 20h)</Text>
-                <TextInput
-                  style={styles.limitInput}
-                  value={formatCurrency(personDayLimit)}
-                  onChangeText={(value) => handleCurrencyInput(value, setPersonDayLimit)}
-                  keyboardType="numeric"
-                  mode="outlined"
-                  outlineColor="#E0E0E0"
-                  activeOutlineColor="#E91E63"
-                  disabled={isLoading}
-                />
+                <View style={styles.valueContainer}>
+                  <Text style={styles.valueText}>{formatCurrency(personDayLimit)}</Text>
+                </View>
               </View>
               
               <View style={styles.limitItem}>
                 <Text style={styles.limitLabel}>Limite PIX Noite (20h às 6h)</Text>
-                <TextInput
-                  style={styles.limitInput}
-                  value={formatCurrency(personNightLimit)}
-                  onChangeText={(value) => handleCurrencyInput(value, setPersonNightLimit)}
-                  keyboardType="numeric"
-                  mode="outlined"
-                  outlineColor="#E0E0E0"
-                  activeOutlineColor="#E91E63"
-                  disabled={isLoading}
-                />
+                <View style={styles.valueContainer}>
+                  <Text style={styles.valueText}>{formatCurrency(personNightLimit)}</Text>
+                </View>
               </View>
             </View>
 
@@ -236,49 +79,29 @@ const PixLimitsScreen = ({ navigation }) => {
               
               <View style={styles.limitItem}>
                 <Text style={styles.limitLabel}>Limite PIX Dia (6h às 20h)</Text>
-                <TextInput
-                  style={styles.limitInput}
-                  value={formatCurrency(companyDayLimit)}
-                  onChangeText={(value) => handleCurrencyInput(value, setCompanyDayLimit)}
-                  keyboardType="numeric"
-                  mode="outlined"
-                  outlineColor="#E0E0E0"
-                  activeOutlineColor="#E91E63"
-                  disabled={isLoading}
-                />
+                <View style={styles.valueContainer}>
+                  <Text style={styles.valueText}>{formatCurrency(companyDayLimit)}</Text>
+                </View>
               </View>
               
               <View style={styles.limitItem}>
                 <Text style={styles.limitLabel}>Limite PIX Noite (20h às 6h)</Text>
-                <TextInput
-                  style={styles.limitInput}
-                  value={formatCurrency(companyNightLimit)}
-                  onChangeText={(value) => handleCurrencyInput(value, setCompanyNightLimit)}
-                  keyboardType="numeric"
-                  mode="outlined"
-                  outlineColor="#E0E0E0"
-                  activeOutlineColor="#E91E63"
-                  disabled={isLoading}
-                />
+                <View style={styles.valueContainer}>
+                  <Text style={styles.valueText}>{formatCurrency(companyNightLimit)}</Text>
+                </View>
               </View>
+            </View>
+            
+            {/* Texto de contato com suporte */}
+            <View style={styles.supportSection}>
+              <Text style={styles.supportText}>
+                Para solicitar alterações nos seus limites PIX, entre em contato com o suporte.
+              </Text>
             </View>
           </View>
         </ScrollView>
 
-        <View style={styles.footer}>
-          <Button
-            mode="contained"
-            onPress={handleSaveLimits}
-            style={styles.saveButton}
-            buttonColor="#E91E63"
-            textColor="#FFFFFF"
-            loading={isSaving}
-            disabled={isSaving || isLoading}
-          >
-            Salvar Limites
-          </Button>
-        </View>
-      </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   );
 };
@@ -364,9 +187,19 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 8,
   },
-  limitInput: {
-    backgroundColor: '#FFF',
+  valueContainer: {
+    backgroundColor: '#F5F5F5',
     height: 50,
+    borderRadius: 4,
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  valueText: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
   },
   divider: {
     marginVertical: 8,
@@ -382,6 +215,17 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     height: 50,
     justifyContent: 'center',
+  },
+  supportSection: {
+    marginVertical: 24,
+    marginHorizontal: 20,
+    padding: 16,
+  },
+  supportText: {
+    fontSize: 14,
+    color: '#666666',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
 

@@ -1,16 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Linking, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text, TextInput } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { supabase } from '../config/supabase';
+import { resetNavigation } from '../navigation/RootNavigation';
 
 const LoginPasswordScreen = ({ route, navigation }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
   const { documentNumber } = route.params;
+  
+  // Limite de tentativas de login
+  const MAX_LOGIN_ATTEMPTS = 3;
 
   const getUserEmail = async (documentNumber) => {
     try {
@@ -61,10 +66,43 @@ const LoginPasswordScreen = ({ route, navigation }) => {
     }
   };
 
+  // Função para bloquear o usuário após exceder o limite de tentativas
+  const blockUser = async (email) => {
+    try {
+      // Inserir um registro na tabela blocked_users
+      const { error } = await supabase
+        .from('blocked_users')
+        .insert([
+          { 
+            document_number: documentNumber,
+            email: email,
+            reason: 'Excesso de tentativas de login',
+            blocked_at: new Date().toISOString()
+          }
+        ]);
+
+      if (error) {
+        console.error('Erro ao bloquear usuário:', error);
+        return false;
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('Erro inesperado ao bloquear usuário:', err);
+      return false;
+    }
+  };
+
   const handleLogin = async () => {
     try {
       setError('');
       setLoading(true);
+
+      // Se já excedeu o limite de tentativas, redireciona para a tela de bloqueio
+      if (loginAttempts >= MAX_LOGIN_ATTEMPTS) {
+        navigation.navigate('UserBlocked');
+        return;
+      }
 
       // Busca o email real do usuário
       const email = await getUserEmail(documentNumber);
@@ -75,7 +113,25 @@ const LoginPasswordScreen = ({ route, navigation }) => {
         password: password,
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        // Incrementa o contador de tentativas
+        const newAttempts = loginAttempts + 1;
+        setLoginAttempts(newAttempts);
+        
+        // Se atingiu o limite, bloqueia o usuário
+        if (newAttempts >= MAX_LOGIN_ATTEMPTS) {
+          const blocked = await blockUser(email);
+          if (blocked) {
+            navigation.navigate('UserBlocked');
+            return;
+          }
+        }
+        
+        throw authError;
+      }
+
+      // Login bem-sucedido, resetar contador de tentativas
+      setLoginAttempts(0);
 
       // Verifica se a sessão está ativa
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -91,7 +147,9 @@ const LoginPasswordScreen = ({ route, navigation }) => {
       }
 
       if (kycData.onboarding_create_status === 'CONFIRMED') {
-        navigation.navigate('Dashboard2');
+        // Login bem-sucedido, navegar para a tela de carregamento do PIN
+        console.log('[LOGIN] Login bem-sucedido, navegando para a tela de carregamento do PIN');
+        navigation.navigate('PinLoading');
       } else {
         await Linking.openURL('/error');
       }
@@ -101,7 +159,10 @@ const LoginPasswordScreen = ({ route, navigation }) => {
       if (error.message === 'Email não encontrado') {
         setError('Usuário não encontrado');
       } else if (error.message === 'Invalid login credentials') {
-        setError('Senha incorreta');
+        // Calculamos as tentativas restantes com base no novo valor de loginAttempts
+        // que foi incrementado na linha 118
+        const attemptsRemaining = MAX_LOGIN_ATTEMPTS - (loginAttempts + 1);
+        setError(`Senha incorreta. Tentativas restantes: ${attemptsRemaining}`);
       } else {
         setError('Erro ao fazer login. Tente novamente.');
       }
@@ -121,7 +182,7 @@ const LoginPasswordScreen = ({ route, navigation }) => {
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.navigate('Welcome')}
           >
             <MaterialCommunityIcons name="arrow-left" size={24} color="#000000" />
           </TouchableOpacity>
@@ -136,18 +197,45 @@ const LoginPasswordScreen = ({ route, navigation }) => {
             <TextInput
               mode="flat"
               label="Senha"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              error={!!error}
-              style={styles.input}
-              contentStyle={styles.inputContent}
+              value={showPassword ? password : "•".repeat(password.length)}
+              onChangeText={(value) => {
+                // Se estiver mostrando a senha real, atualizamos normalmente
+                if (showPassword) {
+                  setPassword(value);
+                } else {
+                  // Se estiver mostrando os pontos, precisamos determinar se o usuário adicionou ou removeu caracteres
+                  const previousLength = password.length;
+                  const currentLength = value.length;
+                  
+                  if (currentLength > previousLength) {
+                    // Adicionou caracteres - pegamos apenas o último caractere adicionado
+                    const lastChar = value.charAt(value.length - 1);
+                    if (lastChar !== '•') { // Certifique-se de que não estamos adicionando um ponto
+                      setPassword(prev => prev + lastChar);
+                    }
+                  } else if (currentLength < previousLength) {
+                    // Removeu caracteres - removemos o último caractere da senha real
+                    setPassword(prev => prev.slice(0, -1));
+                  }
+                }
+              }}
+              secureTextEntry={false}
+              autoCapitalize="none"
+              autoComplete="off"
+              autoCorrect={false}
+              enablesReturnKeyAutomatically
+              underlineColor="#E91E63"
+              activeUnderlineColor="#E91E63"
+              outlineColor="#E91E63"
+              activeOutlineColor="#E91E63"
               theme={{
                 colors: {
                   primary: '#E91E63',
                   error: '#B00020',
                   onSurfaceVariant: '#666666',
                   onSurface: '#000000',
+                  text: '#000000',
+                  placeholder: '#666666',
                 },
               }}
               right={
@@ -166,7 +254,7 @@ const LoginPasswordScreen = ({ route, navigation }) => {
 
             <TouchableOpacity 
               style={styles.forgotPassword}
-              onPress={() => {/* TODO: Implementar recuperação de senha */}}
+              onPress={() => navigation.navigate('ForgotPassword', { cpf: documentNumber })}
             >
               <Text style={styles.forgotPasswordText}>
                 Esqueceu sua senha?
@@ -234,12 +322,16 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: 'transparent',
+    height: Platform.OS === 'ios' ? 56 : 'auto',
   },
   inputContent: {
     fontFamily: 'Roboto',
     fontSize: 16,
     backgroundColor: 'transparent',
     paddingHorizontal: 0,
+    paddingVertical: Platform.OS === 'ios' ? 8 : 4,
+    minHeight: 24,
+    color: '#000000',
   },
   errorText: {
     color: '#B00020',

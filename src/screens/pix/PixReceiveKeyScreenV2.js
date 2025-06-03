@@ -113,51 +113,68 @@ const PixReceiveKeyScreenV2 = ({ navigation, route }) => {
       <Text style={styles.subtitle}>Selecione uma chave</Text>
 
       <ScrollView style={styles.content}>
-        <RadioButton.Group
-          onValueChange={value => {
-            const key = keys.find(k => k.key === value);
-            setSelectedKey(key);
-          }}
-          value={selectedKey?.key}
-        >
-          {keys.map((key) => (
-            <TouchableOpacity
-              key={key.key}
-              style={styles.keyItem}
-              onPress={() => {
-                setSelectedKey(key);
-              }}
+        {keys.length > 0 ? (
+          <RadioButton.Group
+            onValueChange={value => {
+              const key = keys.find(k => k.key === value);
+              setSelectedKey(key);
+            }}
+            value={selectedKey?.key}
+          >
+            {keys.map((key) => (
+              <TouchableOpacity
+                key={key.key}
+                style={styles.keyItem}
+                onPress={() => {
+                  setSelectedKey(key);
+                }}
+              >
+                <View style={styles.keyContent}>
+                  <View style={styles.keyIconContainer}>
+                    <MaterialCommunityIcons name="key-variant" size={24} color="#E91E63" />
+                  </View>
+                  <View style={styles.keyInfo}>
+                    <Text style={styles.keyType}>{KEY_TYPES[key.keyType] || key.keyType}</Text>
+                    <Text style={styles.keyValue}>{key.key}</Text>
+                  </View>
+                  <RadioButton 
+                    value={key.key}
+                    color="#E91E63"
+                    uncheckedColor="#E91E63"
+                  />
+                </View>
+              </TouchableOpacity>
+            ))}
+          </RadioButton.Group>
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>Nenhuma chave PIX encontrada</Text>
+            <Text style={styles.emptySubText}>É necessário cadastrar uma chave PIX para receber pagamentos</Text>
+            <Button 
+              mode="contained" 
+              onPress={() => navigation.navigate('RegisterPixKey')}
+              style={styles.registerKeyButton}
+              labelStyle={styles.continueButtonLabel}
             >
-              <View style={styles.keyContent}>
-                <View style={styles.keyIconContainer}>
-                  <MaterialCommunityIcons name="key-variant" size={24} color="#E91E63" />
-                </View>
-                <View style={styles.keyInfo}>
-                  <Text style={styles.keyType}>{KEY_TYPES[key.keyType] || key.keyType}</Text>
-                  <Text style={styles.keyValue}>{key.key}</Text>
-                </View>
-                <RadioButton 
-                  value={key.key}
-                  color="#E91E63"
-                  uncheckedColor="#E91E63"
-                />
-              </View>
-            </TouchableOpacity>
-          ))}
-        </RadioButton.Group>
+              CADASTRAR CHAVE PIX
+            </Button>
+          </View>
+        )}
       </ScrollView>
 
-      <View style={styles.footer}>
-        <Button
-          mode="contained"
-          onPress={handleContinue}
-          style={styles.continueButton}
-          labelStyle={styles.continueButtonLabel}
-          disabled={!selectedKey}
-        >
-          CONTINUAR
-        </Button>
-      </View>
+      {keys.length > 0 && (
+        <View style={styles.footer}>
+          <Button
+            mode="contained"
+            onPress={handleContinue}
+            style={styles.continueButton}
+            labelStyle={styles.continueButtonLabel}
+            disabled={!selectedKey}
+          >
+            CONTINUAR
+          </Button>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -242,6 +259,34 @@ const styles = StyleSheet.create({
     color: '#B00020',
     textAlign: 'center',
     marginHorizontal: 16,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 32,
+    paddingHorizontal: 24,
+  },
+  emptyText: {
+    fontSize: 18,
+    color: '#666',
+    textAlign: 'center',
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: '#888',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  registerKeyButton: {
+    backgroundColor: '#E91E63',
+    marginTop: 16,
+    width: '100%',
+    height: 56,
+    borderRadius: 4,
+    justifyContent: 'center',
   },
   footer: {
     padding: 24,

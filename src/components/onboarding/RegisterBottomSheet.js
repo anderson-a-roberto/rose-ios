@@ -5,7 +5,9 @@ import {
   StyleSheet, 
   Animated, 
   TouchableWithoutFeedback,
-  Dimensions 
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 import { Text, TextInput, Button } from 'react-native-paper';
 
@@ -74,57 +76,68 @@ const RegisterBottomSheet = ({ visible, onDismiss, onContinue }) => {
       animationType="fade"
       onRequestClose={onDismiss}
     >
-      <TouchableWithoutFeedback onPress={onDismiss}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
-            <Animated.View
-              style={[
-                styles.bottomSheet,
-                {
-                  transform: [
-                    {
-                      translateY: slideAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [600, 0],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            >
-              <View style={styles.indicator} />
-              <Text style={styles.title}>CPF/CNPJ</Text>
-              <TextInput
-                mode="flat"
-                value={document}
-                onChangeText={handleDocumentChange}
-                placeholder="000.000.000-00"
-                style={styles.input}
-                contentStyle={styles.inputContent}
-                theme={{
-                  colors: {
-                    primary: '#E91E63',
-                    error: '#B00020',
-                    onSurfaceVariant: '#666666',
-                    onSurface: '#000000',
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
+        <TouchableWithoutFeedback onPress={onDismiss}>
+          <View style={styles.overlay}>
+            <TouchableWithoutFeedback>
+              <Animated.View
+                style={[
+                  styles.bottomSheet,
+                  {
+                    transform: [
+                      {
+                        translateY: slideAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [600, 0],
+                        }),
+                      },
+                    ],
                   },
-                }}
-                keyboardType="numeric"
-                maxLength={18}
-              />
-              <Button
-                mode="contained"
-                style={[styles.button, !isValidDocument() && styles.buttonDisabled]}
-                labelStyle={styles.buttonLabel}
-                onPress={handleContinue}
-                disabled={!isValidDocument()}
+                ]}
               >
-                CONTINUAR
-              </Button>
-            </Animated.View>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
+                <View style={styles.content}>
+                  <View style={styles.indicator} />
+                  <Text style={styles.title}>CPF/CNPJ</Text>
+                  <TextInput
+                    mode="flat"
+                    value={document}
+                    onChangeText={handleDocumentChange}
+                    placeholder="000.000.000-00"
+                    style={styles.input}
+                    contentStyle={styles.inputContent}
+                    theme={{
+                      colors: {
+                        primary: '#E91E63',
+                        error: '#B00020',
+                        onSurfaceVariant: '#666666',
+                        onSurface: '#000000',
+                      },
+                    }}
+                    keyboardType="numeric"
+                    maxLength={18}
+                    autoFocus={true}
+                  />
+                  <View style={styles.buttonWrapper}>
+                    <Button
+                      mode="contained"
+                      style={[styles.button, !isValidDocument() && styles.buttonDisabled]}
+                      labelStyle={styles.buttonLabel}
+                      onPress={handleContinue}
+                      disabled={!isValidDocument()}
+                    >
+                      CONTINUAR
+                    </Button>
+                  </View>
+                </View>
+              </Animated.View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
@@ -139,8 +152,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 24,
     minHeight: '35%',
+  },
+  content: {
+    padding: 24,
+    paddingBottom: Platform.OS === 'ios' ? 16 : 24,
   },
   indicator: {
     width: 40,
@@ -165,6 +181,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: 'transparent',
     paddingHorizontal: 0,
+  },
+  buttonWrapper: {
+    marginTop: 8,
   },
   button: {
     backgroundColor: '#E91E63',

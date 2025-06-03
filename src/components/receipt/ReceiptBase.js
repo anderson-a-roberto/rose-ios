@@ -14,9 +14,10 @@ const ReceiptBase = ({
       {/* Header */}
       <View style={styles.header}>
         <Image 
-          source={require('../../assets/images/logo.png')}
+          source={require('../../assets/images/icon.png')}
           style={styles.logo}
           resizeMode="contain"
+          defaultSource={require('../../assets/images/icon.png')}
         />
         <Text style={styles.title}>Comprovante</Text>
         <Text style={styles.transactionId}>ID: {transactionId}</Text>
@@ -74,9 +75,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   logo: {
-    width: 120,
+    width: 40,
     height: 40,
-    marginBottom: 16,
+    marginBottom: 8,
   },
   title: {
     fontSize: 24,

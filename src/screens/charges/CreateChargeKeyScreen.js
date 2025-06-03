@@ -196,6 +196,15 @@ const CreateChargeKeyScreen = ({ navigation }) => {
             {keys.length === 0 && !loading && (
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyText}>Nenhuma chave PIX encontrada</Text>
+                <Text style={styles.emptySubText}>É necessário cadastrar uma chave PIX para criar cobranças</Text>
+                <Button 
+                  mode="contained" 
+                  onPress={() => navigation.navigate('RegisterPixKey')}
+                  style={styles.registerKeyButton}
+                  labelStyle={[styles.buttonLabel, { color: '#FFFFFF' }]}
+                >
+                  CADASTRAR CHAVE PIX
+                </Button>
               </View>
             )}
           </>
@@ -203,18 +212,20 @@ const CreateChargeKeyScreen = ({ navigation }) => {
       </ScrollView>
 
       {/* Footer */}
-      <View style={styles.buttonContainer}>
-        <Button
-          mode="contained"
-          onPress={handleNext}
-          style={styles.button}
-          contentStyle={styles.buttonContent}
-          labelStyle={[styles.buttonLabel, { color: '#FFF' }]}
-          disabled={!selectedKey}
-        >
-          CONTINUAR
-        </Button>
-      </View>
+      {keys.length > 0 && (
+        <View style={styles.buttonContainer}>
+          <Button
+            mode="contained"
+            onPress={handleNext}
+            style={styles.button}
+            contentStyle={styles.buttonContent}
+            labelStyle={[styles.buttonLabel, { color: '#FFF' }]}
+            disabled={!selectedKey}
+          >
+            CONTINUAR
+          </Button>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -321,11 +332,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 32,
+    paddingHorizontal: 24,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#666',
     textAlign: 'center',
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: '#888',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  registerKeyButton: {
+    backgroundColor: '#E91E63',
+    marginTop: 16,
+    width: '100%',
+    borderRadius: 4,
+    height: 56,
+    justifyContent: 'center',
   },
   buttonContainer: {
     padding: 20,

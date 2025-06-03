@@ -21,6 +21,10 @@ export default function ProfileSettingsForm({ onBack }) {
     motherName: '',
     documentNumber: '',
     documentType: 'CPF',
+    // Dados PJ
+    businessName: '',
+    businessEmail: '',
+    contactNumber: '',
 
     // Endereço
     addressPostalCode: '',
@@ -38,6 +42,7 @@ export default function ProfileSettingsForm({ onBack }) {
   const [closeAccountError, setCloseAccountError] = useState({});
   const [accountNumber, setAccountNumber] = useState('');
   const [userTaxId, setUserTaxId] = useState('');
+  const [isPJ, setIsPJ] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -71,6 +76,10 @@ export default function ProfileSettingsForm({ onBack }) {
         motherName: data.mother_name || '',
         documentNumber: data.document_number || '',
         documentType: data.document_type || 'CPF',
+        // Dados PJ
+        businessName: data.business_name || '',
+        businessEmail: data.business_email || '',
+        contactNumber: data.contact_number || '',
         addressPostalCode: data.address_postal_code || '',
         addressStreet: data.address_street || '',
         addressNumber: data.address_number || '',
@@ -83,6 +92,8 @@ export default function ProfileSettingsForm({ onBack }) {
       // Armazenar o CPF/CNPJ do usuário para uso no encerramento de conta
       if (data.document_number) {
         setUserTaxId(data.document_number);
+        // Verificar se é PJ com base no tamanho do documento (CNPJ tem 14 dígitos)
+        setIsPJ(data.document_number.replace(/[^0-9]/g, '').length > 11);
       }
     } catch (error) {
       console.error('Erro ao carregar perfil:', error);
@@ -265,111 +276,170 @@ export default function ProfileSettingsForm({ onBack }) {
       >
         <View style={styles.form}>
           {/* Dados Pessoais */}
-          <Text style={styles.sectionTitle}>Dados Pessoais</Text>
+          <Text style={styles.sectionTitle}>Dados {isPJ ? 'Empresariais' : 'Pessoais'}</Text>
           
-          <Text style={styles.label}>Nome Completo</Text>
-          <TextInput
-            value={form.fullName}
-            onChangeText={(text) => setForm(prev => ({ ...prev, fullName: text }))}
-            style={[styles.input, form.fullName && styles.filledInput]}
-            contentStyle={{ color: '#000000', fontSize: 16 }}
-            theme={{
-              colors: {
-                text: '#000000',
-                disabled: '#000000',
-                placeholder: '#666666',
-                primary: '#E91E63',
-              }
-            }}
-            disabled
-          />
+          {isPJ ? (
+            // Campos para Pessoa Jurídica (PJ)
+            <>
+              <Text style={styles.label}>Razão Social</Text>
+              <TextInput
+                value={form.businessName}
+                onChangeText={(text) => setForm(prev => ({ ...prev, businessName: text }))}
+                style={[styles.input, form.businessName && styles.filledInput]}
+                contentStyle={{ color: '#000000', fontSize: 16 }}
+                theme={{
+                  colors: {
+                    text: '#000000',
+                    disabled: '#000000',
+                    placeholder: '#666666',
+                    primary: '#E91E63',
+                  }
+                }}
+                disabled
+              />
 
-          <Text style={styles.label}>Nome Social</Text>
-          <TextInput
-            value={form.socialName}
-            onChangeText={(text) => setForm(prev => ({ ...prev, socialName: text }))}
-            style={[styles.input, form.socialName && styles.filledInput]}
-            contentStyle={{ color: '#000000', fontSize: 16 }}
-            theme={{
-              colors: {
-                text: '#000000',
-                disabled: '#000000',
-                placeholder: '#666666',
-                primary: '#E91E63',
-              }
-            }}
-            disabled
-          />
+              <Text style={styles.label}>Email Comercial</Text>
+              <TextInput
+                value={form.businessEmail}
+                onChangeText={(text) => setForm(prev => ({ ...prev, businessEmail: text }))}
+                style={[styles.input, form.businessEmail && styles.filledInput]}
+                contentStyle={{ color: '#000000', fontSize: 16 }}
+                theme={{
+                  colors: {
+                    text: '#000000',
+                    disabled: '#000000',
+                    placeholder: '#666666',
+                    primary: '#E91E63',
+                  }
+                }}
+                disabled
+              />
 
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            value={form.email}
-            onChangeText={(text) => setForm(prev => ({ ...prev, email: text }))}
-            style={[styles.input, form.email && styles.filledInput]}
-            contentStyle={{ color: '#000000', fontSize: 16 }}
-            theme={{
-              colors: {
-                text: '#000000',
-                disabled: '#000000',
-                placeholder: '#666666',
-                primary: '#E91E63',
-              }
-            }}
-            disabled
-          />
+              <Text style={styles.label}>Telefone de Contato</Text>
+              <TextInput
+                value={form.contactNumber}
+                onChangeText={(text) => setForm(prev => ({ ...prev, contactNumber: text }))}
+                style={[styles.input, form.contactNumber && styles.filledInput]}
+                contentStyle={{ color: '#000000', fontSize: 16 }}
+                theme={{
+                  colors: {
+                    text: '#000000',
+                    disabled: '#000000',
+                    placeholder: '#666666',
+                    primary: '#E91E63',
+                  }
+                }}
+                disabled
+              />
+            </>
+          ) : (
+            // Campos para Pessoa Física (PF)
+            <>
+              <Text style={styles.label}>Nome Completo</Text>
+              <TextInput
+                value={form.fullName}
+                onChangeText={(text) => setForm(prev => ({ ...prev, fullName: text }))}
+                style={[styles.input, form.fullName && styles.filledInput]}
+                contentStyle={{ color: '#000000', fontSize: 16 }}
+                theme={{
+                  colors: {
+                    text: '#000000',
+                    disabled: '#000000',
+                    placeholder: '#666666',
+                    primary: '#E91E63',
+                  }
+                }}
+                disabled
+              />
 
-          <Text style={styles.label}>Telefone</Text>
-          <TextInput
-            value={form.phoneNumber}
-            onChangeText={(text) => setForm(prev => ({ ...prev, phoneNumber: text }))}
-            style={[styles.input, form.phoneNumber && styles.filledInput]}
-            contentStyle={{ color: '#000000', fontSize: 16 }}
-            theme={{
-              colors: {
-                text: '#000000',
-                disabled: '#000000',
-                placeholder: '#666666',
-                primary: '#E91E63',
-              }
-            }}
-            disabled
-          />
+              <Text style={styles.label}>Nome Social</Text>
+              <TextInput
+                value={form.socialName}
+                onChangeText={(text) => setForm(prev => ({ ...prev, socialName: text }))}
+                style={[styles.input, form.socialName && styles.filledInput]}
+                contentStyle={{ color: '#000000', fontSize: 16 }}
+                theme={{
+                  colors: {
+                    text: '#000000',
+                    disabled: '#000000',
+                    placeholder: '#666666',
+                    primary: '#E91E63',
+                  }
+                }}
+                disabled
+              />
 
-          <Text style={styles.label}>Data de Nascimento</Text>
-          <TextInput
-            value={form.birthDate}
-            onChangeText={(text) => setForm(prev => ({ ...prev, birthDate: text }))}
-            style={[styles.input, form.birthDate && styles.filledInput]}
-            contentStyle={{ color: '#000000', fontSize: 16 }}
-            theme={{
-              colors: {
-                text: '#000000',
-                disabled: '#000000',
-                placeholder: '#666666',
-                primary: '#E91E63',
-              }
-            }}
-            disabled
-          />
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                value={form.email}
+                onChangeText={(text) => setForm(prev => ({ ...prev, email: text }))}
+                style={[styles.input, form.email && styles.filledInput]}
+                contentStyle={{ color: '#000000', fontSize: 16 }}
+                theme={{
+                  colors: {
+                    text: '#000000',
+                    disabled: '#000000',
+                    placeholder: '#666666',
+                    primary: '#E91E63',
+                  }
+                }}
+                disabled
+              />
 
-          <Text style={styles.label}>Nome da Mãe</Text>
-          <TextInput
-            value={form.motherName}
-            onChangeText={(text) => setForm(prev => ({ ...prev, motherName: text }))}
-            style={[styles.input, form.motherName && styles.filledInput]}
-            contentStyle={{ color: '#000000', fontSize: 16 }}
-            theme={{
-              colors: {
-                text: '#000000',
-                disabled: '#000000',
-                placeholder: '#666666',
-                primary: '#E91E63',
-              }
-            }}
-            disabled
-          />
+              <Text style={styles.label}>Telefone</Text>
+              <TextInput
+                value={form.phoneNumber}
+                onChangeText={(text) => setForm(prev => ({ ...prev, phoneNumber: text }))}
+                style={[styles.input, form.phoneNumber && styles.filledInput]}
+                contentStyle={{ color: '#000000', fontSize: 16 }}
+                theme={{
+                  colors: {
+                    text: '#000000',
+                    disabled: '#000000',
+                    placeholder: '#666666',
+                    primary: '#E91E63',
+                  }
+                }}
+                disabled
+              />
 
-          <Text style={styles.label}>CPF/CNPJ</Text>
+              <Text style={styles.label}>Data de Nascimento</Text>
+              <TextInput
+                value={form.birthDate}
+                onChangeText={(text) => setForm(prev => ({ ...prev, birthDate: text }))}
+                style={[styles.input, form.birthDate && styles.filledInput]}
+                contentStyle={{ color: '#000000', fontSize: 16 }}
+                theme={{
+                  colors: {
+                    text: '#000000',
+                    disabled: '#000000',
+                    placeholder: '#666666',
+                    primary: '#E91E63',
+                  }
+                }}
+                disabled
+              />
+
+              <Text style={styles.label}>Nome da Mãe</Text>
+              <TextInput
+                value={form.motherName}
+                onChangeText={(text) => setForm(prev => ({ ...prev, motherName: text }))}
+                style={[styles.input, form.motherName && styles.filledInput]}
+                contentStyle={{ color: '#000000', fontSize: 16 }}
+                theme={{
+                  colors: {
+                    text: '#000000',
+                    disabled: '#000000',
+                    placeholder: '#666666',
+                    primary: '#E91E63',
+                  }
+                }}
+                disabled
+              />
+            </>
+          )}
+
+          <Text style={styles.label}>{isPJ ? 'CNPJ' : 'CPF'}</Text>
           <TextInput
             value={form.documentNumber}
             onChangeText={(text) => setForm(prev => ({ ...prev, documentNumber: text }))}
@@ -508,21 +578,6 @@ export default function ProfileSettingsForm({ onBack }) {
             disabled
           />
         </View>
-      </ScrollView>
-
-      {/* Footer */}
-      <View style={styles.footer}>
-        <Button
-          mode="contained"
-          onPress={onBack}
-          style={styles.button}
-          labelStyle={styles.buttonLabel}
-        >
-          Voltar
-        </Button>
-        
-        <View style={styles.divider} />
-        
         {/* Seção de Encerramento de Conta */}
         <View style={styles.closeAccountSection}>
           <Button
@@ -536,7 +591,7 @@ export default function ProfileSettingsForm({ onBack }) {
             ENCERRAR CONTA
           </Button>
         </View>
-      </View>
+      </ScrollView>
       <CloseAccountDialog
         visible={showCloseAccountDialog}
         onDismiss={() => setShowCloseAccountDialog(false)}
@@ -629,42 +684,16 @@ const styles = StyleSheet.create({
   filledInput: {
     fontWeight: '500',
   },
-  footer: {
-    padding: 16,
-    backgroundColor: '#FFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    ...Platform.select({
-      android: {
-        elevation: 8,
-      },
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-    }),
-  },
-  button: {
-    height: 48,
-    justifyContent: 'center',
-    backgroundColor: '#E91E63',
-    borderRadius: 8,
-  },
   buttonLabel: {
     fontSize: 16,
     fontWeight: '500',
     color: '#FFF',
     textTransform: 'uppercase',
   },
-  divider: {
-    height: 1,
-    backgroundColor: '#E0E0E0',
-    marginVertical: 16,
-  },
   closeAccountSection: {
-    marginTop: 16,
+    marginTop: 24,
+    marginBottom: 32,
+    paddingHorizontal: 24,
   },
   closeAccountButton: {
     height: 48,

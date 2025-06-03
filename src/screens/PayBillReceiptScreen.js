@@ -27,10 +27,12 @@ export default function PayBillReceiptScreen({ route }) {
 
       const fileName = `comprovante-boleto-${new Date().toISOString().slice(0,10)}.jpg`;
       
+      // Modificado para usar as mesmas configurações do ReceiptModal que funciona
       const uri = await captureRef(receiptRef, {
         format: 'jpg',
         quality: 0.8,
-        result: 'base64'
+        result: 'base64',
+        height: 1500 // Usar a mesma altura do ReceiptModal
       });
 
       const tempUri = FileSystem.cacheDirectory + fileName;
@@ -38,11 +40,16 @@ export default function PayBillReceiptScreen({ route }) {
         encoding: FileSystem.EncodingType.Base64
       });
 
+      // Adicionar um pequeno atraso para garantir que o arquivo seja gravado completamente
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       await Sharing.shareAsync(tempUri, {
         mimeType: 'image/jpeg',
         dialogTitle: 'Compartilhar Comprovante'
       });
 
+      // Adicionar um pequeno atraso antes de excluir o arquivo
+      await new Promise(resolve => setTimeout(resolve, 300));
       await FileSystem.deleteAsync(tempUri);
 
     } catch (error) {
@@ -73,7 +80,8 @@ export default function PayBillReceiptScreen({ route }) {
         </TouchableOpacity>
       </View>
 
-      <View ref={receiptRef} collapsable={false} style={styles.container}>
+      <View style={styles.container}>
+        <View ref={receiptRef} collapsable={false} style={[styles.receiptContainer, {backgroundColor: '#FFF'}]}>
         <ReceiptBase
           transactionId={paymentData.transactionId}
           timestamp={new Date()}
@@ -119,6 +127,7 @@ export default function PayBillReceiptScreen({ route }) {
             <Text style={styles.value}>{paymentData.clientRequestId}</Text>
           </View>
         </ReceiptBase>
+        </View>
       </View>
 
       <View style={styles.buttonContainer}>
@@ -172,6 +181,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF',
     paddingHorizontal: 20,
+  },
+  receiptContainer: {
+    backgroundColor: '#FFF'
   },
   infoRow: {
     flexDirection: 'row',

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, FlatList, Dimensions, Image } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, FlatList, Dimensions, Image, StatusBar } from 'react-native';
 import { Text, Menu } from 'react-native-paper';
+import { normalize, FontSizes, Spacing } from '../utils/scaling';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { supabase } from '../config/supabase';
 import StatementForm from '../components/extrato/StatementForm';
@@ -163,10 +164,9 @@ export default function Dashboard2Screen({ navigation }) {
 
   const menuItems = [
     { id: 'pix', icon: 'bank-transfer', label: 'Pix', onPress: () => navigation.navigate('HomePix', { balance }) },
-    { id: 'transfer', icon: 'transfer', label: 'Transferir', onPress: () => navigation.navigate('TransferAmount', { balance }) },
-    { id: 'payment', icon: 'barcode', label: 'Pagar Conta', onPress: () => navigation.navigate('PayBill', { balance }) },
     { id: 'statement', icon: 'text-box-outline', label: 'Extrato', onPress: () => navigation.navigate('Statement', { balance }) },
-    { id: 'charges', icon: 'cash-multiple', label: 'Cobranças', onPress: () => navigation.navigate('Charges') },
+    { id: 'payment', icon: 'barcode', label: 'Pagar Boleto', onPress: () => navigation.navigate('PayBill', { balance }) },
+    { id: 'transfer', icon: 'transfer', label: 'Transf. Contas Rose', onPress: () => navigation.navigate('TransferAmount', { balance }) },
   ];
 
   const formatCurrency = (value) => {
@@ -348,7 +348,8 @@ export default function Dashboard2Screen({ navigation }) {
   }, []);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+      <StatusBar barStyle="light-content" backgroundColor="#682145" />
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.userInfo}>
@@ -387,7 +388,7 @@ export default function Dashboard2Screen({ navigation }) {
             />
           </Menu>
           <View style={styles.userDetails}>
-            <Text style={styles.userName}>OLÁ, {userName.toUpperCase()}</Text>
+            <Text style={styles.userName}>OLÁ, {userName.split(' ')[0].toUpperCase()}</Text>
             <Text style={styles.accountInfo}>Agência: 0001 | Conta: {userAccount || '----'}</Text>
           </View>
         </View>
@@ -651,7 +652,7 @@ const styles = StyleSheet.create({
   },
   balanceValue: {
     color: '#FFFFFF',
-    fontSize: 32,
+    fontSize: normalize(32),
     fontWeight: 'bold',
   },
   hiddenBalanceContainer: {
@@ -662,9 +663,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   hiddenBalanceDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: normalize(8),
+    height: normalize(8),
+    borderRadius: normalize(4),
     backgroundColor: 'white',
   },
   addBalanceButton: {
@@ -680,7 +681,7 @@ const styles = StyleSheet.create({
   },
   addBalanceText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: normalize(12),
     fontWeight: '500',
   },
   actionsContainer: {
@@ -702,7 +703,7 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: normalize(14),
     fontWeight: '500',
   },
   actionButtonIconContainer: {
@@ -724,7 +725,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   transactionsTitle: {
-    fontSize: 18,
+    fontSize: normalize(18),
     fontWeight: '600',
     color: '#333333',
   },
@@ -748,7 +749,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F5F5F5',
-    height: 84,
+    minHeight: 84,
   },
   transactionTypeContainer: {
     width: 36,
@@ -759,22 +760,23 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   transactionTypeSymbol: {
-    fontSize: 18,
+    fontSize: normalize(18),
     fontWeight: 'bold',
   },
   transactionContent: {
     flex: 1,
+    paddingBottom: 8,
   },
   transactionTitle: {
-    fontSize: 16,
+    fontSize: normalize(16),
     fontWeight: 'bold',
     color: '#000000',
-    marginBottom: 4,
+    marginBottom: normalize(4),
   },
   transactionSubtitle: {
-    fontSize: 14,
+    fontSize: normalize(14),
     color: '#666666',
-    marginBottom: 4,
+    marginBottom: normalize(4),
   },
   transactionDetails: {
     flexDirection: 'row',
@@ -783,22 +785,23 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   transactionValue: {
-    fontSize: 14,
+    fontSize: normalize(14),
     fontWeight: '500',
     color: '#333333',
-    marginRight: 8,
+    marginRight: normalize(8),
   },
   transactionMethod: {
-    fontSize: 12,
+    fontSize: normalize(12),
     color: '#999999',
     backgroundColor: '#F5F5F5',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingHorizontal: normalize(6),
+    paddingVertical: normalize(2),
+    borderRadius: normalize(4),
   },
   transactionDate: {
-    fontSize: 12,
+    fontSize: normalize(12),
     color: '#999999',
+    marginBottom: normalize(4),
   },
   errorContainer: {
     alignItems: 'center',
@@ -809,15 +812,15 @@ const styles = StyleSheet.create({
     margin: 16,
   },
   errorTitle: {
-    fontSize: 18,
+    fontSize: normalize(18),
     fontWeight: '600',
     color: '#333333',
-    marginBottom: 8,
+    marginBottom: normalize(8),
   },
   errorMessage: {
-    fontSize: 14,
+    fontSize: normalize(14),
     color: '#666666',
-    marginBottom: 16,
+    marginBottom: normalize(16),
   },
   retryButton: {
     backgroundColor: '#682145',
@@ -828,7 +831,7 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: normalize(14),
     fontWeight: '500',
   },
   loader: {

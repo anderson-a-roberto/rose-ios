@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Linking } from 'react-native';
+import { View, StyleSheet, Linking, TouchableOpacity } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
 import { createClient } from '@supabase/supabase-js';
 
@@ -26,6 +26,30 @@ const LoginCPFScreen = ({ navigation }) => {
   const handleCPFChange = (text) => {
     const formattedCPF = formatCPF(text);
     setCpf(formattedCPF);
+  };
+
+  const getUserEmail = async (documentNumber) => {
+    try {
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('email, business_email, document_type')
+        .eq('document_number', documentNumber.replace(/\D/g, ''))
+        .single();
+
+      if (profileError) throw profileError;
+      
+      // Se for PJ usa business_email, se for PF usa email
+      const userEmail = profileData.document_type === 'CNPJ' 
+        ? profileData.business_email 
+        : profileData.email;
+        
+      if (!userEmail) throw new Error('Email não encontrado');
+
+      return userEmail;
+    } catch (error) {
+      console.error('Erro ao buscar email:', error);
+      throw error;
+    }
   };
 
   const handleContinue = async () => {
@@ -103,6 +127,30 @@ const LoginCPFScreen = ({ navigation }) => {
         >
           Continuar
         </Button>
+
+        <TouchableOpacity 
+          onPress={async () => {
+            if (!cpf || cpf.replace(/\D/g, '').length !== 11) {
+              setError('Digite um CPF válido para recuperar sua senha');
+              return;
+            }
+            
+            try {
+              setError('');
+              // Tenta buscar o email do usuário para pré-preencher na tela de recuperação
+              const cleanCPF = cpf.replace(/\D/g, '');
+              const email = await getUserEmail(cleanCPF);
+              navigation.navigate('ForgotPassword', { email, cpf: cleanCPF });
+            } catch (error) {
+              // Se não conseguir buscar o email, navega sem parâmetros
+              console.error('Erro ao buscar email para recuperação:', error);
+              navigation.navigate('ForgotPassword', { cpf: cleanCPF });
+            }
+          }}
+          style={styles.forgotPasswordContainer}
+        >
+          <Text style={styles.forgotPasswordText}>Esqueceu a senha? Clique aqui</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -147,6 +195,15 @@ const styles = StyleSheet.create({
     color: 'red',
     textAlign: 'center',
     marginBottom: 16,
+  },
+  forgotPasswordContainer: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  forgotPasswordText: {
+    color: '#666',
+    fontSize: 14,
+    textDecorationLine: 'underline',
   },
 });
 

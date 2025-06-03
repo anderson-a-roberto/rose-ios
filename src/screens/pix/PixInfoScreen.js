@@ -89,21 +89,16 @@ const PixInfoScreen = ({ navigation }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Atendimento e Reclamações</Text>
           <Text style={styles.sectionDescription}>
-            Se você tiver algum problema com uma transação Pix, entre em contato com nosso suporte:
+            Se você tiver algum problema com uma transação Pix, entre em contato com nosso suporte.
           </Text>
-          
-          <TouchableOpacity style={styles.supportButton}>
-            <MaterialCommunityIcons name="headset" size={20} color="white" />
-            <Text style={styles.supportButtonText}>Falar com o Suporte</Text>
-          </TouchableOpacity>
           
           <Text style={styles.noteText}>
             Caso sua ocorrência não seja resolvida pelo nosso atendimento, você pode registrar uma reclamação no site do Banco Central:
           </Text>
           
-          <TouchableOpacity style={styles.bcbButton} onPress={openBCBComplaintLink}>
-            <MaterialCommunityIcons name="bank" size={20} color="white" />
-            <Text style={styles.bcbButtonText}>Registrar Reclamação no Banco Central</Text>
+          <TouchableOpacity style={styles.linkContainer} onPress={openBCBComplaintLink}>
+            <MaterialCommunityIcons name="bank" size={16} color="#682145" />
+            <Text style={styles.linkText}>Registrar Reclamação no Banco Central</Text>
           </TouchableOpacity>
         </View>
 
@@ -114,9 +109,9 @@ const PixInfoScreen = ({ navigation }) => {
             Para mais informações sobre o Pix, visite o site do Banco Central do Brasil:
           </Text>
           
-          <TouchableOpacity style={styles.bcbInfoButton} onPress={openBCBLink}>
-            <MaterialCommunityIcons name="information" size={20} color="white" />
-            <Text style={styles.bcbButtonText}>Acessar Site do Banco Central</Text>
+          <TouchableOpacity style={styles.linkContainer} onPress={openBCBLink}>
+            <MaterialCommunityIcons name="information" size={16} color="#682145" />
+            <Text style={styles.linkText}>Acessar Site do Banco Central</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -197,47 +192,24 @@ const styles = StyleSheet.create({
     color: '#666',
     lineHeight: 20,
   },
-  supportButton: {
-    backgroundColor: '#682145',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  supportButtonText: {
-    color: 'white',
-    fontWeight: '500',
-    marginLeft: 8,
-  },
+
   noteText: {
     fontSize: 14,
     color: '#666',
     marginBottom: 16,
     fontStyle: 'italic',
   },
-  bcbButton: {
-    backgroundColor: '#1a5653',
+  linkContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
+    marginVertical: 8,
   },
-  bcbInfoButton: {
-    backgroundColor: '#1a5653',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    borderRadius: 8,
-  },
-  bcbButtonText: {
-    color: 'white',
+  linkText: {
+    color: '#682145',
     fontWeight: '500',
     marginLeft: 8,
+    textDecorationLine: 'underline',
+    fontSize: 14,
   },
 });
 

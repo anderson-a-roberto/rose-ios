@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
 import { Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -27,12 +27,6 @@ const HomePix = ({ route, navigation }) => {
 
   const menuItems = [
     {
-      icon: 'key-variant',
-      title: 'Minhas Chaves',
-      description: 'Cadastre e gerencie suas chaves ativas e pendentes.',
-      onPress: () => navigation.navigate('PixKeys', { balance }),
-    },
-    {
       icon: 'bank-transfer',
       title: 'Transferir',
       description: 'Faça transferências através de chaves ou dados bancários.',
@@ -43,12 +37,6 @@ const HomePix = ({ route, navigation }) => {
       title: 'Receber Pix',
       description: 'Compartilhe o QR Code para receber cobrança de terceiros.',
       onPress: () => navigation.navigate('PixReceiveAmount'),
-    },
-    {
-      icon: 'shield-lock',
-      title: 'Meus Limites',
-      description: 'Defina limites personalizados para suas transferências.',
-      onPress: () => navigation.navigate('PixLimits'),
     },
     {
       icon: 'qrcode-scan',
@@ -62,10 +50,23 @@ const HomePix = ({ route, navigation }) => {
       description: 'Cole um código PIX para fazer uma transferência.',
       onPress: () => navigation.navigate('PixCopyPaste'),
     },
+    {
+      icon: 'key-variant',
+      title: 'Minhas Chaves',
+      description: 'Cadastre e gerencie suas chaves ativas e pendentes.',
+      onPress: () => navigation.navigate('PixKeys', { balance }),
+    },
+    {
+      icon: 'shield-lock',
+      title: 'Meus Limites',
+      description: 'Defina limites personalizados para suas transferências.',
+      onPress: () => navigation.navigate('PixLimits'),
+    },
   ];
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#682145" />
       {/* Card do Topo */}
       <View style={styles.topCard}>
         {/* Header */}

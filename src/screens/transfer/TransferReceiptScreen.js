@@ -1,12 +1,12 @@
 import React, { useRef, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, StatusBar, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, StatusBar, Alert, ScrollView } from 'react-native';
 import { Text, Button, Divider } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { captureRef } from 'react-native-view-shot';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import ReceiptBase from '../../components/receipt/ReceiptBase';
+import TransferOutReceipt from '../../components/extrato/receipts/TransferOutReceipt';
 
 const TransferReceiptScreen = ({ navigation, route }) => {
   const { transferData } = route.params;
@@ -25,10 +25,12 @@ const TransferReceiptScreen = ({ navigation, route }) => {
 
       const fileName = `comprovante-transferencia-${new Date().toISOString().slice(0,10)}.jpg`;
       
+      // Modificado para usar as mesmas configurações do ReceiptModal que funciona
       const uri = await captureRef(receiptRef, {
         format: 'jpg',
         quality: 0.8,
-        result: 'base64'
+        result: 'base64',
+        height: 1500 // Usar a mesma altura do ReceiptModal
       });
 
       const tempUri = FileSystem.cacheDirectory + fileName;
@@ -36,11 +38,16 @@ const TransferReceiptScreen = ({ navigation, route }) => {
         encoding: FileSystem.EncodingType.Base64
       });
 
+      // Adicionar um pequeno atraso para garantir que o arquivo seja gravado completamente
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       await Sharing.shareAsync(tempUri, {
         mimeType: 'image/jpeg',
         dialogTitle: 'Compartilhar Comprovante'
       });
 
+      // Adicionar um pequeno atraso antes de excluir o arquivo
+      await new Promise(resolve => setTimeout(resolve, 300));
       await FileSystem.deleteAsync(tempUri);
 
     } catch (error) {
@@ -54,14 +61,13 @@ const TransferReceiptScreen = ({ navigation, route }) => {
     }
   };
 
-  const handleNewTransfer = () => {
-    navigation.navigate('TransferAmount', { balance: transferData.balance });
-  };
+  // Removido o método handleNewTransfer para manter consistência com a tela de PIX
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
       
+      {/* Header com botão de fechar */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.closeButton}
@@ -71,80 +77,41 @@ const TransferReceiptScreen = ({ navigation, route }) => {
         </TouchableOpacity>
       </View>
 
-      <View ref={receiptRef} collapsable={false} style={styles.container}>
-        <ReceiptBase
-          transactionId={transferData.transactionId || '0000000000'}
-          timestamp={new Date()}
-          operationType="Transferência"
-        >
-          {/* Valor */}
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Valor:</Text>
-            <Text style={[styles.value, { color: '#E91E63' }]}>
-              -R$ {transferData.valor.toFixed(2).replace('.', ',')}
-            </Text>
-          </View>
+      <ScrollView style={styles.container}>
+        <View ref={receiptRef} collapsable={false} style={[styles.receiptContainer, {backgroundColor: '#FFF'}]}>
+          {/* Usando o componente TransferOutReceipt para manter consistência com PIX */}
+          <TransferOutReceipt 
+            transaction={{
+              id: transferData.transactionId || transferData.clientRequestId || '0000000000',
+              createDate: new Date(),
+              amount: transferData.amount || transferData.valor || 0,
+              movementType: 'TEDTRANSFEROUT',
+              description: transferData.description || transferData.descricao || 'Transferência',
+              recipient: {
+                name: transferData.destinatario?.nome || `Conta ${transferData.destinationAccount || ''}`,
+                documentNumber: transferData.destinatario?.documento || '-',
+                bankName: transferData.destinatario?.banco || 'Banco Inovação',
+                branch: transferData.destinatario?.agencia || '0001',
+                account: transferData.destinatario?.conta || transferData.destinationAccount || ''
+              }
+            }}
+          />
+        </View>
+      </ScrollView>
 
-          <Divider style={styles.divider} />
-
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Status:</Text>
-            <Text style={styles.value}>
-              {transferData.status === 'PROCESSING' ? 'Em processamento' : 'Concluída'}
-            </Text>
-          </View>
-
-          <Divider style={styles.divider} />
-
-          {/* Beneficiário */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Beneficiário</Text>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Nome:</Text>
-              <Text style={styles.value}>{transferData.destinatario.nome}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>CPF/CNPJ:</Text>
-              <Text style={styles.value}>{transferData.destinatario.documento}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Banco:</Text>
-              <Text style={styles.value}>{transferData.destinatario.banco}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Agência:</Text>
-              <Text style={styles.value}>{transferData.destinatario.agencia}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Conta:</Text>
-              <Text style={styles.value}>{transferData.destinatario.conta}</Text>
-            </View>
-          </View>
-        </ReceiptBase>
-      </View>
-
+      {/* Share Button - Apenas um botão como na tela de PIX */}
       <View style={styles.buttonContainer}>
         <Button
           mode="contained"
           onPress={handleShare}
-          style={styles.shareButton}
+          style={styles.button}
           contentStyle={styles.buttonContent}
           labelStyle={styles.buttonLabel}
+          icon="share-variant"
           loading={loading}
           disabled={loading}
-          icon="share-variant"
         >
-          COMPARTILHAR COMPROVANTE
-        </Button>
-
-        <Button
-          mode="outlined"
-          onPress={handleNewTransfer}
-          style={styles.newTransferButton}
-          contentStyle={styles.buttonContent}
-          labelStyle={[styles.buttonLabel, { color: '#E91E63' }]}
-        >
-          NOVA TRANSFERÊNCIA
+          {loading ? 'PROCESSANDO...' : 'COMPARTILHAR COMPROVANTE'}
         </Button>
       </View>
     </SafeAreaView>
@@ -174,58 +141,28 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF'
   },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
-  label: {
-    fontSize: 14,
-    color: '#666',
-  },
-  value: {
-    fontSize: 14,
-    color: '#000',
-    fontWeight: '500',
-    flex: 1,
-    textAlign: 'right',
-    marginLeft: 16,
-  },
-  section: {
-    marginVertical: 8,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    color: '#000',
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  divider: {
-    backgroundColor: '#E0E0E0',
-    height: 1,
-    marginVertical: 16,
+  receiptContainer: {
+    backgroundColor: '#FFF',
+    minHeight: 100, // Garantir altura mínima para o conteúdo ser visível
+    paddingHorizontal: 8, // Adicionar padding horizontal para melhor aparência
+    paddingVertical: 16 // Adicionar padding vertical para melhor aparência
   },
   buttonContainer: {
-    padding: 16,
-    backgroundColor: '#FFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    padding: 20,
+    paddingBottom: 32,
   },
-  shareButton: {
+  button: {
     backgroundColor: '#E91E63',
-    marginBottom: 8,
-  },
-  newTransferButton: {
-    borderColor: '#E91E63',
+    borderRadius: 8,
   },
   buttonContent: {
-    height: 48,
+    height: 56,
   },
   buttonLabel: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FFF',
+    letterSpacing: 0.5,
+    color: '#FFFFFF',
   }
 });
 
