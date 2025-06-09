@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { supabase } from '../config/supabase';
 import { resetNavigation } from '../navigation/RootNavigation';
+import { useLoginAuditMobile } from '../hooks/useLoginAuditMobile';
 
 const LoginPasswordScreen = ({ route, navigation }) => {
   const [password, setPassword] = useState('');
@@ -13,6 +14,7 @@ const LoginPasswordScreen = ({ route, navigation }) => {
   const [loading, setLoading] = useState(false);
   const [loginAttempts, setLoginAttempts] = useState(0);
   const { documentNumber } = route.params;
+  const { logLoginAttempt, retryPendingLogs } = useLoginAuditMobile();
   
   // Limite de tentativas de login
   const MAX_LOGIN_ATTEMPTS = 3;
@@ -97,15 +99,38 @@ const LoginPasswordScreen = ({ route, navigation }) => {
     try {
       setError('');
       setLoading(true);
+      const startTime = Date.now(); // Registrar o tempo de início para medir a duração
 
       // Se já excedeu o limite de tentativas, redireciona para a tela de bloqueio
       if (loginAttempts >= MAX_LOGIN_ATTEMPTS) {
+        // Log de usuário bloqueado
+        await logLoginAttempt({
+          document_number: documentNumber,
+          email: "blocked@example.com",
+          success: false,
+          error_type: "USER_BLOCKED",
+          request_duration_ms: Date.now() - startTime,
+        });
         navigation.navigate('UserBlocked');
         return;
       }
 
       // Busca o email real do usuário
       const email = await getUserEmail(documentNumber);
+
+      // Verificar se a senha está vazia
+      if (!password || password.trim() === '') {
+        await logLoginAttempt({
+          document_number: documentNumber,
+          email: "unknown@example.com",
+          success: false,
+          error_type: "EMPTY_PASSWORD",
+          request_duration_ms: Date.now() - startTime,
+        });
+        setError('Por favor, insira sua senha');
+        setLoading(false);
+        return;
+      }
 
       // Faz login com o email real e senha
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -121,10 +146,26 @@ const LoginPasswordScreen = ({ route, navigation }) => {
         // Se atingiu o limite, bloqueia o usuário
         if (newAttempts >= MAX_LOGIN_ATTEMPTS) {
           const blocked = await blockUser(email);
+          await logLoginAttempt({
+            document_number: documentNumber,
+            email: email,
+            success: false,
+            error_type: "MAX_ATTEMPTS_REACHED",
+            request_duration_ms: Date.now() - startTime,
+          });
           if (blocked) {
             navigation.navigate('UserBlocked');
             return;
           }
+        } else {
+          // Log de credenciais inválidas
+          await logLoginAttempt({
+            document_number: documentNumber,
+            email: email,
+            success: false,
+            error_type: "INVALID_CREDENTIALS",
+            request_duration_ms: Date.now() - startTime,
+          });
         }
         
         throw authError;
@@ -137,6 +178,19 @@ const LoginPasswordScreen = ({ route, navigation }) => {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) throw sessionError;
       if (!session) throw new Error('Sessão não estabelecida após login');
+      
+      // Log de login bem-sucedido
+      await logLoginAttempt({
+        document_number: documentNumber,
+        email: email,
+        success: true,
+        request_duration_ms: Date.now() - startTime,
+        user_id: authData.user?.id,
+        session_id: session?.access_token?.substring(0, 20),
+      });
+      
+      // Tentar reenviar logs pendentes quando o login for bem-sucedido
+      retryPendingLogs();
 
       // Verificar status do KYC usando o documento
       const kycData = await checkKYCStatus(documentNumber);
@@ -156,16 +210,34 @@ const LoginPasswordScreen = ({ route, navigation }) => {
 
     } catch (error) {
       console.error('Erro ao fazer login:', error);
+      const startTime = Date.now();
+      
       if (error.message === 'Email não encontrado') {
+        // Log de email não encontrado
+        await logLoginAttempt({
+          document_number: documentNumber,
+          email: "notfound@example.com",
+          success: false,
+          error_type: "EMAIL_NOT_FOUND",
+          request_duration_ms: Date.now() - startTime,
+        });
         setError('Usuário não encontrado');
       } else if (error.message === 'Invalid login credentials') {
         // Calculamos as tentativas restantes com base no novo valor de loginAttempts
-        // que foi incrementado na linha 118
-        const attemptsRemaining = MAX_LOGIN_ATTEMPTS - (loginAttempts + 1);
+        const attemptsRemaining = MAX_LOGIN_ATTEMPTS - loginAttempts;
         setError(`Senha incorreta. Tentativas restantes: ${attemptsRemaining}`);
       } else {
+        // Log de erro genérico
+        await logLoginAttempt({
+          document_number: documentNumber,
+          email: "error@example.com",
+          success: false,
+          error_type: "GENERAL_ERROR",
+          error_message: error.message,
+          request_duration_ms: Date.now() - startTime,
+        });
         setError('Erro ao fazer login. Tente novamente.');
-      }
+      }  
     } finally {
       setLoading(false);
     }
