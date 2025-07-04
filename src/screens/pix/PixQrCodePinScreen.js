@@ -6,7 +6,6 @@ import {
   StatusBar,
   ActivityIndicator,
   Alert,
-  Image,
   KeyboardAvoidingView,
   Platform,
   Keyboard
@@ -18,43 +17,33 @@ import { useTransactionPassword } from '../../contexts/TransactionPasswordContex
 import { supabase } from '../../config/supabase';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
-const TransferPinScreen = ({ navigation, route }) => {
+const PixQrCodePinScreen = ({ navigation, route }) => {
   const { verifyTransactionPassword, isVerifying, error: contextError } = useTransactionPassword();
   const [pin, setPin] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
-  // Removida a contagem de tentativas
   const pinInputRef = useRef(null);
-  const { transferData, payload } = route.params;
-  
-  // Removido useFocusEffect em favor do autoFocus nativo do TextInput do React Native Paper
+  const { paymentData, emvData, dictData, amount } = route.params;
   
   // Mostrar erro do contexto se houver
   useEffect(() => {
     if (contextError) {
-      // Simplificar a mensagem de erro
       setError('Erro ao verificar PIN');
     }
   }, [contextError]);
   
   const handleBack = () => {
-    // Redirecionar para a tela inicial em vez da tela de entrada dos dados da conta
-    // para evitar erros de parâmetros ausentes
     navigation.navigate('Dashboard2');
   };
 
   const handleForgotPin = async () => {
-    // Navegar para a tela de recuperação de PIN
     try {
-      // Obter o email do usuário logado para preencher automaticamente
       const { data: { session } } = await supabase.auth.getSession();
       const userEmail = session?.user?.email || '';
       
-      // Navegar para a tela de recuperação de PIN com o email pré-preenchido
       navigation.navigate('ForgotPin', { email: userEmail });
     } catch (error) {
       console.error('Erro ao obter email do usuário:', error);
-      // Mesmo com erro, navegar para a tela de recuperação sem email pré-preenchido
       navigation.navigate('ForgotPin');
     }
   };
@@ -65,123 +54,112 @@ const TransferPinScreen = ({ navigation, route }) => {
       return;
     }
     
-    // Limpar erro anterior
     setError(null);
     
     try {
-      console.log('[TransferPinScreen] Verificando PIN...');
+      console.log('[PixQrCodePinScreen] Verificando PIN...');
       const success = await verifyTransactionPassword(pin);
       
       if (success) {
-        console.log('[TransferPinScreen] PIN verificado com sucesso!');
-        // PIN verificado com sucesso
-        // Executar a transferência e navegar para a tela de sucesso
-        executeTransfer();
+        console.log('[PixQrCodePinScreen] PIN verificado com sucesso! Navegando para loading...');
+        
+        // Estruturar dados para o loading screen (igual ao Copy-Paste)
+        const transferData = {
+          amount: amount,
+          description: emvData?.merchantName || dictData?.name || 'Pagamento PIX QR Code',
+          beneficiary: {
+            name: emvData?.merchantName || dictData?.name || 'Beneficiário',
+            taxId: dictData?.documentnumber || 'N/A',
+            bank: dictData?.participant || 'N/A'
+          }
+        };
+
+        // Gerar clientCode único
+        const clientCode = `QR${Date.now()}`;
+        
+        // Estruturar payload para API (usando mesma estrutura do Copy-Paste)
+        const payload = {
+          ...paymentData,
+          clientCode
+        };
+
+        console.log('[PixQrCodePinScreen] Navegando para PixTransferLoading com:', {
+          transferData,
+          payload,
+          isQrCode: true
+        });
+
+        // Navegar para loading screen que executará o pagamento
+        navigation.replace('PixTransferLoading', {
+          transferData,
+          payload,
+          isQrCode: true
+        });
       } else {
-        console.log('[TransferPinScreen] Falha na verificação do PIN - avisar inclusive que são 3 tentativas apenas');
+        console.log('[PixQrCodePinScreen] Falha na verificação do PIN');
       }
     } catch (err) {
-      console.error('[TransferPinScreen] Erro ao verificar PIN:', err);
-      // Não definimos o erro aqui, pois ele será tratado pelo useEffect que monitora contextError
-    }
-  };
-  
-  const executeTransfer = async () => {
-    try {
-      console.log('[TransferPinScreen] Executando transferência...');
-      
-      // Chamar edge function secure
-      const { data: transferResult, error: transferError } = await supabase.functions.invoke(
-        'internal-transfer-secure',
-        { body: payload }
-      );
-
-      if (transferError) throw transferError;
-
-      // Aceita tanto SUCCESS quanto PROCESSING como estados válidos
-      if (transferResult.status === 'SUCCESS' || transferResult.status === 'PROCESSING') {
-        navigation.navigate('TransferSuccess', { transferData });
-      } else {
-        throw new Error('Erro ao processar transferência');
-      }
-    } catch (err) {
-      console.error('[TransferPinScreen] Erro ao realizar transferência:', err);
-      setError(err.message || 'Erro ao realizar transferência. Tente novamente.');
+      console.error('[PixQrCodePinScreen] Erro ao verificar PIN:', err);
     }
   };
   
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#FFFFFF" barStyle="dark-content" />
-      
       <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingContainer}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Header com botão de voltar */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
             <TouchableOpacity
               style={styles.backButton}
               onPress={handleBack}
-              disabled={isVerifying}
             >
               <Text style={styles.backText}>‹</Text>
             </TouchableOpacity>
           </View>
         </View>
-        
+
         <View style={styles.content}>
-          {/* Ícone de segurança */}
+          {/* Ícone */}
           <View style={styles.iconContainer}>
             <View style={styles.iconBackground}>
-              <MaterialCommunityIcons name="lock" size={30} color="#E91E63" />
+              <MaterialCommunityIcons name="qrcode" size={32} color="#E91E63" />
             </View>
           </View>
-          
-          {/* Título e subtítulo */}
-          <Text style={styles.title}>Digite a senha de transação</Text>
-          <Text style={styles.subtitle}>É usada para autorizar operações no app</Text>
-          
+
+          {/* Título */}
+          <Text style={styles.title}>Digite seu PIN de segurança</Text>
+          <Text style={styles.subtitle}>
+            Para confirmar o pagamento PIX QR Code de {new Intl.NumberFormat('pt-BR', {
+              style: 'currency',
+              currency: 'BRL'
+            }).format(amount)}
+          </Text>
+
           {/* Input do PIN */}
           <View style={styles.inputContainer}>
             <TextInput
-              mode="flat"
               ref={pinInputRef}
-              value={showPassword ? pin : '•'.repeat(pin.length)}
-              onChangeText={(value) => {
-                if (showPassword) {
-                  const clean = value.replace(/[^0-9]/g, '').slice(0, 6);
-                  setPin(clean);
-                } else {
-                  const prevLen = pin.length;
-                  const currLen = value.length;
-
-                  if (currLen > prevLen) {
-                    const last = value.charAt(value.length - 1);
-                    if (/\d/.test(last)) setPin((p) => (p + last).slice(0, 6));
-                  } else if (currLen < prevLen) {
-                    setPin((p) => p.slice(0, -1));
-                  }
-                }
-                setError('');
-              }}
-              keyboardType={Platform.OS === 'ios' ? 'number-pad' : 'numeric'}
+              mode="outlined"
+              value={pin}
+              onChangeText={setPin}
+              placeholder="Digite seu PIN de 6 dígitos"
+              secureTextEntry={!showPassword}
+              keyboardType="numeric"
               maxLength={6}
-              underlineColor="#E91E63"
-              activeUnderlineColor="#E91E63"
-              placeholder="Digite sua senha de 6 dígitos"
-              placeholderTextColor="#666"
-              autoFocus
-              right={
-                <TextInput.Icon
-                  icon={showPassword ? 'eye-off' : 'eye'}
-                  onPress={() => setShowPassword(!showPassword)}
-                  color="#666"
-                />
-              }
               style={styles.pinInput}
+              outlineColor="#E91E63"
+              activeOutlineColor="#E91E63"
+              autoFocus={true}
+              theme={{
+                colors: {
+                  text: '#000000',
+                  placeholder: '#666666',
+                  primary: '#E91E63',
+                }
+              }}
             />
             
             {/* Mensagem de erro */}
@@ -250,7 +228,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
   },
   content: {
-    flex: 0,
+    flex: 1,
     paddingHorizontal: 24,
     paddingTop: 10,
     paddingBottom: 10,
@@ -284,46 +262,22 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     width: '100%',
-    marginBottom: 24,
+    marginBottom: 16,
     alignItems: 'center',
     position: 'relative',
   },
   pinInput: {
-    height: 56,
+    backgroundColor: 'transparent',
     fontSize: 13,
     letterSpacing: 1,
     textAlign: 'center',
-    backgroundColor: 'transparent',
+    color: '#000000',
     width: '100%',
-  },
-  pinDisplay: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: 16,
-    height: 40,
-    position: 'relative',
-    width: '100%',
-  },
-  pinDot: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    marginHorizontal: 6,
+    height: 56,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#CCC',
-  },
-  pinDotEmpty: {
-    backgroundColor: 'transparent',
-  },
-  pinDotFilled: {
-    backgroundColor: '#E91E63',
     borderColor: '#E91E63',
-  },
-  pinDotCurrent: {
-    borderColor: '#E91E63',
-    borderWidth: 2,
-    transform: [{scale: 1.1}],
+    borderRadius: 8,
   },
   confirmButton: {
     backgroundColor: '#E91E63',
@@ -368,4 +322,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TransferPinScreen;
+export default PixQrCodePinScreen;

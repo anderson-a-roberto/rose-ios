@@ -33,6 +33,7 @@ import PixTransferPinScreen from './src/screens/pix/PixTransferPinScreen';
 import PixTransferLoadingScreen from './src/screens/pix/PixTransferLoadingScreen';
 import PixTransferSuccessScreen from './src/screens/pix/PixTransferSuccessScreen';
 import PixTransferReceiptScreen from './src/screens/pix/PixTransferReceiptScreen';
+import PixTransferErrorScreen from './src/screens/pix/PixTransferErrorScreen';
 import PixReceiveAmountScreen from './src/screens/pix/PixReceiveAmountScreen';
 import PixReceiveKeyScreen from './src/screens/pix/PixReceiveKeyScreen';
 import PixReceiveKeyScreenV2 from './src/screens/pix/PixReceiveKeyScreenV2';
@@ -86,6 +87,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import PixLimitsScreen from './src/screens/pix/PixLimitsScreen';
 import PixQrCodeScanScreen from './src/screens/pix/PixQrCodeScanScreen';
 import PixCopyPasteScreen from './src/screens/pix/PixCopyPasteScreen';
+import PixCopyPasteConfirmScreen from './src/screens/pix/PixCopyPasteConfirmScreen';
+import PixCopyPastePinScreen from './src/screens/pix/PixCopyPastePinScreen';
 import PixQrCodePaymentScreen from './src/screens/pix/PixQrCodePaymentScreen';
 import PixQrCodeLoadingScreen from './src/screens/pix/PixQrCodeLoadingScreen';
 import PixQrCodeSuccessScreen from './src/screens/pix/PixQrCodeSuccessScreen';
@@ -257,10 +260,13 @@ const App = () => {
                   <Stack.Screen name="PixTransferLoading" component={PixTransferLoadingScreen} />
                   <Stack.Screen name="PixTransferSuccess" component={PixTransferSuccessScreen} />
                   <Stack.Screen name="PixTransferReceipt" component={PixTransferReceiptScreen} />
+                  <Stack.Screen name="PixTransferError" component={PixTransferErrorScreen} />
                   <Stack.Screen name="PixReceiveAmount" component={PixReceiveAmountScreen} />
                   <Stack.Screen name="PixLimits" component={PixLimitsScreen} />
                   <Stack.Screen name="PixQrCode" component={PixQrCodeScanScreen} />
                   <Stack.Screen name="PixCopyPaste" component={PixCopyPasteScreen} />
+                  <Stack.Screen name="PixCopyPasteConfirm" component={PixCopyPasteConfirmScreen} />
+                  <Stack.Screen name="PixCopyPastePin" component={PixCopyPastePinScreen} />
                   <Stack.Screen name="PixQrCodePayment" component={PixQrCodePaymentScreen} />
                   <Stack.Screen name="PixQrCodeLoading" component={PixQrCodeLoadingScreen} />
                   <Stack.Screen name="PixQrCodeSuccess" component={PixQrCodeSuccessScreen} />

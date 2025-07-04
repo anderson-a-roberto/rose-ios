@@ -62,6 +62,73 @@ const PixTransferReceiptScreen = ({ navigation, route }) => {
     }
   };
 
+  // Preparar dados para o comprovante
+  const prepareReceiptData = () => {
+    // Se temos objeto movement do polling, usar ele
+    if (transferData.movement) {
+      return {
+        transaction: transferData.movement,
+        preloadedDetails: {
+          status: transferData.movement.status || 'CONFIRMED',
+          body: {
+            debitParty: {
+              name: transferData.debitParty?.name || transferData.movement.pixDetails?.debitParty?.name,
+              taxId: transferData.debitParty?.taxId || transferData.movement.pixDetails?.debitParty?.taxId,
+              bank: transferData.debitParty?.bank || transferData.movement.pixDetails?.debitParty?.bank,
+              branch: transferData.debitParty?.branch || '0001',
+              account: transferData.debitParty?.account || transferData.movement.pixDetails?.debitParty?.account
+            },
+            creditParty: {
+              name: transferData.beneficiary?.name || transferData.creditParty?.name,
+              taxId: transferData.beneficiary?.taxId || transferData.creditParty?.taxId,
+              bank: transferData.beneficiary?.bank || transferData.creditParty?.bank,
+              key: transferData.beneficiary?.pixKey || transferData.beneficiary?.taxId || transferData.creditParty?.key
+            },
+            endToEndId: transferData.movement.endToEndId || transferData.endToEndId,
+            remittanceInformation: transferData.description || transferData.movement.description || 'Transferência PIX',
+            amount: transferData.amount || transferData.movement.amount,
+            ...transferData.movement.pixDetails
+          }
+        }
+      };
+    }
+
+    // Fallback para dados antigos (compatibilidade)
+    return {
+      transaction: {
+        id: transferData.endToEndId || transferData.id,
+        createDate: transferData.createDate || new Date(),
+        amount: transferData.amount,
+        movementType: 'PIXPAYMENTOUT',
+        celcoinId: transferData.celcoinId,
+        endToEndId: transferData.endToEndId
+      },
+      preloadedDetails: {
+        status: transferData.status || 'CONFIRMED',
+        body: {
+          debitParty: {
+            name: transferData.debitParty?.name,
+            taxId: transferData.debitParty?.taxId,
+            bank: transferData.debitParty?.bank,
+            branch: transferData.debitParty?.branch || '0001',
+            account: transferData.debitParty?.account || '42109747'
+          },
+          creditParty: {
+            name: transferData.beneficiary?.name || transferData.creditParty?.name,
+            taxId: transferData.beneficiary?.taxId || transferData.creditParty?.taxId,
+            bank: transferData.beneficiary?.bank || transferData.creditParty?.bank,
+            key: transferData.beneficiary?.pixKey || transferData.beneficiary?.taxId || transferData.creditParty?.key
+          },
+          endToEndId: transferData.endToEndId,
+          remittanceInformation: transferData.description || 'Transferência PIX',
+          amount: transferData.amount
+        }
+      }
+    };
+  };
+
+  const receiptData = prepareReceiptData();
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
@@ -80,33 +147,9 @@ const PixTransferReceiptScreen = ({ navigation, route }) => {
         <View ref={receiptRef} collapsable={false} style={[styles.receiptContainer, {backgroundColor: '#FFF'}]}>
           {/* Usando o mesmo componente do extrato para garantir consistência */}
           <PixOutReceipt 
-            transaction={{
-              id: transferData.endToEndId,
-              createDate: new Date(),
-              amount: transferData.amount,
-              movementType: 'PIXPAYMENTOUT'
-            }}
+            transaction={receiptData.transaction}
             onTransferDetailsLoaded={() => {}}
-            preloadedDetails={{
-              status: 'CONFIRMED',
-              body: {
-                debitParty: {
-                  name: transferData.debitParty.name,
-                  taxId: transferData.debitParty.taxId,
-                  bank: transferData.debitParty.bank,
-                  branch: transferData.debitParty.branch || '0001',
-                  account: transferData.debitParty.account || '42109747'
-                },
-                creditParty: {
-                  name: transferData.beneficiary.name,
-                  taxId: transferData.beneficiary.taxId,
-                  bank: transferData.beneficiary.bank,
-                  key: transferData.beneficiary.pixKey || transferData.beneficiary.taxId
-                },
-                endToEndId: transferData.endToEndId,
-                remittanceInformation: transferData.description || 'Transferência PIX'
-              }
-            }}
+            preloadedDetails={receiptData.preloadedDetails}
           />
         </View>
       </ScrollView>

@@ -311,7 +311,9 @@ export default function WelcomeScreen() {
   };
 
   const handleRegisterContinue = (documentNumber, accountType) => {
+    console.log('WelcomeScreen: Navegando para OnboardingTerms com:', { documentNumber, accountType });
     setShowRegisterSheet(false);
+    
     // Atualiza o contexto com os dados iniciais
     updateOnboardingData({
       accountType,
@@ -320,16 +322,11 @@ export default function WelcomeScreen() {
         : { companyData: { documentNumber } }
       ),
     });
-    // Agora vamos para OnboardingTerms usando navigation.reset
-    navigation.reset({
-      index: 0,
-      routes: [{ 
-        name: 'OnboardingTerms', 
-        params: {
-          documentNumber,
-          accountType
-        }
-      }],
+    
+    // Navega diretamente para a tela de termos, que agora verifica a necessidade de código de convite
+    navigation.navigate('OnboardingTerms', {
+      documentNumber,
+      accountType
     });
   };
 

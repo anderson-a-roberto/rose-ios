@@ -121,173 +121,162 @@ const PixQrCodePaymentScreen = ({ navigation, route }) => {
     setError(null);
 
     try {
-      console.log('Chamando edge function pix-emv com código QR:', pixCode.substring(0, 20) + '...');
-      
-      // Decodificar o código EMV
-      const { data: emvResponse, error: emvError } = await supabase.functions.invoke('pix-emv', {
-        body: { emv: pixCode }
-      });
+      console.log('[PixQrCodePaymentScreen] Chamando edge function pix-emv-full');
+    
+    // Decodificar o código EMV usando a nova edge function
+    const { data: emvResponse, error: emvError } = await supabase.functions.invoke('pix-emv-full', {
+      body: { emv: pixCode }
+    });
 
-      console.log('Resposta pix-emv:', { emvResponse, emvError });
+      console.log('[PixQrCodePaymentScreen] Resposta pix-emv-full:', { emvResponse, emvError });
 
       if (emvError) {
-        console.log('Erro na chamada pix-emv:', emvError);
+        console.log('[PixQrCodePaymentScreen] Erro na chamada pix-emv-full:', emvError);
         throw new Error(emvError.message || 'Não foi possível ler o código QR PIX');
       }
 
       if (emvResponse.status === 'ERROR') {
-        console.log('Erro no status da resposta pix-emv:', emvResponse.error);
+        console.log('[PixQrCodePaymentScreen] Erro no status da resposta pix-emv-full:', emvResponse.error);
         throw new Error(emvResponse.error?.message || 'Não foi possível ler o código QR PIX');
       }
 
-      console.log('Dados EMV decodificados:', emvResponse.data);
-      setEmvData(emvResponse.data);
+      console.log('[PixQrCodePaymentScreen] Dados EMV decodificados:', emvResponse.data);
+      
+      // Processar os dados EMV da nova estrutura (dentro do objeto body)
+      const emvData = emvResponse.data.body || emvResponse.data;
+      
+      // Log detalhado para depuração
+    console.log('[PixQrCodePaymentScreen] Resposta completa pix-emv-full:', JSON.stringify(emvResponse.data, null, 2));
+    console.log('[PixQrCodePaymentScreen] Tipo de QR code declarado:', emvData.type);
+    
+    // Verificar se é um QR code dinâmico ou estático usando APENAS o campo type
+    // Considerando DYNAMIC e IMMEDIATE como tipos dinâmicos
+    const isDynamicQrCode = emvData.type === 'DYNAMIC' || emvData.type === 'IMMEDIATE';
+    const isStaticQrCode = emvData.type === 'STATIC' || !isDynamicQrCode;
+    
+    // Log de outros indicadores apenas para referência
+    console.log('[PixQrCodePaymentScreen] Outros indicadores (apenas para referência):', {
+      hasTransactionId: !!emvData.transactionIdentification,
+      pointOfInitiationMethod: emvData.pointOfInitiationMethod,
+      canModifyAmount: emvData.amount?.canModifyFinalAmount
+    });
+    
+    console.log(`[PixQrCodePaymentScreen] Tipo de QR code detectado: ${isDynamicQrCode ? 'Dinâmico' : 'Estático'}`);
+    
+    // Definir o tipo de iniciação recomendado com base no tipo de QR code conforme documentação
+    // Para QR codes dinâmicos: DYNAMIC_QRCODE
+    // Para QR codes estáticos: STATIC_QRCODE
+    const recommendedInitiationType = isDynamicQrCode ? "DYNAMIC_QRCODE" : "STATIC_QRCODE";
+    console.log(`[PixQrCodePaymentScreen] Tipo de iniciação recomendado: ${recommendedInitiationType}`);
+    
+    if (emvData.transactionIdentification) {
+      console.log(`[PixQrCodePaymentScreen] ID de transação encontrado: ${emvData.transactionIdentification}`);
+    }
 
-      // Se o código não tem valor definido, inicializar o campo de valor
-      if (!emvResponse.data.transactionAmount) {
-        setPaymentAmount('');
-      } else {
-        setPaymentAmount(emvResponse.data.transactionAmount.toString());
-      }
-
-      // Extrair a chave PIX corretamente da estrutura merchantAccountInformation
-      const pixKey = emvResponse.data.merchantAccountInformation?.key;
+      // Extrair a chave PIX do código QR da nova estrutura
+      const pixKey = emvData.key || emvData.merchantAccountInformation?.key;
+      
+      console.log('[PixQrCodePaymentScreen] Chave PIX encontrada:', pixKey);
       
       if (!pixKey) {
-        console.log('Erro: Chave PIX não encontrada nos dados EMV');
+        console.error('[PixQrCodePaymentScreen] Chave PIX não encontrada nos dados EMV', emvData);
         throw new Error('Chave PIX não encontrada no código QR');
       }
+      
+      // Extrair o valor da transação da nova estrutura
+      const transactionAmount = emvData.amount?.final || emvData.amount?.original || emvData.transactionAmount;
+      
+      console.log(`[PixQrCodePaymentScreen] Valor da transação: ${transactionAmount}`);
+      
+      // Se o código não tem valor definido, inicializar o campo de valor
+      if (!transactionAmount) {
+        setPaymentAmount('');
+      } else {
+        setPaymentAmount(transactionAmount.toString());
+      }
+      
+      // Atualizar o estado com os dados EMV processados
+      setEmvData(emvData);
 
-      // Consultar informações do destinatário pelo DICT
-      console.log('Antes de chamar get-pix-dict - Parâmetros:', {
-        pixKey: pixKey,
-        account: userAccount
-      });
+      // Chamar a nova edge function get-pix-dict-qrcode para obter informações do recebedor
+      console.log(`[PixQrCodePaymentScreen] Consultando informações da chave PIX: ${pixKey}`);
+      
+      // Usar a conta do usuário autenticado
+      const accountToUse = userAccount;
+      console.log('[PixQrCodePaymentScreen] Usando conta do usuário:', accountToUse);
       
       const { data: dictResponse, error: dictError } = await supabase.functions.invoke('get-pix-dict', {
         body: { 
           key: pixKey,
-          account: userAccount
+          account: accountToUse 
         }
       });
 
-      console.log('Resposta get-pix-dict:', { dictResponse, dictError });
+      console.log(`[PixQrCodePaymentScreen] Resposta get-pix-dict-qrcode:`, dictResponse);
 
-      if (dictError) {
-        console.log('Erro na chamada get-pix-dict:', dictError);
-        throw new Error(dictError.message || 'Não foi possível obter informações do destinatário');
-      }
-
-      if (dictResponse.status === 'ERROR') {
-        console.log('Erro no status da resposta get-pix-dict:', dictResponse.error);
-        throw new Error(dictResponse.error?.message || 'Não foi possível obter informações do destinatário');
+      // Verificar se houve erro na consulta DICT
+      if (dictError || !dictResponse?.data || dictResponse?.error) {
+        const errorMessage = dictError?.message || dictResponse?.error?.message || 'Erro ao consultar informações do recebedor';
+        console.log('[PixQrCodePaymentScreen] Erro no status da resposta get-pix-dict-qrcode:', dictResponse?.error || dictError);
+        
+        // Para QR codes dinâmicos, podemos continuar mesmo sem dados do DICT
+        if (isDynamicQrCode) {
+          console.log('[PixQrCodePaymentScreen] QR code dinâmico - continuando mesmo sem dados DICT');
+          // Criar dados DICT mínimos para continuar o fluxo
+          dictResponse = {
+            data: {
+              name: emvData.merchantAccountInformation?.merchantName || 'Recebedor',
+              key: pixKey,
+              documentnumber: '',
+              account: '',
+              branch: '',
+              participant: '',
+              accounttype: 'CACC'
+            }
+          };
+        } else {
+          // Para QR codes estáticos, ainda precisamos dos dados DICT
+          throw new Error(errorMessage);
+        }
       }
 
       console.log('Dados DICT obtidos:', dictResponse.data);
       setDictData(dictResponse.data);
       
-      console.log('Dados processados com sucesso');
+      console.log('Dados processados com sucesso - Navegando para tela de confirmação');
+      
+      // Preparar o valor para a tela de confirmação
+      const amount = transactionAmount || parseFloat(paymentAmount || '0');
+      
+      console.log(`[PixQrCodePaymentScreen] Navegando para confirmação com dados:`, {
+        amount,
+        emvData,
+        dictData: dictResponse.data,
+        isDynamicQrCode,
+        isStaticQrCode,
+        initiationType: recommendedInitiationType
+      });
+
+      // Navegar para a tela de confirmação (unificando o fluxo com o Copy-Paste)
+      navigation.navigate('PixCopyPasteConfirm', {
+        amount,
+        emvData,
+        dictData: dictResponse.data,
+        userAccount,
+        userTaxId,
+        userName,
+        isDynamicQrCode,
+        isStaticQrCode,
+        recommendedInitiationType,
+        sourceFlow: 'qrcode'
+      });
+      
     } catch (error) {
       console.error('Erro ao processar código QR PIX:', error);
       setError(error.message || 'Ocorreu um erro ao processar o código QR PIX');
       Alert.alert('Erro', error.message || 'Ocorreu um erro ao processar o código QR PIX');
     } finally {
       setIsProcessing(false);
-    }
-  };
-
-  const handleConfirmPayment = async () => {
-    console.log('handleConfirmPayment chamado - Iniciando confirmação de pagamento');
-    
-    if (!emvData || !dictData) {
-      console.log('Erro: Dados incompletos para pagamento', { emvData: !!emvData, dictData: !!dictData });
-      Alert.alert('Erro', 'Dados incompletos para realizar o pagamento.');
-      return;
-    }
-
-    // Verificar se é necessário informar o valor
-    if (!emvData.transactionAmount && (!paymentAmount || parseFloat(paymentAmount) <= 0)) {
-      console.log('Erro: Valor de pagamento inválido', { paymentAmount });
-      Alert.alert('Erro', 'Por favor, informe um valor válido para o pagamento.');
-      return;
-    }
-
-    setIsPaymentProcessing(true);
-    setError(null);
-
-    try {
-      const amount = emvData.transactionAmount || parseFloat(paymentAmount);
-      
-      // Gerar clientCode único para a transação
-      const generateClientCode = () => {
-        return Math.floor(100000 + Math.random() * 900000).toString();
-      };
-      
-      const clientCode = generateClientCode();
-      console.log('ClientCode gerado para a transação:', clientCode);
-      
-      // Estrutura completa do payload conforme esperado pela edge function
-      const paymentData = {
-        amount: amount,
-        clientCode: clientCode,
-        endToEndId: dictData.endtoendid, // Usar sempre o endToEndId retornado pelo DICT
-        initiationType: "STATIC_QRCODE", // Alterado para pagamentos via QR Code estático
-        paymentType: "IMMEDIATE", // Valor fixo para pagamentos imediatos
-        urgency: "HIGH", // Valor fixo para urgência alta
-        transactionType: "TRANSFER", // Valor fixo para transferências
-        debitParty: {
-          account: userAccount,
-          branch: "1", // Valor padrão
-          taxId: userTaxId,
-          name: userName || "Titular da Conta", // Nome do usuário ou fallback
-          accountType: "TRAN" // Valor padrão para conta de transação
-        },
-        creditParty: {
-          bank: dictData.participant, // Banco do recebedor, vem da resposta do DICT
-          key: emvData.merchantAccountInformation.key, // Chave PIX do recebedor, vem do EMV
-          account: dictData.account, // Conta do recebedor, vem da resposta do DICT
-          branch: dictData.branch || "0", // Agência do recebedor, vem da resposta do DICT
-          taxId: dictData.documentnumber, // CPF/CNPJ do recebedor, vem do DICT
-          name: dictData.name, // Nome do recebedor, vem do DICT
-          accountType: dictData.accounttype || "TRAN" // Tipo de conta do recebedor, vem do DICT
-        },
-        remittanceInformation: emvData.additionalDataField?.referenceLabel || "Pagamento PIX via QR Code" // Informação adicional
-      };
-      
-      console.log('Chamando edge function pix-cash-out com dados:', JSON.stringify(paymentData));
-
-      const { data: paymentResponse, error: paymentError } = await supabase.functions.invoke('pix-cash-out', {
-        body: paymentData
-      });
-
-      console.log('Resposta pix-cash-out:', { paymentResponse, paymentError });
-
-      if (paymentError) {
-        console.log('Erro na chamada pix-cash-out:', paymentError);
-        throw new Error(paymentError.message || 'Não foi possível processar o pagamento');
-      }
-
-      if (paymentResponse.status === 'ERROR') {
-        console.log('Erro no status da resposta pix-cash-out:', paymentResponse.error);
-        throw new Error(paymentResponse.error?.message || 'Não foi possível processar o pagamento');
-      }
-
-      // Consideramos PROCESSING como sucesso, já que o status final será atualizado via webhook
-      console.log('Pagamento processado com sucesso:', paymentResponse);
-      
-      // Invalidar o cache de transações para que o extrato seja atualizado
-      queryClient.invalidateQueries(['transactions']);
-      queryClient.invalidateQueries(['balance']);
-      
-      // Navegar para a tela de processamento com os dados do pagamento
-      navigation.navigate('PixQrCodeLoading', { paymentData });
-      
-    } catch (error) {
-      console.error('Erro ao confirmar pagamento:', error);
-      setError(error.message || 'Ocorreu um erro ao processar o pagamento');
-      Alert.alert('Erro no Pagamento', error.message || 'Ocorreu um erro ao processar o pagamento');
-    } finally {
-      setIsPaymentProcessing(false);
     }
   };
 
@@ -387,7 +376,15 @@ const PixQrCodePaymentScreen = ({ navigation, route }) => {
                 
                 <Button
                   mode="contained"
-                  onPress={handleConfirmPayment}
+                  onPress={() => navigation.navigate('PixCopyPasteConfirm', {
+                    amount: emvData.transactionAmount || parseFloat(paymentAmount),
+                    emvData: emvData,
+                    dictData: dictData,
+                    userAccount,
+                    userTaxId,
+                    userName,
+                    sourceFlow: 'qrcode'
+                  })}
                   style={styles.confirmButton}
                   labelStyle={styles.confirmButtonLabel}
                   disabled={!emvData.transactionAmount && (!paymentAmount || parseFloat(paymentAmount) <= 0)}

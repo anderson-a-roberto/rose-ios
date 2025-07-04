@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, StatusBar, ScrollView, Alert } from 'react-native';
 import { Text, Button, TextInput, Divider } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -13,22 +13,51 @@ const formatCurrency = (value) => {
 };
 
 const generateClientCode = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  const timestamp = Date.now();
+  const randomStr = Math.random().toString(36).substring(2, 15);
+  return `px${timestamp}${randomStr}`;
 };
 
 const PixTransferConfirmScreen = ({ navigation, route }) => {
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [userData, setUserData] = useState(null);
   const { amount, pixKey, dictData, accountData, error: routeError } = route.params || {};
   
   // Se houver erro passado via rota, mostrar alerta
-  React.useEffect(() => {
+  useEffect(() => {
     if (routeError) {
       setError(routeError);
       Alert.alert('Erro', routeError);
     }
   }, [routeError]);
+  
+  // Buscar dados do usuário logado
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id;
+        
+        if (userId) {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('full_name, document_number')
+            .eq('id', userId)
+            .single();
+            
+          if (data) {
+            setUserData(data);
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao buscar dados do usuário:', err);
+      }
+    };
+    
+    fetchUserData();
+  }, []);
 
   // Função para navegar para a tela de verificação de PIN
   const handleTransfer = () => {
@@ -38,7 +67,7 @@ const PixTransferConfirmScreen = ({ navigation, route }) => {
         account: accountData.account,
         branch: "1",
         taxId: accountData.documentNumber,
-        name: "Usuário", // TODO: Adicionar nome do usuário
+        name: userData?.full_name || "Usuário", // Nome real do usuário
         accountType: "TRAN"
       },
       creditParty: {
@@ -89,7 +118,7 @@ const PixTransferConfirmScreen = ({ navigation, route }) => {
           account: accountData.account,
           branch: "1",
           taxId: accountData.documentNumber,
-          name: "Usuário", // TODO: Adicionar nome do usuário
+          name: userData?.full_name || "Usuário", // Nome real do usuário
           accountType: "TRAN"
         },
         creditParty: {
@@ -110,9 +139,9 @@ const PixTransferConfirmScreen = ({ navigation, route }) => {
         remittanceInformation: description || "Transferência PIX"
       };
 
-      // Realizar transferência PIX
+      // Realizar transferência PIX com a edge function segura
       const { data: transferResponse, error: transferError } = await supabase.functions.invoke(
-        'pix-cash-out',
+        'pix-cash-out-secure',
         {
           body: payload
         }

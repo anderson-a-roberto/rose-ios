@@ -5,6 +5,8 @@ import { useOnboarding } from '../../contexts/OnboardingContext';
 import { supabase } from '../../config/supabase';
 import { getReadableError } from '../../utils/errorHandler';
 import CustomAlert from '../../components/common/CustomAlert';
+import { useOnboardingAuditMobile } from '../../hooks/useOnboardingAuditMobile';
+import { useTermsAcceptanceMobile } from '../../hooks/useTermsAcceptanceMobile';
 
 // Funções de formatação
 const formatCPF = (cpf) => cpf.replace(/\D/g, '');
@@ -28,6 +30,16 @@ const formatCEP = (cep) => cep.replace(/\D/g, '');
 
 const EmailScreen = ({ navigation }) => {
   const { onboardingData, updateOnboardingData } = useOnboarding();
+  const { recordOnboardingAttempt } = useOnboardingAuditMobile();
+  console.log('[DEBUG-EMAIL] Inicializando o hook de registro de termos');
+  const { recordTermsAcceptance, getMobileDeviceInfo } = useTermsAcceptanceMobile();
+  console.log('[DEBUG-TERMS] Hook useTermsAcceptanceMobile inicializado:', { 
+    recordTermsAcceptance: !!recordTermsAcceptance,
+    getMobileDeviceInfo: !!getMobileDeviceInfo
+  });
+  
+  // Não precisamos mais tentar reenviar logs pendentes, pois removemos essa funcionalidade
+
   const [email, setEmail] = useState(onboardingData.contactData.email || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -52,7 +64,40 @@ const EmailScreen = ({ navigation }) => {
     setError('');
     setLoading(true);
     
+    // Iniciar registro da tentativa de onboarding
+    const startTime = Date.now();
+    let attemptId = null;
+    let onboardingAttemptData = null;
+    
     try {
+      // Registrar início da tentativa de onboarding
+      try {
+        console.log('[EmailScreen] Registrando início da tentativa de onboarding');
+        const attemptData = {
+          document_number: formatCPF(onboardingData.personalData.documentNumber),
+          document_type: 'CPF',
+          attempt_type: 'PF',
+          email: email.toLowerCase().trim(),
+          form_step: 'submit',
+          success: null // Ainda não sabemos o resultado
+        };
+        
+        const result = await recordOnboardingAttempt(attemptData);
+        console.log('[EmailScreen] Resultado do registro inicial:', JSON.stringify(result));
+        
+        if (result.success && result.data?.id) {
+          attemptId = result.data.id;
+          onboardingAttemptData = attemptData;
+          console.log('[EmailScreen] ID do registro obtido:', attemptId);
+        } else {
+          console.warn('[EmailScreen] Registro inicial criado sem ID ou com falha');
+        }
+        
+        // Removido registro inicial de aceitação dos termos - será feito apenas no final do fluxo
+        console.log('[DEBUG-TERMS] O registro de aceitação dos termos será feito apenas no final do fluxo');
+      } catch (auditError) {
+        console.error('[EmailScreen] Erro ao registrar tentativa de onboarding/termos:', auditError);
+      }
       // DEBUG: Vamos ver o que tem nos dados quando tenta submeter
       console.log('EmailScreen handleSubmit - onboardingData:', JSON.stringify(onboardingData, null, 2));
 
@@ -313,10 +358,74 @@ const EmailScreen = ({ navigation }) => {
         let errorMessage = 'Erro no processamento do cadastro.';
         
         // Tentar extrair a mensagem de erro específica
-        if (celcoinResponse.details && celcoinResponse.details.error && celcoinResponse.details.error.message) {
-          errorMessage = celcoinResponse.details.error.message;
-        } else if (celcoinResponse.error) {
-          errorMessage = celcoinResponse.error;
+        if (celcoinResponse.message) {
+          errorMessage = celcoinResponse.message;
+        } else if (celcoinResponse.details && celcoinResponse.details.message) {
+          errorMessage = celcoinResponse.details.message;
+        }
+        
+        // Atualizar o registro de tentativa de onboarding com o erro
+        if (attemptId) {
+          try {
+            await recordOnboardingAttempt({
+              id: attemptId,
+              success: false,
+              error_type: 'CELCOIN_ERROR',
+              error_message: errorMessage,
+              processing_time_ms: Date.now() - startTime
+            });
+          } catch (auditError) {
+            console.error('[EmailScreen] Erro ao atualizar registro de tentativa com erro da Celcoin:', auditError);
+          }
+        }
+        
+        // Em caso de erro Celcoin, registrar aceitação dos termos com informações do erro
+        try {
+          console.log('[DEBUG-TERMS] Registrando aceitação dos termos após erro Celcoin...');
+          if (recordTermsAcceptance) {
+            const termsData = {
+              document_number: formatCPF(onboardingData.personalData.documentNumber),
+              document_type: 'CPF',
+              email: email.toLowerCase().trim(),
+              terms_version: 'v1.0', // Usar formato consistente v1.0
+              form_step: 'submit_error',
+              success: false,
+              error_message: error.message || 'Erro Celcoin',
+              error_type: 'CELCOIN_ERROR',
+              user_id: userId,
+              
+              // Campos adicionais para geração de contrato
+              full_name: onboardingData.personalData.fullName,
+              social_name: onboardingData.personalData.socialName || onboardingData.personalData.fullName,
+              birth_date: formatDate(onboardingData.personalData.birthDate),
+              mother_name: onboardingData.personalData.motherName,
+              phone_number: formatPhone(onboardingData.contactData.phoneNumber),
+              
+              // Dados de endereço
+              address: {
+                postalCode: formatCEP(onboardingData.addressData.postalCode),
+                street: onboardingData.addressData.street,
+                number: onboardingData.addressData.number,
+                addressComplement: onboardingData.addressData.complement || "",
+                neighborhood: onboardingData.addressData.neighborhood,
+                city: onboardingData.addressData.city,
+                state: onboardingData.addressData.state
+              }
+            };
+            
+            console.log('[DEBUG-TERMS] Dados para registro de termos após erro:', JSON.stringify(termsData));
+            const result = await recordTermsAcceptance(termsData);
+            console.log('[DEBUG-TERMS] Resultado do registro de termos após erro:', JSON.stringify(result));
+            
+            if (!result.success) {
+              console.warn('[WARN-TERMS] Registro de termos após erro não foi bem-sucedido:', result.error);
+            }
+          } else {
+            console.warn('[WARN-TERMS] Método recordTermsAcceptance não disponível');
+          }
+        } catch (termsError) {
+          console.error('[ERROR-TERMS] Erro ao registrar aceitação dos termos após erro Celcoin:', termsError);
+          console.error('[ERROR-TERMS] Detalhes do erro:', JSON.stringify(termsError));
         }
         
         setError(errorMessage);
@@ -324,24 +433,83 @@ const EmailScreen = ({ navigation }) => {
         setErrorDetails(celcoinResponse);
         setShowErrorModal(true);
         setLoading(false);
-        return; // Interrompe a execução para não navegar para a tela de sucesso
-      } else if (celcoinError) {
-        console.error('Erro ao enviar para Celcoin:', celcoinError);
-        setError(getReadableError(celcoinError));
-        setErrorType('celcoin');
-        setErrorDetails(celcoinError);
-        setShowErrorModal(true);
-        setLoading(false);
-        return; // Interrompe a execução para não navegar para a tela de sucesso
+        return;
       }
-
-      console.log('Dados enviados para Celcoin com sucesso');
-
-      // 6. Se tudo der certo, navega para sucesso - só chega aqui se não houver erros
-      navigation.replace('OnboardingSuccess');
-
+      
+      // Se chegou aqui, o cadastro foi bem-sucedido
+      console.log('Cadastro realizado com sucesso!');
+      
+      // Atualizar o registro de tentativa de onboarding com sucesso
+      if (attemptId) {
+        try {
+          await recordOnboardingAttempt({
+            id: attemptId,
+            success: true,
+            processing_time_ms: Date.now() - startTime
+          });
+        } catch (auditError) {
+          console.error('[EmailScreen] Erro ao atualizar registro de tentativa com sucesso:', auditError);
+        }
+      }
+      
+      // Registrar aceitação dos termos com sucesso (ponto centralizado de registro)
+      try {
+        console.log('[DEBUG-TERMS] Registrando aceitação dos termos após sucesso do cadastro...');
+        if (recordTermsAcceptance) {
+          // Buscar o user_id do contexto de autenticação, se disponível
+          const { user } = await supabase.auth.getUser();
+          const userId = user?.id;
+          
+          console.log('[DEBUG-TERMS] User ID obtido para registro de termos:', userId || 'Não disponível');
+          
+          const termsData = {
+            document_number: formatCPF(onboardingData.personalData.documentNumber),
+            document_type: 'CPF',
+            email: email.toLowerCase().trim(),
+            terms_version: 'v1.0',
+            form_step: 'submit_success',
+            // Incluir o user_id apenas se estiver disponível
+            ...(userId ? { user_id: userId } : {}),
+            success: true,
+            
+            // Campos adicionais para geração de contrato
+            full_name: onboardingData.personalData.fullName,
+            social_name: onboardingData.personalData.socialName || onboardingData.personalData.fullName,
+            birth_date: formatDate(onboardingData.personalData.birthDate),
+            mother_name: onboardingData.personalData.motherName,
+            phone_number: formatPhone(onboardingData.contactData.phoneNumber),
+            
+            // Dados de endereço
+            address: {
+              postalCode: formatCEP(onboardingData.addressData.postalCode),
+              street: onboardingData.addressData.street,
+              number: onboardingData.addressData.number,
+              addressComplement: onboardingData.addressData.complement || "",
+              neighborhood: onboardingData.addressData.neighborhood,
+              city: onboardingData.addressData.city,
+              state: onboardingData.addressData.state
+            }
+          };
+          
+          console.log('[DEBUG-TERMS] Dados para registro de termos após sucesso:', JSON.stringify(termsData));
+          const result = await recordTermsAcceptance(termsData);
+          console.log('[DEBUG-TERMS] Resultado do registro de termos após sucesso:', JSON.stringify(result));
+          
+          if (!result.success) {
+            console.warn('[WARN-TERMS] Registro de termos após sucesso não foi bem-sucedido:', result.error);
+          }
+        } else {
+          console.warn('[WARN-TERMS] Método recordTermsAcceptance não disponível');
+        }
+      } catch (termsError) {
+        console.error('[EmailScreen] Erro ao registrar aceitação dos termos após sucesso:', termsError);
+        console.error('[ERROR-TERMS] Detalhes do erro:', JSON.stringify(termsError));
+      }
+      
+      // Navegar para a tela de sucesso
+      navigation.navigate('OnboardingSuccess');
     } catch (error) {
-      console.error('Erro no cadastro:', error);
+      console.error('[EmailScreen] Erro no processo de cadastro:', error);
       
       // Extrair a mensagem de erro específica
       let errorMessage = getReadableError(error);
@@ -351,17 +519,89 @@ const EmailScreen = ({ navigation }) => {
         errorMessage = errorMessage.split('Error:')[1].trim();
       }
       
-      setError(errorMessage);
-      
       // Determinar o tipo de erro com base na mensagem
+      let errorType = 'GENERIC_ERROR';
       if (errorMessage.includes('obrigatório') || 
           errorMessage.includes('inválido') || 
           errorMessage.includes('formato')) {
         setErrorType('validation');
+        errorType = 'VALIDATION_ERROR';
       } else {
         setErrorType('generic');
       }
       
+      // Atualizar o registro de tentativa de onboarding com o erro
+      if (attemptId) {
+        try {
+          await recordOnboardingAttempt({
+            id: attemptId,
+            success: false,
+            error_type: errorType,
+            error_message: errorMessage,
+            processing_time_ms: Date.now() - startTime
+          });
+        } catch (auditError) {
+          console.error('[EmailScreen] Erro ao atualizar registro de tentativa com erro genérico:', auditError);
+        }
+      }
+      
+      // Registrar aceitação dos termos com erro genérico
+      try {
+        console.log('[DEBUG-TERMS] Registrando aceitação dos termos após erro genérico...');
+        if (recordTermsAcceptance) {
+          // Buscar o user_id do contexto de autenticação, se disponível
+          let termsData;
+          try {
+            const { user } = await supabase.auth.getUser();
+            const userId = user?.id;
+            
+            console.log('[DEBUG-TERMS] User ID obtido para registro de termos após erro:', userId || 'Não disponível');
+            
+            termsData = {
+              document_number: formatCPF(onboardingData.personalData.documentNumber),
+              document_type: 'CPF',
+              email: email.toLowerCase().trim(),
+              terms_version: 'v1.0',
+              form_step: 'submit_error',
+              // Incluir o user_id apenas se estiver disponível
+              ...(userId ? { user_id: userId } : {}),
+              success: false,
+              error_type: errorType,
+              error_message: errorMessage
+            };
+          } catch (authError) {
+            console.error('[ERROR-TERMS] Erro ao obter user_id:', authError);
+            
+            termsData = {
+              document_number: formatCPF(onboardingData.personalData.documentNumber),
+              document_type: 'CPF',
+              email: email.toLowerCase().trim(),
+              terms_version: 'v1.0',
+              form_step: 'submit_error',
+              success: false,
+              error_type: errorType,
+              error_message: errorMessage
+            };
+          }
+          
+          console.log('[DEBUG-TERMS] Dados para registro de termos após erro genérico:', JSON.stringify(termsData));
+          const result = await recordTermsAcceptance(termsData);
+          console.log('[DEBUG-TERMS] Resultado do registro de termos após erro genérico:', JSON.stringify(result));
+          
+          if (!result.success) {
+            console.warn('[WARN-TERMS] Registro de termos após erro genérico não foi bem-sucedido:', result.error);
+            if (result.pendingSaved) {
+              console.log('[DEBUG-TERMS] Log pendente foi salvo para retry posterior');
+            }
+          }
+        } else {
+          console.warn('[WARN-TERMS] Método recordTermsAcceptance não disponível');
+        }
+      } catch (termsError) {
+        console.error('[EmailScreen] Erro ao atualizar registro de aceitação dos termos com erro genérico:', termsError);
+      }
+      
+      setError(errorMessage);
       setErrorDetails(error);
       setShowErrorModal(true);
       setLoading(false);

@@ -17,10 +17,13 @@ export const SessionProvider = ({ children }) => {
   const lastActive = useRef(Date.now());
   const isAuthenticatedRef = useRef(false); // Ref para rastrear o estado de autenticação imediatamente
   const timeoutRef = useRef(null); // Ref para o timer de inatividade
+  const backgroundTimeoutRef = useRef(null); // Ref para o timer de background
   const appStateRef = useRef('active'); // Ref para o estado atual do app
   
   // Tempo de inatividade em milissegundos (3 minutos)
   const INACTIVITY_TIMEOUT = 3 * 60 * 1000;
+  // Tempo de espera em background antes de logout (1 minuto)
+  const BACKGROUND_TIMEOUT = 60 * 1000;
   
   // Função para resetar o timer de inatividade
   const resetActivity = () => {
@@ -180,49 +183,66 @@ export const SessionProvider = ({ children }) => {
       console.log(`[APPSTATE] Mudou de ${appStateRef.current} para ${nextAppState}`);
       
       if (nextAppState.match(/inactive|background/)) {
-        // App foi para background - fazer logout imediatamente se estiver autenticado
+        // App foi para background - configurar timer de 1 minuto antes de fazer logout
         console.log(`[APPSTATE] App foi para background. isAuthenticated = ${isAuthenticatedRef.current}`);
         if (isAuthenticatedRef.current) {
-          console.log('[APPSTATE] Iniciando logout por segurança (background)');
-          try {
-            await logout();
-            console.log('[APPSTATE] Logout por background concluído com sucesso');
-            // Verificar se o estado foi realmente atualizado
-            console.log(`[APPSTATE] Estado após logout: isAuthenticated = ${isAuthenticatedRef.current}`);
-          } catch (error) {
-            console.error('[APPSTATE] Erro ao fazer logout durante mudança de estado:', error);
-            // Forçar atualização do estado mesmo se o logout falhar
-            console.log('[APPSTATE] Forçando atualização do estado após erro');
-            
-            // Limpar timer em caso de erro
-            if (timeoutRef.current) {
-              clearTimeout(timeoutRef.current);
-              timeoutRef.current = null;
-            }
-            
-            // Forçar navegação mesmo em caso de erro
-            if (RootNavigation.navigationRef.current) {
-              RootNavigation.navigationRef.current.reset({
-                index: 0,
-                routes: [{ name: 'Welcome' }],
-              });
-              console.log('[APPSTATE] Navegação resetada após erro');
-            } else {
-              console.error('[APPSTATE] Referência de navegação não disponível após erro');
-            }
-            
-            // Atualizar estado
-            isAuthenticatedRef.current = false;
-            setIsAuthenticated(false);
-            setUser(null);
-            
-            // Re-throw para permitir tratamento específico em outros lugares
-            throw error;
+          // Limpar qualquer timer de background existente
+          if (backgroundTimeoutRef.current) {
+            clearTimeout(backgroundTimeoutRef.current);
+            backgroundTimeoutRef.current = null;
           }
+          
+          console.log(`[APPSTATE] Configurando timer de background de ${BACKGROUND_TIMEOUT/1000} segundos antes do logout`);
+          backgroundTimeoutRef.current = setTimeout(async () => {
+            console.log('[APPSTATE] Timer de background expirou. Iniciando logout por segurança');
+            try {
+              await logout();
+              console.log('[APPSTATE] Logout por background concluído com sucesso');
+              // Verificar se o estado foi realmente atualizado
+              console.log(`[APPSTATE] Estado após logout: isAuthenticated = ${isAuthenticatedRef.current}`);
+            } catch (error) {
+              console.error('[APPSTATE] Erro ao fazer logout durante mudança de estado:', error);
+              // Forçar atualização do estado mesmo se o logout falhar
+              console.log('[APPSTATE] Forçando atualização do estado após erro');
+              
+              // Limpar timer em caso de erro
+              if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
+              }
+              
+              // Forçar navegação mesmo em caso de erro
+              if (RootNavigation.navigationRef.current) {
+                RootNavigation.navigationRef.current.reset({
+                  index: 0,
+                  routes: [{ name: 'Welcome' }],
+                });
+                console.log('[APPSTATE] Navegação resetada após erro');
+              } else {
+                console.error('[APPSTATE] Referência de navegação não disponível após erro');
+              }
+              
+              // Atualizar estado
+              isAuthenticatedRef.current = false;
+              setIsAuthenticated(false);
+              setUser(null);
+              
+              // Re-throw para permitir tratamento específico em outros lugares
+              throw error;
+            }
+          }, BACKGROUND_TIMEOUT);
         }
       } else if (nextAppState === 'active' && appStateRef.current.match(/inactive|background/)) {
-        // App voltou para o foreground - verificar sessão e resetar timer
-        console.log('[APPSTATE] App voltou para o foreground. Verificando sessão...');
+        // App voltou para o foreground - cancelar timer de background e verificar sessão
+        console.log('[APPSTATE] App voltou para o foreground. Cancelando timer de background e verificando sessão...');
+        
+        // Cancelar timer de background se existir
+        if (backgroundTimeoutRef.current) {
+          console.log('[APPSTATE] Cancelando timer de background');
+          clearTimeout(backgroundTimeoutRef.current);
+          backgroundTimeoutRef.current = null;
+        }
+        
         try {
           // Verificar se a sessão ainda é válida
           console.log('[APPSTATE] Chamando supabase.auth.getSession()');
@@ -284,6 +304,9 @@ export const SessionProvider = ({ children }) => {
       subscription.remove();
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
+      }
+      if (backgroundTimeoutRef.current) {
+        clearTimeout(backgroundTimeoutRef.current);
       }
     };
   }, []);

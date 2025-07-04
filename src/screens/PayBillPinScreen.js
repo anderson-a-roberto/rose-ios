@@ -22,6 +22,7 @@ const PayBillPinScreen = ({ navigation, route }) => {
   const [pin, setPin] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
+  const [isExecutingPayment, setIsExecutingPayment] = useState(false);
   // Removida a contagem de tentativas
   const pinInputRef = useRef(null);
   const { billData, balance } = route.params;
@@ -73,9 +74,8 @@ const PayBillPinScreen = ({ navigation, route }) => {
       
       if (success) {
         console.log('[PayBillPinScreen] PIN verificado com sucesso!');
-        // PIN verificado com sucesso
-        // Navegar para tela de loading e executar o pagamento
-        executePayment();
+        // PIN verificado com sucesso - executar pagamento imediatamente
+        await executePayment();
       } else {
         console.log('[PayBillPinScreen] Falha na verificação do PIN');
       }
@@ -86,15 +86,17 @@ const PayBillPinScreen = ({ navigation, route }) => {
   };
   
   const executePayment = async () => {
+    if (isExecutingPayment) return; // Evitar dupla execução
+    
     try {
-      // Navega para tela de loading
-      navigation.navigate('PayBillLoading');
-
+      setIsExecutingPayment(true);
+      console.log('[PayBillPinScreen] Executando pagamento...');
+      
       // Gera um UUID único para a transação
       const clientRequestId = `PB${Date.now()}`;
 
-      // Chama a edge function para realizar o pagamento
-      const { data: paymentData, error: paymentError } = await supabase.functions.invoke('bill-payment', {
+      // Chama a edge function segura para realizar o pagamento
+      const { data: paymentData, error: paymentError } = await supabase.functions.invoke('bill-payment-secure', {
         body: {
           barCodeInfo: {
             digitable: billData.barCode.digitable
@@ -110,27 +112,28 @@ const PayBillPinScreen = ({ navigation, route }) => {
 
       // Verifica se o status é PROCESSING (caso de sucesso da Celcoin)
       if (paymentData.status === "PROCESSING") {
-        // Navega para tela de sucesso com os dados do pagamento
-        navigation.replace('PayBillSuccess', {
-          paymentData: {
-            ...billData,
-            ...paymentData.body,
-            assignor: billData.assignor,
-            barCode: billData.barCode,
-            value: billData.value,
-            status: paymentData.status,
-            transactionId: paymentData.body.transactionIdAuthorize
-          }
+        console.log('[PayBillPinScreen] Pagamento iniciado, navegando para loading...');
+        // Navega para tela de loading com dados para polling
+        navigation.replace('PayBillLoading', {
+          clientRequestId,
+          celcoinId: paymentData.body?.id, // ID da Celcoin para polling
+          billData,
+          paymentResponse: paymentData
         });
       } else {
-        throw new Error(paymentData.message || 'Erro ao processar pagamento');
+        // Caso de erro ou status inesperado
+        throw new Error(paymentData.error?.message || 'Status de pagamento inesperado');
       }
+
     } catch (error) {
-      console.error('[PayBillPinScreen] Erro ao realizar pagamento:', error);
-      navigation.replace('PayBillError', { 
-        error: error.message || 'Não foi possível processar o pagamento. Tente novamente.'
+      console.error('[PayBillPinScreen] Erro no pagamento:', error);
+      setIsExecutingPayment(false); // Reset loading apenas em caso de erro
+      navigation.replace('PayBillError', {
+        error: error.message || 'Não foi possível processar o pagamento. Tente novamente.',
+        billData
       });
     }
+    // Não resetamos isExecutingPayment em caso de sucesso pois navegamos para outra tela
   };
   
   return (
@@ -156,10 +159,10 @@ const PayBillPinScreen = ({ navigation, route }) => {
         </View>
         
         <View style={styles.content}>
-          {/* Ícone de segurança */}
+          {/* Ícone de cadeado */}
           <View style={styles.iconContainer}>
             <View style={styles.iconBackground}>
-              <MaterialCommunityIcons name="lock" size={48} color="#E91E63" />
+              <MaterialCommunityIcons name="lock" size={40} color="#E91E63" />
             </View>
           </View>
           
@@ -188,8 +191,7 @@ const PayBillPinScreen = ({ navigation, route }) => {
                     setPin((p) => p.slice(0, -1));
                   }
                 }
-                // Limpar erro quando o usuário começa a digitar novamente
-                if (error) setError(null);
+                setError('');
               }}
               keyboardType={Platform.OS === 'ios' ? 'number-pad' : 'numeric'}
               maxLength={6}
@@ -228,12 +230,12 @@ const PayBillPinScreen = ({ navigation, route }) => {
           <TouchableOpacity
             style={[
               styles.confirmButton,
-              (pin.length !== 6 || isVerifying) && styles.confirmButtonDisabled
+              (pin.length !== 6 || isVerifying || isExecutingPayment) && styles.confirmButtonDisabled
             ]}
             onPress={handleVerifyPin}
-            disabled={pin.length !== 6 || isVerifying}
+            disabled={pin.length !== 6 || isVerifying || isExecutingPayment}
           >
-            {isVerifying ? (
+            {isVerifying || isExecutingPayment ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
               <Text style={styles.confirmButtonText}>Continuar</Text>
@@ -274,77 +276,53 @@ const styles = StyleSheet.create({
     fontWeight: '300',
   },
   content: {
-    flex: 1,
+    flex: 0,
     paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 10,
+    paddingBottom: 10,
     alignItems: 'center',
   },
   iconContainer: {
-    marginBottom: 30,
-    marginTop: 20,
+    marginBottom: 16,
+    marginTop: 10,
   },
   iconBackground: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     backgroundColor: '#FCE4EC',
     justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#000000',
-    marginBottom: 8,
+    marginBottom: 6,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#000000',
-    marginBottom: 40,
+    fontSize: 13,
+    color: '#666666',
+    marginBottom: 16,
     textAlign: 'center',
-    fontWeight: 'bold',
+    fontWeight: 'normal',
   },
   inputContainer: {
     width: '100%',
-    marginBottom: 40,
+    marginBottom: 16,
     alignItems: 'center',
-  },
-  hiddenInput: {
-    position: 'absolute',
-    opacity: 0,
-    height: 50,
-    width: '100%',
-    zIndex: 1,
-  },
-  pinDisplay: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: 30,
-    height: 50,
     position: 'relative',
-    width: '100%',
   },
-  pinDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    marginHorizontal: 8,
-    borderWidth: 1,
-    borderColor: '#CCC',
-  },
-  pinDotEmpty: {
+  pinInput: {
     backgroundColor: 'transparent',
-  },
-  pinDotFilled: {
-    backgroundColor: '#E91E63',
-    borderColor: '#E91E63',
-  },
-  pinDotCurrent: {
-    borderColor: '#E91E63',
-    borderWidth: 2,
-    transform: [{scale: 1.1}],
+    fontSize: 13,
+    letterSpacing: 1,
+    textAlign: 'center',
+    color: '#000000',
+    width: '100%',
+    height: 56,
+    marginBottom: 16,
   },
   confirmButton: {
     backgroundColor: '#E91E63',

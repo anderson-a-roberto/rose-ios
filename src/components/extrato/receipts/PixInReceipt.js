@@ -1,18 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { supabase } from '../../../config/supabase';
-import ReceiptBase from '../../receipt/ReceiptBase';
+import { format } from 'date-fns';
+import useBankSearch from '../../../hooks/useBankSearch';
 
 const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  return format(new Date(dateString), "dd/MM/yyyy 'às' HH:mm");
 };
 
 const formatCurrency = (value) => {
@@ -27,6 +22,9 @@ const PixInReceipt = ({ transaction, onTransferDetailsLoaded }) => {
   const [error, setError] = useState(null);
   const [transferDetails, setTransferDetails] = useState(null);
   const [hasLoaded, setHasLoaded] = useState(false);
+
+  // Hook para busca de bancos
+  const { getBankNameByISPB, loading: banksLoading } = useBankSearch();
 
   useEffect(() => {
     const fetchTransferDetails = async () => {
@@ -69,11 +67,13 @@ const PixInReceipt = ({ transaction, onTransferDetailsLoaded }) => {
     fetchTransferDetails();
   }, [transaction.id, onTransferDetailsLoaded, hasLoaded]);
 
-  if (loading) {
+  if (loading || banksLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#E91E63" />
-        <Text style={styles.loadingText}>Carregando detalhes...</Text>
+        <Text style={styles.loadingText}>
+          {banksLoading ? 'Carregando informações dos bancos...' : 'Carregando detalhes...'}
+        </Text>
       </View>
     );
   }
@@ -88,138 +88,178 @@ const PixInReceipt = ({ transaction, onTransferDetailsLoaded }) => {
   }
 
   return (
-    <ReceiptBase
-      transactionId={transaction.id}
-      timestamp={transaction.createDate}
-      operationType="PIX Recebido"
-    >
-      {/* Status */}
-      <View style={styles.statusContainer}>
-        <Text style={styles.statusLabel}>Status</Text>
-        <Text style={styles.statusValue}>CONFIRMADO</Text>
+    <View style={styles.receiptContainer} id="pix-in-receipt">
+      {/* Header limpo com logo + título */}
+      <View style={styles.header}>
+        <View style={styles.logoContainer}>
+          <Image 
+            source={require('../../../assets/images/logorosa.png')} 
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </View>
+        <Text style={styles.title}>Comprovante</Text>
       </View>
 
-      {/* Valor */}
-      <View style={styles.amountContainer}>
-        <Text style={styles.amountLabel}>Valor</Text>
-        <Text style={styles.amountValue}>{formatCurrency(transaction.amount)}</Text>
-      </View>
-
-      {/* Dados do Pagador */}
+      {/* Seção TRANSAÇÃO */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Dados do Pagador</Text>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Nome</Text>
-          <Text style={styles.value}>{transferDetails?.requestBody?.debitParty?.name || '-'}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>CPF/CNPJ</Text>
-          <Text style={styles.value}>{transferDetails?.requestBody?.debitParty?.taxId || '-'}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Banco</Text>
-          <Text style={styles.value}>{transferDetails?.requestBody?.debitParty?.bank || '-'}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Agência/Conta</Text>
-          <Text style={styles.value}>
-            {transferDetails?.requestBody?.debitParty?.branch || '-'}/
-            {transferDetails?.requestBody?.debitParty?.account || '-'}
-          </Text>
-        </View>
-      </View>
-
-      {/* Dados do Beneficiário */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Dados do Beneficiário</Text>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Nome</Text>
-          <Text style={styles.value}>{transferDetails?.requestBody?.creditParty?.name || '-'}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>CPF/CNPJ</Text>
-          <Text style={styles.value}>{transferDetails?.requestBody?.creditParty?.taxId || '-'}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Chave PIX</Text>
-          <Text style={styles.value}>{transferDetails?.requestBody?.creditParty?.key || '-'}</Text>
-        </View>
-      </View>
-
-      {/* Identificação */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Identificação</Text>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>ID da Transação</Text>
-          <Text style={styles.value}>{transaction.id}</Text>
-        </View>
-        {transferDetails?.requestBody?.endToEndId && (
+        <Text style={styles.sectionTitle}>TRANSAÇÃO</Text>
+        <View style={styles.infoGroup}>
           <View style={styles.infoRow}>
-            <Text style={styles.label}>End to End ID</Text>
-            <Text style={styles.value}>{transferDetails.requestBody.endToEndId}</Text>
+            <Text style={styles.label}>Tipo:</Text>
+            <Text style={styles.valueHighlight}>PIX RECEBIDO</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Data:</Text>
+            <Text style={styles.valueMedium}>
+              {formatDate(transferDetails?.requestBody?.createTimestamp || transaction.createDate)}
+            </Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Valor:</Text>
+            <Text style={styles.valueBold}>{formatCurrency(transaction.amount)}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Status:</Text>
+            <Text style={styles.valueHighlight}>CONFIRMADO</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Seção DE */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>DE</Text>
+        <Text style={styles.personName}>
+          {transferDetails?.requestBody?.debitParty?.name || 'Remetente'}
+        </Text>
+        <View style={styles.infoGroup}>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Banco:</Text>
+            <Text style={styles.valueMedium}>
+              {getBankNameByISPB(transferDetails?.requestBody?.debitParty?.ispb) || 
+               transferDetails?.requestBody?.debitParty?.ispb || 
+               'Banco do Remetente'}
+            </Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Documento:</Text>
+            <Text style={styles.valueMedium}>
+              {transferDetails?.requestBody?.debitParty?.taxId ? 
+                `***${transferDetails.requestBody.debitParty.taxId.substring(3, transferDetails.requestBody.debitParty.taxId.length-2)}**` : 
+                '-'}
+            </Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Agência/Conta:</Text>
+            <Text style={styles.valueMedium}>
+              {transferDetails?.requestBody?.debitParty?.branch || '-'}/
+              {transferDetails?.requestBody?.debitParty?.account || '-'}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Seção PARA */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>PARA</Text>
+        <Text style={styles.personName}>
+          {transferDetails?.requestBody?.creditParty?.name || 'Você'}
+        </Text>
+        <View style={styles.infoGroup}>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Banco:</Text>
+            <Text style={styles.valueMedium}>Banco Rose</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Documento:</Text>
+            <Text style={styles.valueMedium}>
+              {transferDetails?.requestBody?.creditParty?.taxId ? 
+                `***${transferDetails.requestBody.creditParty.taxId.substring(3, transferDetails.requestBody.creditParty.taxId.length-2)}**` : 
+                '-'}
+            </Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Chave PIX:</Text>
+            <Text style={styles.valueMedium}>
+              {transferDetails?.requestBody?.creditParty?.key || '-'}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Seção DETALHES */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>DETALHES</Text>
+        <View style={styles.infoGroup}>
+          <Text style={styles.label}>ID:</Text>
+          <Text style={styles.valueMonospace}>{transaction.id}</Text>
+        </View>
+        
+        {transferDetails?.requestBody?.endToEndId && (
+          <View style={styles.infoGroup}>
+            <Text style={styles.label}>End to End ID:</Text>
+            <Text style={styles.valueMonospace}>{transferDetails.requestBody.endToEndId}</Text>
           </View>
         )}
       </View>
-
-      {/* Tipo e Data */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Informações Adicionais</Text>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Tipo de transação</Text>
-          <Text style={styles.value}>RECEIVEPIX</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Data de criação</Text>
-          <Text style={styles.value}>{formatDate(transferDetails?.requestBody?.createTimestamp || transaction.createDate)}</Text>
-        </View>
-      </View>
-    </ReceiptBase>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  statusContainer: {
-    marginBottom: 16,
-    alignItems: 'center',
-  },
-  statusLabel: {
-    fontSize: 14,
-    color: '#666666',
-    marginBottom: 4,
-  },
-  statusValue: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#4CAF50',
-  },
-  amountContainer: {
-    alignItems: 'center',
-    marginBottom: 24,
-    padding: 16,
-    backgroundColor: '#F5F5F5',
+  receiptContainer: {
+    backgroundColor: '#fff',
+    padding: 20, // Padronizado para 20
     borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  amountLabel: {
-    fontSize: 14,
-    color: '#666666',
-    marginBottom: 4,
+  header: {
+    alignItems: 'center',
+    marginBottom: 32,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
   },
-  amountValue: {
-    fontSize: 24,
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  logo: {
+    height: 50,
+    width: 160,
+  },
+  title: {
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#000000',
+    color: '#333333',
+    textAlign: 'center',
   },
   section: {
     marginBottom: 24,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
   },
   sectionTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#333333',
+    marginBottom: 12,
+    letterSpacing: 0.5,
+  },
+  personName: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: 'bold',
     color: '#000000',
     marginBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-    paddingBottom: 8,
+  },
+  infoGroup: {
+    marginTop: 4,
+    marginBottom: 8,
   },
   infoRow: {
     flexDirection: 'row',
@@ -230,12 +270,37 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666666',
   },
-  value: {
+  valueMedium: {
     fontSize: 14,
     color: '#000000',
+    fontWeight: '500',
     flex: 1,
     textAlign: 'right',
     marginLeft: 16,
+  },
+  valueBold: {
+    fontSize: 16,
+    color: '#000000',
+    fontWeight: 'bold',
+    flex: 1,
+    textAlign: 'right',
+    marginLeft: 16,
+  },
+  valueHighlight: {
+    fontSize: 14,
+    color: '#4CAF50',
+    fontWeight: 'bold',
+    flex: 1,
+    textAlign: 'right',
+    marginLeft: 16,
+  },
+  valueMonospace: {
+    fontSize: 13,
+    color: '#000000',
+    fontFamily: 'monospace',
+    marginTop: 4,
+    marginBottom: 4,
+    textAlign: 'left',
   },
   loadingContainer: {
     padding: 24,

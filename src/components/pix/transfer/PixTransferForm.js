@@ -101,7 +101,7 @@ const PixTransferForm = ({ onBack, userAccount, userTaxId }) => {
 
       // Realizar transferência PIX
       const { data: transferResponse, error: transferError } = await supabase.functions.invoke(
-        'pix-cash-out',
+        'pix-cash-out-secure',
         {
           body: payload
         }

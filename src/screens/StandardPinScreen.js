@@ -14,20 +14,19 @@ import {
 import { Text, TextInput } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { useTransactionPassword } from '../../contexts/TransactionPasswordContext';
-import { supabase } from '../../config/supabase';
+import { useTransactionPassword } from '../contexts/TransactionPasswordContext';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { supabase } from '../config/supabase';
 
-const TransferPinScreen = ({ navigation, route }) => {
+const StandardPinScreen = ({ navigation, route }) => {
   const { verifyTransactionPassword, isVerifying, error: contextError } = useTransactionPassword();
   const [pin, setPin] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
-  // Removida a contagem de tentativas
   const pinInputRef = useRef(null);
-  const { transferData, payload } = route.params;
   
-  // Removido useFocusEffect em favor do autoFocus nativo do TextInput do React Native Paper
+  // Parâmetros genéricos que podem vir de qualquer fluxo
+  const { onSuccess, onBack, ...otherParams } = route.params;
   
   // Mostrar erro do contexto se houver
   useEffect(() => {
@@ -38,9 +37,12 @@ const TransferPinScreen = ({ navigation, route }) => {
   }, [contextError]);
   
   const handleBack = () => {
-    // Redirecionar para a tela inicial em vez da tela de entrada dos dados da conta
-    // para evitar erros de parâmetros ausentes
-    navigation.navigate('Dashboard2');
+    if (onBack) {
+      onBack();
+    } else {
+      // Redirecionar para a tela inicial por padrão
+      navigation.navigate('Dashboard2');
+    }
   };
 
   const handleForgotPin = async () => {
@@ -69,44 +71,22 @@ const TransferPinScreen = ({ navigation, route }) => {
     setError(null);
     
     try {
-      console.log('[TransferPinScreen] Verificando PIN...');
+      console.log('[StandardPinScreen] Verificando PIN...');
       const success = await verifyTransactionPassword(pin);
       
       if (success) {
-        console.log('[TransferPinScreen] PIN verificado com sucesso!');
+        console.log('[StandardPinScreen] PIN verificado com sucesso!');
         // PIN verificado com sucesso
-        // Executar a transferência e navegar para a tela de sucesso
-        executeTransfer();
+        // Chamar callback de sucesso passado pelos parâmetros
+        if (onSuccess) {
+          onSuccess(otherParams);
+        }
       } else {
-        console.log('[TransferPinScreen] Falha na verificação do PIN - avisar inclusive que são 3 tentativas apenas');
+        console.log('[StandardPinScreen] Falha na verificação do PIN - avisar inclusive que são 3 tentativas apenas');
       }
     } catch (err) {
-      console.error('[TransferPinScreen] Erro ao verificar PIN:', err);
+      console.error('[StandardPinScreen] Erro ao verificar PIN:', err);
       // Não definimos o erro aqui, pois ele será tratado pelo useEffect que monitora contextError
-    }
-  };
-  
-  const executeTransfer = async () => {
-    try {
-      console.log('[TransferPinScreen] Executando transferência...');
-      
-      // Chamar edge function secure
-      const { data: transferResult, error: transferError } = await supabase.functions.invoke(
-        'internal-transfer-secure',
-        { body: payload }
-      );
-
-      if (transferError) throw transferError;
-
-      // Aceita tanto SUCCESS quanto PROCESSING como estados válidos
-      if (transferResult.status === 'SUCCESS' || transferResult.status === 'PROCESSING') {
-        navigation.navigate('TransferSuccess', { transferData });
-      } else {
-        throw new Error('Erro ao processar transferência');
-      }
-    } catch (err) {
-      console.error('[TransferPinScreen] Erro ao realizar transferência:', err);
-      setError(err.message || 'Erro ao realizar transferência. Tente novamente.');
     }
   };
   
@@ -131,7 +111,8 @@ const TransferPinScreen = ({ navigation, route }) => {
             </TouchableOpacity>
           </View>
         </View>
-        
+
+        {/* Conteúdo principal */}
         <View style={styles.content}>
           {/* Ícone de segurança */}
           <View style={styles.iconContainer}>
@@ -143,7 +124,7 @@ const TransferPinScreen = ({ navigation, route }) => {
           {/* Título e subtítulo */}
           <Text style={styles.title}>Digite a senha de transação</Text>
           <Text style={styles.subtitle}>É usada para autorizar operações no app</Text>
-          
+
           {/* Input do PIN */}
           <View style={styles.inputContainer}>
             <TextInput
@@ -284,46 +265,19 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     width: '100%',
-    marginBottom: 24,
+    marginBottom: 16,
     alignItems: 'center',
     position: 'relative',
   },
   pinInput: {
-    height: 56,
+    backgroundColor: 'transparent',
     fontSize: 13,
     letterSpacing: 1,
     textAlign: 'center',
-    backgroundColor: 'transparent',
+    color: '#000000',
     width: '100%',
-  },
-  pinDisplay: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: 16,
-    height: 40,
-    position: 'relative',
-    width: '100%',
-  },
-  pinDot: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    marginHorizontal: 6,
-    borderWidth: 1,
-    borderColor: '#CCC',
-  },
-  pinDotEmpty: {
-    backgroundColor: 'transparent',
-  },
-  pinDotFilled: {
-    backgroundColor: '#E91E63',
-    borderColor: '#E91E63',
-  },
-  pinDotCurrent: {
-    borderColor: '#E91E63',
-    borderWidth: 2,
-    transform: [{scale: 1.1}],
+    height: 56,
+    marginBottom: 16,
   },
   confirmButton: {
     backgroundColor: '#E91E63',
@@ -334,6 +288,7 @@ const styles = StyleSheet.create({
     width: '100%',
     marginTop: 'auto',
     marginBottom: 30,
+    elevation: 2,
   },
   confirmButtonDisabled: {
     backgroundColor: '#CCCCCC',
@@ -368,4 +323,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TransferPinScreen;
+export default StandardPinScreen;

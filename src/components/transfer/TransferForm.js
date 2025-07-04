@@ -102,9 +102,9 @@ const TransferForm = () => {
         description: "Transferência interna"
       };
 
-      // Chamar edge function
+      // Chamar edge function secure
       const { data: transferResult, error: transferError } = await supabase.functions.invoke(
-        'internal-transfer',
+        'internal-transfer-secure',
         { body: payload }
       );
 

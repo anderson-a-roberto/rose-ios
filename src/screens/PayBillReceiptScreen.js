@@ -1,19 +1,67 @@
 import React, { useRef, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, StatusBar, Alert } from 'react-native';
-import { Button, Text, Divider } from 'react-native-paper';
+import { Button, Text } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { captureRef } from 'react-native-view-shot';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import ReceiptBase from '../components/receipt/ReceiptBase';
-import MoneyValue from '../components/receipt/MoneyValue';
+import BillPaymentReceipt from '../components/extrato/receipts/BillPaymentReceipt';
 
 export default function PayBillReceiptScreen({ route }) {
   const navigation = useNavigation();
-  const { paymentData } = route.params;
+  const { transaction, preloadedDetails, billData, paymentData, movementData, isTimeout } = route.params || {};
   const [loading, setLoading] = useState(false);
   const receiptRef = useRef();
+
+  // Função para preparar dados do comprovante
+  const prepareReceiptData = () => {
+    // Se temos dados do polling (transaction), usar eles
+    if (transaction) {
+      console.log('[PayBillReceiptScreen] Usando dados do polling:', transaction);
+      return transaction;
+    }
+
+    // Se temos dados do polling (movementData), usar eles
+    if (movementData) {
+      console.log('[PayBillReceiptScreen] Usando movementData:', movementData);
+      return {
+        id: movementData.id,
+        createDate: movementData.createDate,
+        description: movementData.description,
+        balanceType: movementData.balanceType,
+        amount: movementData.amount,
+        movementType: movementData.movementType,
+        clientRequestId: movementData.clientRequestId,
+        status: movementData.status,
+        // Dados específicos do boleto
+        assignor: billData?.assignor || 'N/A',
+        barCode: billData?.barCode || {},
+        value: billData?.value || movementData.amount,
+        transactionId: paymentData?.transactionId || movementData.id
+      };
+    }
+
+    // Fallback para dados básicos se não temos dados do polling
+    console.log('[PayBillReceiptScreen] Usando dados de fallback');
+    return {
+      id: paymentData?.transactionId || `PB${Date.now()}`,
+      createDate: new Date().toISOString(),
+      description: 'PAGAMENTO DE CONTAS',
+      balanceType: 'DEBIT',
+      amount: billData?.value || 0,
+      movementType: 'BILLPAYMENT',
+      clientRequestId: paymentData?.clientRequestId || null,
+      status: isTimeout ? 'PROCESSING' : (paymentData?.status || 'CONFIRMED'),
+      // Dados específicos do boleto
+      assignor: billData?.assignor || 'N/A',
+      barCode: billData?.barCode || {},
+      value: billData?.value || 0,
+      transactionId: paymentData?.transactionId || null
+    };
+  };
+
+  const transactionData = prepareReceiptData();
 
   const handleShare = async () => {
     try {
@@ -27,12 +75,11 @@ export default function PayBillReceiptScreen({ route }) {
 
       const fileName = `comprovante-boleto-${new Date().toISOString().slice(0,10)}.jpg`;
       
-      // Modificado para usar as mesmas configurações do ReceiptModal que funciona
       const uri = await captureRef(receiptRef, {
         format: 'jpg',
         quality: 0.8,
         result: 'base64',
-        height: 1500 // Usar a mesma altura do ReceiptModal
+        height: 1500
       });
 
       const tempUri = FileSystem.cacheDirectory + fileName;
@@ -40,7 +87,6 @@ export default function PayBillReceiptScreen({ route }) {
         encoding: FileSystem.EncodingType.Base64
       });
 
-      // Adicionar um pequeno atraso para garantir que o arquivo seja gravado completamente
       await new Promise(resolve => setTimeout(resolve, 300));
 
       await Sharing.shareAsync(tempUri, {
@@ -48,7 +94,6 @@ export default function PayBillReceiptScreen({ route }) {
         dialogTitle: 'Compartilhar Comprovante'
       });
 
-      // Adicionar um pequeno atraso antes de excluir o arquivo
       await new Promise(resolve => setTimeout(resolve, 300));
       await FileSystem.deleteAsync(tempUri);
 
@@ -81,53 +126,22 @@ export default function PayBillReceiptScreen({ route }) {
       </View>
 
       <View style={styles.container}>
-        <View ref={receiptRef} collapsable={false} style={[styles.receiptContainer, {backgroundColor: '#FFF'}]}>
-        <ReceiptBase
-          transactionId={paymentData.transactionId}
-          timestamp={new Date()}
-          operationType="Pagamento de Boleto"
-        >
-          {/* Status */}
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Status:</Text>
-            <Text style={[styles.value, { color: '#4CAF50' }]}>
-              {paymentData.status === 'PROCESSING' ? 'Em Processamento' : 'Concluído'}
+        <View ref={receiptRef} collapsable={false} style={styles.receiptContainer}>
+          <BillPaymentReceipt 
+            transaction={transactionData}
+            preloadedDetails={preloadedDetails}
+          />
+        </View>
+        
+        {/* Aviso de timeout se aplicável */}
+        {isTimeout && (
+          <View style={styles.timeoutWarning}>
+            <Text style={styles.timeoutText}>
+              ⚠️ O status final do pagamento será confirmado em breve. 
+              Você pode verificar no seu extrato.
             </Text>
           </View>
-
-          <Divider style={styles.divider} />
-
-          {/* Valor */}
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Valor:</Text>
-            <MoneyValue value={-paymentData.value} />
-          </View>
-
-          <Divider style={styles.divider} />
-
-          {/* Beneficiário */}
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Beneficiário:</Text>
-            <Text style={styles.value}>{paymentData.assignor}</Text>
-          </View>
-
-          <Divider style={styles.divider} />
-
-          {/* Código de Barras */}
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Código de Barras:</Text>
-            <Text style={styles.value}>{paymentData.barCode.digitable}</Text>
-          </View>
-
-          <Divider style={styles.divider} />
-
-          {/* ID da Transação */}
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>ID da Transação:</Text>
-            <Text style={styles.value}>{paymentData.clientRequestId}</Text>
-          </View>
-        </ReceiptBase>
-        </View>
+        )}
       </View>
 
       <View style={styles.buttonContainer}>
@@ -185,27 +199,15 @@ const styles = StyleSheet.create({
   receiptContainer: {
     backgroundColor: '#FFF'
   },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 4,
+  timeoutWarning: {
+    padding: 16,
+    backgroundColor: '#F7F7F7',
+    borderRadius: 8,
+    marginBottom: 16,
   },
-  label: {
+  timeoutText: {
     fontSize: 14,
     color: '#666666',
-  },
-  value: {
-    fontSize: 14,
-    color: '#000000',
-    fontWeight: '500',
-    flex: 1,
-    textAlign: 'right',
-    marginLeft: 16,
-  },
-  divider: {
-    backgroundColor: '#E0E0E0',
-    marginVertical: 12,
   },
   buttonContainer: {
     padding: 20,

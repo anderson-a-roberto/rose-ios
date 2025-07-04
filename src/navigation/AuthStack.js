@@ -9,6 +9,8 @@ import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import ResetPasswordScreen from '../screens/ResetPasswordScreen';
 import BlockCheckScreen from '../screens/BlockCheckScreen';
 import UserBlockedScreen from '../screens/UserBlockedScreen';
+import InviteCodeScreen from '../screens/InviteCodeScreen';
+import DocumentScreen from '../screens/DocumentScreen';
 
 // Telas de onboarding
 import OnboardingTermsScreen from '../screens/onboarding/TermsScreen';
@@ -39,11 +41,13 @@ const AuthStack = () => {
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Document" component={DocumentScreen} />
       <Stack.Screen name="BlockCheck" component={BlockCheckScreen} />
       <Stack.Screen name="LoginPassword" component={LoginPasswordScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="UserBlocked" component={UserBlockedScreen} />
+      <Stack.Screen name="InviteCode" component={InviteCodeScreen} />
       
       {/* Onboarding Screens */}
       <Stack.Screen name="OnboardingTerms" component={OnboardingTermsScreen} />

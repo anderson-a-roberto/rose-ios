@@ -131,7 +131,12 @@ const TransactionItem = ({ date, description, value, isPositive, movementType, o
 
 export default function Dashboard2Screen({ navigation }) {
   const { userAccount, userTaxId } = useDashboard();
-  const { data: balance, isLoading: balanceLoading, error: balanceError } = useBalanceQuery();
+  const { 
+    data: balance, 
+    isLoading: balanceLoading, 
+    error: balanceError,
+    refetch: refetchBalance
+  } = useBalanceQuery();
   const { 
     data, 
     isLoading: transactionsLoading,
@@ -462,7 +467,10 @@ export default function Dashboard2Screen({ navigation }) {
             style={styles.refreshButton}
             onPress={() => {
               setRefreshing(true);
-              refetchTransactions().finally(() => {
+              Promise.all([
+                refetchBalance(),
+                refetchTransactions()
+              ]).finally(() => {
                 setTimeout(() => setRefreshing(false), 500);
               });
             }}
@@ -490,13 +498,18 @@ export default function Dashboard2Screen({ navigation }) {
               size={48} 
               color="#682145" 
             />
-            <Text style={styles.errorTitle}>Erro ao carregar transações</Text>
+            <Text style={styles.errorTitle}>Erro ao carregar dados</Text>
             <Text style={styles.errorMessage}>
-              {transactionsError.message || "Ocorreu um erro ao buscar suas transações. Tente novamente mais tarde."}
+              {transactionsError.message || "Ocorreu um erro ao buscar os dados. Tente novamente mais tarde."}
             </Text>
             <TouchableOpacity 
               style={styles.retryButton}
-              onPress={() => refetchTransactions()}
+              onPress={() => {
+                Promise.all([
+                  refetchBalance(),
+                  refetchTransactions()
+                ]);
+              }}
             >
               <Text style={styles.retryButtonText}>Tentar novamente</Text>
             </TouchableOpacity>

@@ -92,165 +92,164 @@ const InternalTransferReceipt = ({ transaction, onTransferDetailsLoaded }) => {
   const isOutgoing = transaction.balanceType === 'DEBIT' || 
                      transaction.movementType === 'INTERNALTRANSFEROUT';
   
-  const title = isOutgoing ? 'Comprovante de Transferência Enviada' : 'Comprovante de Transferência Recebida';
-
   return (
     <View style={styles.container}>
-      {/* Cabeçalho */}
+      {/* Header limpo com logo + título */}
       <View style={styles.header}>
-        <Image 
-          source={require('../../../assets/images/icon.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.date}>{formatDate(transaction.createDate)}</Text>
+        <View style={styles.logoContainer}>
+          <Image 
+            source={require('../../../assets/images/logorosa.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </View>
+        <Text style={styles.title}>Comprovante</Text>
       </View>
 
-      {/* Status */}
-      <View style={styles.statusContainer}>
-        <Text style={styles.statusLabel}>Status</Text>
-        <Text style={styles.statusValue}>CONFIRMADO</Text>
-      </View>
-
-      {/* Valor */}
-      <View style={styles.amountContainer}>
-        <Text style={styles.amountLabel}>Valor</Text>
-        <Text style={[
-          styles.amountValue, 
-          isOutgoing ? styles.amountNegative : styles.amountPositive
-        ]}>
-          {isOutgoing ? '-' : ''}{formatCurrency(transaction.amount)}
-        </Text>
+      {/* Seção TRANSAÇÃO */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>TRANSAÇÃO</Text>
+        <View style={styles.infoGroup}>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Tipo:</Text>
+            <Text style={styles.valueHighlight}>
+              {isOutgoing ? 'TRANSFERÊNCIA ENVIADA' : 'TRANSFERÊNCIA RECEBIDA'}
+            </Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Data:</Text>
+            <Text style={styles.valueMedium}>{formatDate(transaction.createDate)}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Valor:</Text>
+            <Text style={styles.valueBold}>{formatCurrency(transaction.amount)}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Status:</Text>
+            <Text style={styles.valueHighlight}>CONFIRMADO</Text>
+          </View>
+        </View>
       </View>
 
       {isOutgoing ? (
         <>
-          {/* Dados do Remetente */}
+          {/* Seção DE */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Dados do Remetente</Text>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Nome</Text>
-              <Text style={styles.value}>{transferDetails?.body?.debitParty?.name || '-'}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>CPF/CNPJ</Text>
-              <Text style={styles.value}>{transferDetails?.body?.debitParty?.taxId || '-'}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Agência/Conta</Text>
-              <Text style={styles.value}>
-                {transferDetails?.body?.debitParty?.branch || '-'}/
-                {transferDetails?.body?.debitParty?.account || '-'}
-              </Text>
+            <Text style={styles.sectionTitle}>DE</Text>
+            <Text style={styles.personName}>Banco Rose</Text>
+            <View style={styles.infoGroup}>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Banco:</Text>
+                <Text style={styles.valueMedium}>CELCOIN INSTITUICAO DE PAGAMENTO S.A.</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Conta:</Text>
+                <Text style={styles.valueMedium}>
+                  {transferDetails?.body?.debitParty?.account || '-'}
+                </Text>
+              </View>
             </View>
           </View>
 
-          {/* Dados do Destinatário */}
+          {/* Seção PARA */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Dados do Destinatário</Text>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Nome</Text>
-              <Text style={styles.value}>{transferDetails?.body?.creditParty?.name || '-'}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>CPF/CNPJ</Text>
-              <Text style={styles.value}>{transferDetails?.body?.creditParty?.taxId || '-'}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Agência/Conta</Text>
-              <Text style={styles.value}>
-                {transferDetails?.body?.creditParty?.branch || '-'}/
-                {transferDetails?.body?.creditParty?.account || '-'}
-              </Text>
+            <Text style={styles.sectionTitle}>PARA</Text>
+            <Text style={styles.personName}>
+              {transferDetails?.body?.creditParty?.name || 'Beneficiário'}
+            </Text>
+            <View style={styles.infoGroup}>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Banco:</Text>
+                <Text style={styles.valueMedium}>CELCOIN INSTITUICAO DE PAGAMENTO S.A.</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Documento:</Text>
+                <Text style={styles.valueMedium}>
+                  {transferDetails?.body?.creditParty?.taxId ? 
+                    `***${transferDetails.body.creditParty.taxId.substring(3, transferDetails.body.creditParty.taxId.length-2)}**` : 
+                    '-'}
+                </Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Conta:</Text>
+                <Text style={styles.valueMedium}>
+                  {transferDetails?.body?.creditParty?.account || '-'}
+                </Text>
+              </View>
             </View>
           </View>
         </>
       ) : (
         <>
-          {/* Dados do Pagador */}
+          {/* Seção DE */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Dados do Pagador</Text>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Nome</Text>
-              <Text style={styles.value}>{transferDetails?.body?.debitParty?.name || '-'}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>CPF/CNPJ</Text>
-              <Text style={styles.value}>{transferDetails?.body?.debitParty?.taxId || '-'}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Agência/Conta</Text>
-              <Text style={styles.value}>
-                {transferDetails?.body?.debitParty?.branch || '-'}/
-                {transferDetails?.body?.debitParty?.account || '-'}
-              </Text>
+            <Text style={styles.sectionTitle}>DE</Text>
+            <Text style={styles.personName}>
+              {transferDetails?.body?.debitParty?.name || 'Remetente'}
+            </Text>
+            <View style={styles.infoGroup}>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Banco:</Text>
+                <Text style={styles.valueMedium}>CELCOIN INSTITUICAO DE PAGAMENTO S.A.</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Documento:</Text>
+                <Text style={styles.valueMedium}>
+                  {transferDetails?.body?.debitParty?.taxId ? 
+                    `***${transferDetails.body.debitParty.taxId.substring(3, transferDetails.body.debitParty.taxId.length-2)}**` : 
+                    '-'}
+                </Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Conta:</Text>
+                <Text style={styles.valueMedium}>
+                  {transferDetails?.body?.debitParty?.account || '-'}
+                </Text>
+              </View>
             </View>
           </View>
 
-          {/* Dados do Beneficiário */}
+          {/* Seção PARA */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Dados do Beneficiário</Text>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Nome</Text>
-              <Text style={styles.value}>{transferDetails?.body?.creditParty?.name || '-'}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>CPF/CNPJ</Text>
-              <Text style={styles.value}>{transferDetails?.body?.creditParty?.taxId || '-'}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Agência/Conta</Text>
-              <Text style={styles.value}>
-                {transferDetails?.body?.creditParty?.branch || '-'}/
-                {transferDetails?.body?.creditParty?.account || '-'}
-              </Text>
+            <Text style={styles.sectionTitle}>PARA</Text>
+            <Text style={styles.personName}>Banco Rose</Text>
+            <View style={styles.infoGroup}>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Banco:</Text>
+                <Text style={styles.valueMedium}>CELCOIN INSTITUICAO DE PAGAMENTO S.A.</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Conta:</Text>
+                <Text style={styles.valueMedium}>
+                  {transferDetails?.body?.creditParty?.account || '-'}
+                </Text>
+              </View>
             </View>
           </View>
         </>
       )}
 
-      {/* Identificação */}
+      {/* Seção DETALHES */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Identificação</Text>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>ID da Transação</Text>
-          <Text style={styles.value}>{transaction.id}</Text>
+        <Text style={styles.sectionTitle}>DETALHES</Text>
+        <View style={styles.infoGroup}>
+          <Text style={styles.label}>ID:</Text>
+          <Text style={styles.valueMonospace}>{transaction.id}</Text>
         </View>
         {transferDetails?.body?.endToEndId && (
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>End to End ID</Text>
-            <Text style={styles.value}>{transferDetails.body.endToEndId}</Text>
+          <View style={styles.infoGroup}>
+            <Text style={styles.label}>End to End ID:</Text>
+            <Text style={styles.valueMonospace}>{transferDetails.body.endToEndId}</Text>
           </View>
         )}
-      </View>
-
-      {/* Descrição */}
-      {(transferDetails?.body?.description || transaction.description) && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Descrição</Text>
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Mensagem</Text>
-            <Text style={styles.value}>
+        {(transferDetails?.body?.description || transaction.description) && (
+          <View style={styles.infoGroup}>
+            <Text style={styles.label}>Descrição:</Text>
+            <Text style={styles.valueMedium}>
               {transferDetails?.body?.description || transaction.description}
             </Text>
           </View>
-        </View>
-      )}
-
-      {/* Tipo e Data */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Informações Adicionais</Text>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Tipo de transação</Text>
-          <Text style={styles.value}>
-            {isOutgoing ? 'INTERNALTRANSFEROUT' : 'INTERNALTRANSFERIN'}
-          </Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Data de criação</Text>
-          <Text style={styles.value}>{formatDate(transaction.createDate)}</Text>
-        </View>
+        )}
       </View>
     </View>
   );
@@ -258,77 +257,58 @@ const InternalTransferReceipt = ({ transaction, onTransferDetailsLoaded }) => {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
+    padding: 20, // Padronizado para 20
     backgroundColor: '#FFFFFF',
-    paddingBottom: 0, // Reduzir o padding inferior para eliminar espaço em branco excessivo
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   header: {
-    marginBottom: 16,
     alignItems: 'center',
+    marginBottom: 32,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 8,
   },
   logo: {
-    width: 40,
-    height: 40,
-    marginBottom: 8,
+    height: 50,
+    width: 160,
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#000000',
-    marginBottom: 8,
+    color: '#333333',
     textAlign: 'center',
-  },
-  date: {
-    fontSize: 14,
-    color: '#666666',
-  },
-  statusContainer: {
-    marginBottom: 16,
-    alignItems: 'center',
-  },
-  statusLabel: {
-    fontSize: 14,
-    color: '#666666',
-    marginBottom: 4,
-  },
-  statusValue: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#4CAF50',
-  },
-  amountContainer: {
-    alignItems: 'center',
-    marginBottom: 24,
-    padding: 16,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 4,
-  },
-  amountLabel: {
-    fontSize: 14,
-    color: '#666666',
-    marginBottom: 4,
-  },
-  amountValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  amountPositive: {
-    color: '#4CAF50',
-  },
-  amountNegative: {
-    color: '#F44336',
   },
   section: {
     marginBottom: 24,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
   },
   sectionTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#333333',
+    marginBottom: 12,
+    letterSpacing: 0.5,
+  },
+  personName: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: 'bold',
     color: '#000000',
     marginBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-    paddingBottom: 8,
+  },
+  infoGroup: {
+    marginTop: 4,
+    marginBottom: 8,
   },
   infoRow: {
     flexDirection: 'row',
@@ -339,12 +319,37 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666666',
   },
-  value: {
+  valueMedium: {
     fontSize: 14,
     color: '#000000',
+    fontWeight: '500',
     flex: 1,
     textAlign: 'right',
     marginLeft: 16,
+  },
+  valueBold: {
+    fontSize: 16,
+    color: '#000000',
+    fontWeight: 'bold',
+    flex: 1,
+    textAlign: 'right',
+    marginLeft: 16,
+  },
+  valueHighlight: {
+    fontSize: 14,
+    color: '#4CAF50',
+    fontWeight: 'bold',
+    flex: 1,
+    textAlign: 'right',
+    marginLeft: 16,
+  },
+  valueMonospace: {
+    fontSize: 13,
+    color: '#000000',
+    fontFamily: 'monospace',
+    marginTop: 4,
+    marginBottom: 4,
+    textAlign: 'left',
   },
   loadingContainer: {
     padding: 24,

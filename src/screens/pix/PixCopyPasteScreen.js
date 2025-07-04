@@ -15,9 +15,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as Clipboard from 'expo-clipboard';
 import { supabase } from '../../config/supabase';
-import PixConfirmationModal from '../../components/pix/copypaste/PixConfirmationModal';
-import PixCopyPasteReceipt from '../../components/pix/copypaste/PixCopyPasteReceipt';
-import PixReceiptModal from '../../components/pix/copypaste/PixReceiptModal';
 import { useQueryClient } from '@tanstack/react-query';
 
 const PixCopyPasteScreen = ({ navigation, route }) => {
@@ -28,9 +25,6 @@ const PixCopyPasteScreen = ({ navigation, route }) => {
   const [paymentAmount, setPaymentAmount] = useState('');
   const [emvData, setEmvData] = useState(null);
   const [dictData, setDictData] = useState(null);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [showReceiptModal, setShowReceiptModal] = useState(false);
-  const [paymentResult, setPaymentResult] = useState(null);
   const [error, setError] = useState(null);
   
   // Estados para armazenar os dados do usuário
@@ -109,73 +103,131 @@ const PixCopyPasteScreen = ({ navigation, route }) => {
     setError(null);
 
     try {
-      console.log('Chamando edge function pix-emv com código:', pixCode.substring(0, 20) + '...');
-      
-      // Decodificar o código EMV
-      const { data: emvResponse, error: emvError } = await supabase.functions.invoke('pix-emv', {
-        body: { emv: pixCode }
-      });
+      console.log('Chamando edge function pix-emv-full com código:', pixCode.substring(0, 20) + '...');
+    
+    // Decodificar o código EMV usando a nova edge function
+    const { data: emvResponse, error: emvError } = await supabase.functions.invoke('pix-emv-full', {
+      body: { emv: pixCode }
+    });
 
-      console.log('Resposta pix-emv:', { emvResponse, emvError });
+      console.log('Resposta pix-emv-full:', { emvResponse, emvError });
 
       if (emvError) {
-        console.log('Erro na chamada pix-emv:', emvError);
+        console.log('Erro na chamada pix-emv-full:', emvError);
         throw new Error(emvError.message || 'Não foi possível ler o código PIX');
       }
 
       if (emvResponse.status === 'ERROR') {
-        console.log('Erro no status da resposta pix-emv:', emvResponse.error);
+        console.log('Erro no status da resposta pix-emv-full:', emvResponse.error);
         throw new Error(emvResponse.error?.message || 'Não foi possível ler o código PIX');
       }
 
       console.log('Dados EMV decodificados:', emvResponse.data);
       setEmvData(emvResponse.data);
 
+      // Processar os dados EMV da nova estrutura (dentro do objeto body)
+      const emvData = emvResponse.data.body || emvResponse.data;
+      
+      // Log detalhado para depuração
+      console.log('[PixCopyPasteScreen] Resposta completa pix-emv-full:', JSON.stringify(emvResponse.data, null, 2));
+      console.log('[PixCopyPasteScreen] Tipo de QR code declarado:', emvData.type);
+      
+      // Verificar se é um QR code dinâmico ou estático usando APENAS o campo type
+      // Considerando DYNAMIC e IMMEDIATE como tipos dinâmicos
+      const isDynamicQrCode = emvData.type === 'DYNAMIC' || emvData.type === 'IMMEDIATE';
+      const isStaticQrCode = emvData.type === 'STATIC' || !isDynamicQrCode;
+      
+      // Log de outros indicadores apenas para referência
+      console.log('[PixCopyPasteScreen] Outros indicadores (apenas para referência):', {
+        hasTransactionId: !!emvData.transactionIdentification,
+        pointOfInitiationMethod: emvData.pointOfInitiationMethod,
+        canModifyAmount: emvData.amount?.canModifyFinalAmount
+      });
+      
+      console.log(`[PixCopyPasteScreen] Tipo de QR code detectado: ${isDynamicQrCode ? 'Dinâmico' : 'Estático'}`);
+      
+      // Definir o tipo de iniciação recomendado com base no tipo de QR code
+      const recommendedInitiationType = emvData.recommendedInitiationType || (isDynamicQrCode ? "MANUAL" : "DICT");
+      console.log(`[PixCopyPasteScreen] Tipo de iniciação recomendado: ${recommendedInitiationType}`);
+      
+      if (isDynamicQrCode && emvData.transactionIdentification) {
+        console.log(`[PixCopyPasteScreen] ID de transação encontrado: ${emvData.transactionIdentification}`);
+      }
+
       // Se o código não tem valor definido, inicializar o campo de valor
-      if (!emvResponse.data.transactionAmount) {
+      if (!emvData.transactionAmount) {
         setPaymentAmount('');
       } else {
-        setPaymentAmount(emvResponse.data.transactionAmount.toString());
+        setPaymentAmount(emvData.transactionAmount.toString());
       }
 
       // Extrair a chave PIX corretamente da estrutura merchantAccountInformation
-      const pixKey = emvResponse.data.merchantAccountInformation?.key;
+      const pixKey = emvData.key || emvData.merchantAccountInformation?.key;
       
       if (!pixKey) {
         console.log('Erro: Chave PIX não encontrada nos dados EMV');
         throw new Error('Chave PIX não encontrada no código QR');
       }
 
-      // Consultar informações do destinatário pelo DICT
-      console.log('Antes de chamar get-pix-dict - Parâmetros:', {
-        pixKey: pixKey,
-        account: userAccount
-      });
+      // Chamar a nova edge function get-pix-dict-qrcode para obter informações do recebedor
+      console.log('Antes de chamar get-pix-dict-qrcode - Parâmetros:', { pixKey, account: userAccount });
+      
+      // Usar a conta do usuário autenticado
+      const accountToUse = userAccount;
+      console.log('[PixCopyPasteScreen] Usando conta do usuário:', accountToUse);
       
       const { data: dictResponse, error: dictError } = await supabase.functions.invoke('get-pix-dict', {
         body: { 
-          key: pixKey,
-          account: userAccount
+          key: pixKey, 
+          account: accountToUse 
         }
       });
 
-      console.log('Resposta get-pix-dict:', { dictResponse, dictError });
-
-      if (dictError) {
-        console.log('Erro na chamada get-pix-dict:', dictError);
-        throw new Error(dictError.message || 'Não foi possível obter informações do destinatário');
-      }
-
-      if (dictResponse.status === 'ERROR') {
-        console.log('Erro no status da resposta get-pix-dict:', dictResponse.error);
-        throw new Error(dictResponse.error?.message || 'Não foi possível obter informações do destinatário');
+      console.log('Resposta get-pix-dict-qrcode:', { dictResponse, dictError });
+      
+      // Verificar se houve erro na consulta DICT
+      if (dictError || !dictResponse?.data || dictResponse?.error) {
+        const errorMessage = dictError?.message || dictResponse?.error?.message || 'Erro ao consultar informações do recebedor';
+        console.log('Erro no status da resposta get-pix-dict-qrcode:', dictResponse?.error || dictError);
+        
+        // Para QR codes dinâmicos, podemos continuar mesmo sem dados do DICT
+        if (isDynamicQrCode) {
+          console.log('[PixCopyPasteScreen] QR code dinâmico - continuando mesmo sem dados DICT');
+          // Criar dados DICT mínimos para continuar o fluxo
+          dictResponse = {
+            data: {
+              name: emvData.merchantAccountInformation?.merchantName || 'Recebedor',
+              key: pixKey,
+              documentnumber: '',
+              account: '',
+              branch: '',
+              participant: '',
+              accounttype: 'CACC'
+            }
+          };
+        } else {
+          // Para QR codes estáticos, ainda precisamos dos dados DICT
+          throw new Error(errorMessage);
+        }
       }
 
       console.log('Dados DICT obtidos:', dictResponse.data);
       setDictData(dictResponse.data);
       
-      console.log('Abrindo modal de confirmação');
-      setShowConfirmModal(true);
+      console.log('Navegando para tela de confirmação');
+      // Navegar para a tela de confirmação com flags de tipo de QR code
+      navigation.navigate('PixCopyPasteConfirm', {
+        amount: emvData.transactionAmount || paymentAmount || '',
+        emvData,
+        dictData: dictResponse.data,
+        userAccount,
+        userTaxId,
+        userName,
+        isDynamicQrCode,
+        isStaticQrCode,
+        recommendedInitiationType,
+        sourceFlow: 'copypaste'
+      });
     } catch (error) {
       console.error('Erro ao processar código PIX:', error);
       setError(error.message || 'Ocorreu um erro ao processar o código PIX');
@@ -258,21 +310,21 @@ const PixCopyPasteScreen = ({ navigation, route }) => {
         remittanceInformation: emvData.description || "Pagamento PIX via Código EMV" // Informação adicional
       };
 
-      console.log('Chamando edge function pix-cash-out com dados:', JSON.stringify(paymentData));
+      console.log('Chamando edge function pix-cash-out-secure com dados:', JSON.stringify(paymentData));
 
-      const { data: paymentResponse, error: paymentError } = await supabase.functions.invoke('pix-cash-out', {
+      const { data: paymentResponse, error: paymentError } = await supabase.functions.invoke('pix-cash-out-secure', {
         body: paymentData
       });
 
-      console.log('Resposta pix-cash-out:', { paymentResponse, paymentError });
+      console.log('Resposta pix-cash-out-secure:', { paymentResponse, paymentError });
 
       if (paymentError) {
-        console.log('Erro na chamada pix-cash-out:', paymentError);
+        console.log('Erro na chamada pix-cash-out-secure:', paymentError);
         throw new Error(paymentError.message || 'Não foi possível processar o pagamento');
       }
 
       if (paymentResponse.status === 'ERROR') {
-        console.log('Erro no status da resposta pix-cash-out:', paymentResponse.error);
+        console.log('Erro no status da resposta pix-cash-out-secure:', paymentResponse.error);
         throw new Error(paymentResponse.error?.message || 'Não foi possível processar o pagamento');
       }
 
@@ -284,9 +336,7 @@ const PixCopyPasteScreen = ({ navigation, route }) => {
       queryClient.invalidateQueries(['balance']);
       
       // Usar paymentResponse diretamente como resultado do pagamento
-      setPaymentResult(paymentResponse);
-      setShowConfirmModal(false);
-      setShowReceiptModal(true);
+      navigation.navigate('Dashboard2');
     } catch (error) {
       console.error('Erro ao realizar pagamento PIX:', error);
       setError(error.message || 'Ocorreu um erro ao processar o pagamento');
@@ -296,18 +346,12 @@ const PixCopyPasteScreen = ({ navigation, route }) => {
     }
   };
 
-  const handleCloseReceipt = () => {
-    setShowReceiptModal(false);
-    navigation.navigate('Dashboard2');
-  };
-
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <StatusBar backgroundColor="#FFF" barStyle="dark-content" />
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
-      >
+        style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
@@ -324,32 +368,35 @@ const PixCopyPasteScreen = ({ navigation, route }) => {
           </View>
         </View>
 
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        {/* Content - Scrollable */}
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled">
           <View style={styles.content}>
-            {/* Indicador de carregamento dos dados do usuário */}
-            {isLoadingUserData && (
+            {isLoadingUserData ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#E91E63" />
-                <Text style={styles.loadingText}>Carregando dados da conta...</Text>
+                <Text style={styles.loadingText}>Carregando...</Text>
               </View>
-            )}
-
-            {/* Conteúdo principal */}
-            {!isLoadingUserData && (
+            ) : (
               <>
+                {/* Icon */}
                 <View style={styles.iconContainer}>
-                  <MaterialCommunityIcons name="qrcode" size={64} color="#E91E63" />
+                  <MaterialCommunityIcons name="qrcode-scan" size={64} color="#E91E63" />
                 </View>
-                
+
+                {/* Description */}
                 <Text style={styles.description}>
                   Cole um código PIX para realizar um pagamento de forma rápida e segura.
                 </Text>
-                
+
+                {/* Input */}
                 <View style={styles.inputContainer}>
                   <Text style={styles.label}>Código PIX</Text>
                   <View style={styles.inputRow}>
                     <TextInput
-                      mode="flat"
                       value={pixCode}
                       onChangeText={setPixCode}
                       placeholder="Cole o código PIX aqui"
@@ -368,49 +415,30 @@ const PixCopyPasteScreen = ({ navigation, route }) => {
                       }}
                     />
                   </View>
-                  <View style={styles.buttonRow}>
-                    <Button
-                      mode="contained"
-                      onPress={() => {
-                        console.log('Botão Continuar clicado');
-                        handleProcessPix();
-                      }}
-                      style={[styles.processButton, { flex: 1 }]}
-                      loading={isProcessing}
-                      disabled={isProcessing || !pixCode.trim()}
-                      buttonColor="#E91E63"
-                      textColor="#FFF"
-                    >
-                      Continuar
-                    </Button>
-                  </View>
                 </View>
               </>
             )}
           </View>
         </ScrollView>
+
+        {/* Button Container - Fixed at bottom */}
+        <View style={styles.buttonContainer}>
+          <Button
+            mode="contained"
+            onPress={() => {
+              console.log('Botão Continuar clicado');
+              handleProcessPix();
+            }}
+            style={styles.button}
+            contentStyle={styles.buttonContent}
+            labelStyle={styles.buttonLabel}
+            loading={isProcessing}
+            disabled={isProcessing || !pixCode.trim() || isLoadingUserData}
+          >
+            CONTINUAR
+          </Button>
+        </View>
       </KeyboardAvoidingView>
-
-      {/* Modal de Confirmação */}
-      <PixConfirmationModal
-        visible={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        onConfirm={handleConfirmPayment}
-        emvData={emvData}
-        dictData={dictData}
-        amount={paymentAmount}
-        setAmount={setPaymentAmount}
-        isLoading={isPaymentProcessing}
-      />
-
-      {/* Modal de Recibo */}
-      <PixReceiptModal
-        visible={showReceiptModal}
-        onClose={handleCloseReceipt}
-        paymentResult={paymentResult}
-        emvData={emvData}
-        dictData={dictData}
-      />
     </SafeAreaView>
   );
 };
@@ -499,15 +527,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     borderRadius: 4,
   },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 16,
+  buttonContainer: {
+    padding: 20,
+    paddingBottom: 32,
+    backgroundColor: '#FFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
   },
-  processButton: {
-    borderRadius: 4,
-    height: 48,
-    justifyContent: 'center',
+  button: {
+    backgroundColor: '#E91E63',
+    borderRadius: 8,
+  },
+  buttonContent: {
+    height: 56,
+  },
+  buttonLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+    color: '#FFF',
   },
   iconContainer: {
     alignItems: 'center',

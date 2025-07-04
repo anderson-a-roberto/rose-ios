@@ -19,7 +19,7 @@ import PayBillErrorScreen from '../screens/PayBillErrorScreen';
 import HomePix from '../screens/HomePix';
 import PixLimitsScreen from '../screens/PixLimitsScreen';
 import PixQrCodeScanScreen from '../screens/PixQrCodeScanScreen';
-import PixCopyPasteScreen from '../screens/PixCopyPasteScreen';
+import PixCopyPasteScreen from '../screens/pix/PixCopyPasteScreen';
 import PixKeysScreen from '../screens/PixKeysScreen';
 import PixTransferAmountScreen from '../screens/pix/PixTransferAmountScreen';
 import PixTransferKeyScreen from '../screens/pix/PixTransferKeyScreen';
@@ -28,6 +28,10 @@ import PixTransferPinScreen from '../screens/pix/PixTransferPinScreen';
 import PixTransferLoadingScreen from '../screens/pix/PixTransferLoadingScreen';
 import PixTransferSuccessScreen from '../screens/pix/PixTransferSuccessScreen';
 import PixTransferReceiptScreen from '../screens/pix/PixTransferReceiptScreen';
+import PixTransferErrorScreen from '../screens/pix/PixTransferErrorScreen';
+import PixQrCodePinScreen from '../screens/pix/PixQrCodePinScreen';
+import PixCopyPastePinScreen from '../screens/pix/PixCopyPastePinScreen';
+import PixCopyPasteConfirmScreen from '../screens/pix/PixCopyPasteConfirmScreen';
 import PixReceiveAmountScreen from '../screens/pix/PixReceiveAmountScreen';
 import PixReceiveKeyScreen from '../screens/pix/PixReceiveKeyScreen';
 import PixReceiveKeyScreenV2 from '../screens/pix/PixReceiveKeyScreenV2';
@@ -74,7 +78,10 @@ const MainStack = ({ initialRouteName = "Dashboard2" }) => {
       {/* PIX Screens */}
       <Stack.Screen name="PixLimits" component={PixLimitsScreen} />
       <Stack.Screen name="PixQrCode" component={PixQrCodeScanScreen} />
+      <Stack.Screen name="PixQrCodePin" component={PixQrCodePinScreen} />
       <Stack.Screen name="PixCopyPaste" component={PixCopyPasteScreen} />
+      <Stack.Screen name="PixCopyPastePin" component={PixCopyPastePinScreen} />
+      <Stack.Screen name="PixCopyPasteConfirm" component={PixCopyPasteConfirmScreen} />
       <Stack.Screen name="PixKeysScreen" component={PixKeysScreen} />
       <Stack.Screen name="PixTransferAmount" component={PixTransferAmountScreen} />
       <Stack.Screen name="PixTransferKey" component={PixTransferKeyScreen} />
@@ -83,6 +90,7 @@ const MainStack = ({ initialRouteName = "Dashboard2" }) => {
       <Stack.Screen name="PixTransferLoading" component={PixTransferLoadingScreen} />
       <Stack.Screen name="PixTransferSuccess" component={PixTransferSuccessScreen} />
       <Stack.Screen name="PixTransferReceipt" component={PixTransferReceiptScreen} />
+      <Stack.Screen name="PixTransferError" component={PixTransferErrorScreen} />
       <Stack.Screen name="PixReceiveAmount" component={PixReceiveAmountScreen} />
       <Stack.Screen name="PixReceiveKey" component={PixReceiveKeyScreen} />
       <Stack.Screen name="PixReceiveKeyV2" component={PixReceiveKeyScreenV2} />

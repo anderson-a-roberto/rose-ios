@@ -15,20 +15,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as Clipboard from 'expo-clipboard';
 import { supabase } from '../../config/supabase';
-import PixConfirmationModal from '../../components/pix/copypaste/PixConfirmationModal';
-import PixCopyPasteReceipt from '../../components/pix/copypaste/PixCopyPasteReceipt';
-import PixReceiptModal from '../../components/pix/copypaste/PixReceiptModal';
 
 const PixCopyPasteScreen = ({ navigation, route }) => {
   const [pixCode, setPixCode] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isPaymentProcessing, setIsPaymentProcessing] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [emvData, setEmvData] = useState(null);
   const [dictData, setDictData] = useState(null);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [showReceiptModal, setShowReceiptModal] = useState(false);
-  const [paymentResult, setPaymentResult] = useState(null);
   const [error, setError] = useState(null);
   
   // Estados para armazenar os dados do usuário
@@ -119,40 +112,65 @@ const PixCopyPasteScreen = ({ navigation, route }) => {
     setError(null);
 
     try {
-      console.log('Chamando edge function pix-emv com código:', pixCode.substring(0, 20) + '...');
-      
-      // Decodificar o código EMV
-      const { data: emvResponse, error: emvError } = await supabase.functions.invoke('pix-emv', {
-        body: { emv: pixCode }
-      });
+      console.log('Chamando edge function pix-emv-full com código:', pixCode.substring(0, 20) + '...');
+    
+    // Decodificar o código EMV com a nova edge function
+    const { data: emvResponse, error: emvError } = await supabase.functions.invoke('pix-emv-full', {
+      body: { emv: pixCode }
+    });
 
-      console.log('Resposta pix-emv:', { emvResponse, emvError });
+    console.log('Resposta pix-emv-full:', { emvResponse, emvError });
 
       if (emvError) {
-        console.log('Erro na chamada pix-emv:', emvError);
+        console.log('Erro na chamada pix-emv-full:', emvError);
         throw new Error(emvError.message || 'Não foi possível ler o código PIX');
       }
 
       if (emvResponse.status === 'ERROR') {
-        console.log('Erro no status da resposta pix-emv:', emvResponse.error);
+        console.log('Erro no status da resposta pix-emv-full:', emvResponse.error);
         throw new Error(emvResponse.error?.message || 'Não foi possível ler o código PIX');
       }
 
       console.log('Dados EMV decodificados:', emvResponse.data);
-      setEmvData(emvResponse.data);
+      
+      // Processar os dados EMV da nova estrutura (dentro do objeto body)
+      const emvData = emvResponse.data.body || emvResponse.data;
+      
+      // Verificar se é um QR code dinâmico ou estático usando as novas propriedades
+      const isDynamicQrCode = emvData.type === 'DYNAMIC' || emvData.transactionIdentification;
+      const initiationType = emvData.recommendedInitiationType || (isDynamicQrCode ? "MANUAL" : "DICT");
+      
+      console.log(`[PixCopyPasteScreen] Tipo de QR code detectado: ${isDynamicQrCode ? 'Dinâmico' : 'Estático'}`);
+      console.log(`[PixCopyPasteScreen] Tipo de iniciação recomendado: ${initiationType}`);
+      
+      if (emvData.transactionIdentification) {
+        console.log(`[PixCopyPasteScreen] ID de transação encontrado: ${emvData.transactionIdentification}`);
+      }
+      
+      // Armazenar os dados EMV processados
+      setEmvData(emvData);
 
+      // Extrair o valor da transação da nova estrutura
+      const transactionAmount = emvData.amount?.final || emvData.amount?.original || emvData.transactionAmount;
+      
+      console.log(`[PixCopyPasteScreen] Valor da transação: ${transactionAmount}`);
+      
       // Se o código não tem valor definido, inicializar o campo de valor
-      if (!emvResponse.data.transactionAmount) {
+      if (!transactionAmount) {
         setPaymentAmount('');
       } else {
-        setPaymentAmount(emvResponse.data.transactionAmount.toString());
+        setPaymentAmount(transactionAmount.toString());
       }
 
-      // Extrair a chave PIX corretamente da estrutura merchantAccountInformation
-      const pixKey = emvResponse.data.merchantAccountInformation?.key;
+      // Extrair a chave PIX da nova estrutura de resposta
+      // Na nova edge function pix-emv-full, a chave está diretamente no objeto body como 'key'
+      // ou pode estar dentro de merchantAccountInformation.key como na versão antiga
+      const pixKey = emvData.key || emvData.merchantAccountInformation?.key;
+      
+      console.log('[PixCopyPasteScreen] Chave PIX encontrada:', pixKey);
       
       if (!pixKey) {
-        console.log('Erro: Chave PIX não encontrada nos dados EMV');
+        console.log('Erro: Chave PIX não encontrada nos dados EMV', emvData);
         throw new Error('Chave PIX não encontrada no código QR');
       }
 
@@ -185,7 +203,25 @@ const PixCopyPasteScreen = ({ navigation, route }) => {
       setDictData(dictResponse.data);
       
       console.log('Abrindo modal de confirmação');
-      setShowConfirmModal(true);
+    
+    // Preparar o valor para a tela de confirmação
+    const amount = transactionAmount || parseFloat(paymentAmount || '0');
+    
+    console.log('[PixCopyPasteScreen] Navegando para confirmação com dados:', {
+      amount,
+      emvData,
+      dictData: dictResponse.data
+    });
+    
+    navigation.navigate('PixCopyPasteConfirm', {
+      amount,
+      emvData,
+      dictData: dictResponse.data,
+      userAccount,
+      userTaxId,
+      userName
+    });
+      
     } catch (error) {
       console.error('Erro ao processar código PIX:', error);
       setError(error.message || 'Ocorreu um erro ao processar o código PIX');
@@ -208,103 +244,6 @@ const PixCopyPasteScreen = ({ navigation, route }) => {
       console.error('Erro ao colar do clipboard:', error);
       Alert.alert('Erro', 'Não foi possível colar o código. Tente inserir manualmente.');
     }
-  };
-
-  const handleConfirmPayment = async () => {
-    console.log('handleConfirmPayment chamado - Iniciando confirmação de pagamento');
-    
-    if (!emvData || !dictData) {
-      console.log('Erro: Dados incompletos para pagamento', { emvData: !!emvData, dictData: !!dictData });
-      Alert.alert('Erro', 'Dados incompletos para realizar o pagamento.');
-      return;
-    }
-
-    // Verificar se é necessário informar o valor
-    if (!emvData.transactionAmount && (!paymentAmount || parseFloat(paymentAmount) <= 0)) {
-      console.log('Erro: Valor de pagamento inválido', { paymentAmount });
-      Alert.alert('Erro', 'Por favor, informe um valor válido para o pagamento.');
-      return;
-    }
-
-    setIsPaymentProcessing(true);
-    setError(null);
-
-    try {
-      const amount = emvData.transactionAmount || parseFloat(paymentAmount);
-      
-      // Gerar clientCode único para a transação
-      const generateClientCode = () => {
-        return Math.floor(100000 + Math.random() * 900000).toString();
-      };
-      
-      const clientCode = generateClientCode();
-      console.log('ClientCode gerado para a transação:', clientCode);
-      
-      // Estrutura completa do payload conforme esperado pela edge function
-      const paymentData = {
-        amount: amount,
-        clientCode: clientCode,
-        endToEndId: dictData.endtoendid || `E${Date.now()}`, // Fallback para um ID gerado na hora
-        initiationType: "DICT", // Valor fixo para pagamentos via consulta DICT
-        paymentType: "IMMEDIATE", // Valor fixo para pagamentos imediatos
-        urgency: "HIGH", // Valor fixo para urgência alta
-        transactionType: "TRANSFER", // Valor fixo para transferências
-        debitParty: {
-          account: userAccount,
-          branch: "1", // Valor padrão
-          taxId: userTaxId,
-          name: userName || "Titular da Conta", // Nome do usuário ou fallback
-          accountType: "TRAN" // Valor padrão para conta de transação
-        },
-        creditParty: {
-          bank: dictData.participant, // Banco do recebedor, vem da resposta do DICT
-          key: emvData.merchantAccountInformation.key, // Chave PIX do recebedor, vem do EMV
-          account: dictData.account, // Conta do recebedor, vem da resposta do DICT
-          branch: dictData.branch || "0", // Agência do recebedor, vem da resposta do DICT
-          taxId: dictData.documentnumber, // CPF/CNPJ do recebedor, vem do DICT
-          name: dictData.name, // Nome do recebedor, vem do DICT
-          accountType: dictData.accounttype || "TRAN" // Tipo de conta do recebedor, vem do DICT
-        },
-        remittanceInformation: emvData.description || "Pagamento PIX via Código EMV" // Informação adicional
-      };
-
-      console.log('Chamando edge function pix-cash-out com dados:', JSON.stringify(paymentData));
-
-      const { data: paymentResponse, error: paymentError } = await supabase.functions.invoke('pix-cash-out', {
-        body: paymentData
-      });
-
-      console.log('Resposta pix-cash-out:', { paymentResponse, paymentError });
-
-      if (paymentError) {
-        console.log('Erro na chamada pix-cash-out:', paymentError);
-        throw new Error(paymentError.message || 'Não foi possível processar o pagamento');
-      }
-
-      if (paymentResponse.status === 'ERROR') {
-        console.log('Erro no status da resposta pix-cash-out:', paymentResponse.error);
-        throw new Error(paymentResponse.error?.message || 'Não foi possível processar o pagamento');
-      }
-
-      // Consideramos PROCESSING como sucesso, já que o status final será atualizado via webhook
-      console.log('Pagamento processado com sucesso:', paymentResponse);
-      
-      // Usar paymentResponse diretamente como resultado do pagamento
-      setPaymentResult(paymentResponse);
-      setShowConfirmModal(false);
-      setShowReceiptModal(true);
-    } catch (error) {
-      console.error('Erro ao realizar pagamento PIX:', error);
-      setError(error.message || 'Ocorreu um erro ao processar o pagamento');
-      Alert.alert('Erro', error.message || 'Ocorreu um erro ao processar o pagamento');
-    } finally {
-      setIsPaymentProcessing(false);
-    }
-  };
-
-  const handleCloseReceipt = () => {
-    setShowReceiptModal(false);
-    navigation.navigate('Dashboard2');
   };
 
   return (
@@ -403,27 +342,6 @@ const PixCopyPasteScreen = ({ navigation, route }) => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-
-      {/* Modal de Confirmação */}
-      <PixConfirmationModal
-        visible={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        onConfirm={handleConfirmPayment}
-        emvData={emvData}
-        dictData={dictData}
-        amount={paymentAmount}
-        setAmount={setPaymentAmount}
-        isLoading={isPaymentProcessing}
-      />
-
-      {/* Modal de Recibo */}
-      <PixReceiptModal
-        visible={showReceiptModal}
-        onClose={handleCloseReceipt}
-        paymentResult={paymentResult}
-        emvData={emvData}
-        dictData={dictData}
-      />
     </SafeAreaView>
   );
 };
